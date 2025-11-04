@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🤿 Planificateur MN90</title>
+    <title>🤿 MN90Mobile - Planificateur de Plongée</title>
     <style>
         * {
             margin: 0;
@@ -19,6 +19,7 @@
             color: #fff;
             overflow-x: hidden;
             position: relative;
+            padding-bottom: 100px;
         }
 
         /* ANIMATIONS SOUS-MARINES */
@@ -74,7 +75,24 @@
             filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
         }
 
+        .fish {
+            position: fixed;
+            font-size: 40px;
+            z-index: 1;
+            animation: swim-fish 15s infinite linear;
+            filter: drop-shadow(0 0 8px rgba(0, 200, 255, 0.3));
+        }
+
+        .fish:nth-child(10) { bottom: 35%; animation-duration: 18s; animation-delay: 2s; }
+        .fish:nth-child(11) { bottom: 45%; animation-duration: 22s; animation-delay: 5s; }
+        .fish:nth-child(12) { bottom: 55%; animation-duration: 20s; animation-delay: 1s; }
+
         @keyframes swim {
+            0% { right: -100px; }
+            100% { right: 110%; }
+        }
+
+        @keyframes swim-fish {
             0% { right: -100px; }
             100% { right: 110%; }
         }
@@ -109,25 +127,41 @@
             opacity: 0.95;
         }
 
+        .header .credit {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 8px;
+        }
+
+        .header .credit a {
+            color: #ffff99;
+            text-decoration: none;
+        }
+
         .tabs {
             display: flex;
             background: rgba(0, 51, 102, 0.8);
             backdrop-filter: blur(10px);
             position: sticky;
-            top: 76px;
+            top: 100px;
             z-index: 99;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            overflow-x: auto;
         }
 
         .tab {
             flex: 1;
-            padding: 15px;
+            min-width: 80px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
             border-bottom: 3px solid transparent;
             font-weight: 600;
             user-select: none;
+            font-size: 13px;
         }
 
         .tab.active {
@@ -153,10 +187,61 @@
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             margin: 15px 10px;
-            padding: 20px;
-            border-radius: 20px;
+            border-radius: 15px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            cursor: pointer;
+            background: linear-gradient(135deg, rgba(0, 102, 204, 0.3), rgba(0, 153, 255, 0.3));
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, rgba(0, 102, 204, 0.5), rgba(0, 153, 255, 0.5));
+        }
+
+        .collapsible-header.collapsed {
+            background: linear-gradient(135deg, rgba(0, 51, 102, 0.3), rgba(0, 102, 153, 0.3));
+        }
+
+        .collapsible-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .toggle-icon {
+            display: inline-block;
+            transition: transform 0.3s;
+            font-size: 20px;
+        }
+
+        .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            padding: 20px;
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+            padding: 0 20px;
         }
 
         .section-title {
@@ -195,6 +280,28 @@
             margin-bottom: 8px;
             color: #ffffff;
             font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #00ffff;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            font-weight: 600;
+            color: #fff;
+            flex: 1;
         }
 
         .input-control {
@@ -336,15 +443,19 @@
 
         .tips h4 {
             color: #ffc107;
-            margin-bottom: 10px;
-            font-size: 16px;
+            margin-bottom: 15px;
+            font-size: 18px;
         }
 
         .tips ul {
             list-style-position: inside;
             color: rgba(255, 255, 255, 0.9);
-            font-size: 13px;
-            line-height: 1.8;
+            font-size: 14px;
+            line-height: 2;
+        }
+
+        .tips li {
+            margin-bottom: 10px;
         }
 
         canvas {
@@ -385,6 +496,31 @@
             background: rgba(0, 153, 255, 0.1);
         }
 
+        .gps-cell {
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 4px 8px;
+            display: inline-block;
+        }
+
+        .gps-A { background: rgba(76, 175, 80, 0.4); color: #69f0ae; }
+        .gps-B { background: rgba(102, 175, 233, 0.4); color: #64b5f6; }
+        .gps-C { background: rgba(156, 39, 176, 0.4); color: #ce93d8; }
+        .gps-D { background: rgba(233, 30, 99, 0.4); color: #f48fb1; }
+        .gps-E { background: rgba(255, 152, 0, 0.4); color: #ffb74d; }
+        .gps-F { background: rgba(244, 67, 54, 0.4); color: #ff5252; }
+        .gps-G { background: rgba(244, 67, 54, 0.5); color: #ff7f50; }
+        .gps-H { background: rgba(213, 0, 0, 0.5); color: #ff6b6b; }
+        .gps-I { background: rgba(180, 0, 0, 0.5); color: #ff4444; }
+        .gps-J { background: rgba(139, 0, 0, 0.5); color: #ff2222; }
+        .gps-K { background: rgba(100, 0, 0, 0.5); color: #ff0000; }
+        .gps-L { background: rgba(70, 0, 0, 0.6); color: #dd0000; }
+        .gps-M { background: rgba(50, 0, 0, 0.6); color: #cc0000; }
+        .gps-N { background: rgba(30, 0, 0, 0.6); color: #bb0000; }
+        .gps-O { background: rgba(20, 0, 0, 0.6); color: #aa0000; }
+        .gps-P { background: rgba(10, 0, 0, 0.7); color: #990000; }
+        .gps-Z { background: rgba(100, 100, 100, 0.4); color: #ccc; }
+
         .table-title {
             font-size: 16px;
             font-weight: bold;
@@ -395,7 +531,7 @@
 
         #profileCanvas {
             width: 100% !important;
-            height: 250px !important;
+            height: 350px !important;
         }
 
         .grid-2 {
@@ -404,9 +540,78 @@
             gap: 15px;
         }
 
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.9));
+            backdrop-filter: blur(10px);
+            z-index: 200;
+            padding: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+        }
+
+        .footer-title {
+            color: #ff5252;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .footer-content {
+            font-size: 12px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .quick-menu {
+            position: fixed;
+            bottom: 160px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 150;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .quick-btn {
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #00ccff, #0099cc);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 204, 255, 0.4);
+            transition: all 0.2s;
+        }
+
+        .quick-btn:active {
+            transform: scale(0.95);
+        }
+
+        .hidden-section {
+            display: none;
+        }
+
+        .hidden-section.show {
+            display: block;
+        }
+
         @media (max-width: 480px) {
             .header h1 { font-size: 22px; }
-            .section { margin: 10px 5px; padding: 15px; }
+            .section { margin: 10px 5px; padding: 0; }
+            .collapsible-content { padding: 15px; }
+            .tab { font-size: 11px; min-width: 60px; }
         }
     </style>
 </head>
@@ -423,169 +628,196 @@
         <div class="bubble"></div>
     </div>
     <div class="diver">🤿</div>
+    <div class="fish">🐠</div>
+    <div class="fish">🐟</div>
+    <div class="fish">🐠</div>
 
     <div class="container">
         <div class="header">
-            <h1>🤿 Planificateur MN90</h1>
-            <div class="subtitle">Paliers à 6 mètres • Version Mobile Pro</div>
+            <h1>🤿 MN90Mobile</h1>
+            <div class="subtitle">Planificateur de Plongée • Version Mobile Pro</div>
+            <div class="credit">Créé avec ❤️ by <a href="https://github.com/SOARES-Denis" target="_blank">SOARES Denis</a></div>
         </div>
 
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('planner')">
-                📊 Planificateur
-            </div>
-            <div class="tab" onclick="switchTab('tables')">
-                📋 Tables MN90
-            </div>
+            <div class="tab active" onclick="switchTab('planner')">📊 Planificateur</div>
+            <div class="tab" onclick="switchTab('profile')">📈 Profil</div>
+            <div class="tab" onclick="switchTab('tables')">📋 Tables</div>
         </div>
 
         <!-- ONGLET PLANIFICATEUR -->
         <div id="planner" class="tab-content active">
-            <!-- PLONGÉE 1 -->
-            <div class="section">
-                <div class="section-title">🌊 Plongée 1</div>
-                
-                <div class="input-card">
-                    <div class="input-group">
-                        <label class="input-label">Profondeur (mètres)</label>
-                        <div class="input-control">
-                            <button class="btn-control" onclick="adjustValue('depth1', -1)">-</button>
-                            <div class="slider-container">
-                                <input type="range" class="slider" id="depth1" min="6" max="65" value="20" step="1" oninput="updateValue('depth1')">
-                                <div class="value-display" id="depth1-value">20 m</div>
-                            </div>
-                            <button class="btn-control" onclick="adjustValue('depth1', 1)">+</button>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Durée (minutes)</label>
-                        <div class="input-control">
-                            <button class="btn-control" onclick="adjustValue('time1', -5)">-</button>
-                            <div class="slider-container">
-                                <input type="range" class="slider" id="time1" min="5" max="60" value="45" step="5" oninput="updateValue('time1')">
-                                <div class="value-display" id="time1-value">45 min</div>
-                            </div>
-                            <button class="btn-control" onclick="adjustValue('time1', 5)">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="result-box">
-                    <div class="result-label">Palier à 6m</div>
-                    <div class="result-value" id="palier1">-- min</div>
-                </div>
-
-                <div class="result-box">
-                    <div class="result-label">Groupe de Plongée Successive (GPS)</div>
-                    <div class="result-value" id="gps1">--</div>
-                </div>
-
-                <div class="result-box">
-                    <div class="result-label">Durée totale remontée</div>
-                    <div class="result-value" id="remontee1">-- min</div>
-                </div>
-            </div>
-
-            <!-- INTERVALLE -->
-            <div class="section">
-                <div class="section-title">⏱️ Intervalle de Surface</div>
-                
-                <div class="input-card">
-                    <div class="input-group">
-                        <label class="input-label">Durée de l'intervalle (minutes)</label>
-                        <div class="input-control">
-                            <button class="btn-control" onclick="adjustValue('interval', -15)">-</button>
-                            <div class="slider-container">
-                                <input type="range" class="slider" id="interval" min="15" max="720" value="60" step="15" oninput="updateValue('interval')">
-                                <div class="value-display" id="interval-value">60 min</div>
-                            </div>
-                            <button class="btn-control" onclick="adjustValue('interval', 15)">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="result-box warning">
-                    <div class="result-label">Azote résiduel après intervalle</div>
-                    <div class="result-value" id="azoteResiduel">--</div>
-                </div>
-            </div>
-
-            <!-- PLONGÉE 2 -->
-            <div class="section">
-                <div class="section-title">🤿 Plongée 2 (Successive)</div>
-                
-                <div class="input-card">
-                    <div class="input-group">
-                        <label class="input-label">Profondeur (mètres)</label>
-                        <div class="input-control">
-                            <button class="btn-control" onclick="adjustValue('depth2', -1)">-</button>
-                            <div class="slider-container">
-                                <input type="range" class="slider" id="depth2" min="6" max="65" value="15" step="1" oninput="updateValue('depth2')">
-                                <div class="value-display" id="depth2-value">15 m</div>
-                            </div>
-                            <button class="btn-control" onclick="adjustValue('depth2', 1)">+</button>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Durée (minutes)</label>
-                        <div class="input-control">
-                            <button class="btn-control" onclick="adjustValue('time2', -5)">-</button>
-                            <div class="slider-container">
-                                <input type="range" class="slider" id="time2" min="5" max="60" value="30" step="5" oninput="updateValue('time2')">
-                                <div class="value-display" id="time2-value">30 min</div>
-                            </div>
-                            <button class="btn-control" onclick="adjustValue('time2', 5)">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="result-box warning">
-                    <div class="result-label">Majoration (azote résiduel)</div>
-                    <div class="result-value" id="majoration">-- min</div>
-                </div>
-
-                <div class="result-box">
-                    <div class="result-label">Durée fictive</div>
-                    <div class="result-value" id="dureeFictive">-- min</div>
-                </div>
-
-                <div class="result-box">
-                    <div class="result-label">Palier à 6m</div>
-                    <div class="result-value" id="palier2">-- min</div>
-                </div>
-
-                <div class="result-box">
-                    <div class="result-label">Nouveau GPS</div>
-                    <div class="result-value" id="gps2">--</div>
-                </div>
-            </div>
-
-            <!-- ALERTES -->
-            <div class="section">
-                <div class="section-title">⚠️ Alertes de Sécurité</div>
-                <div id="alerts"></div>
-            </div>
-
-            <!-- GRAPHIQUE -->
-            <div class="section">
-                <div class="section-title">📊 Profil de Plongée</div>
-                <canvas id="profileCanvas"></canvas>
-            </div>
-
-            <!-- CONSEILS -->
+            <!-- CONSEILS AU DÉBUT -->
             <div class="section">
                 <div class="tips">
                     <h4>💡 Conseils de Sécurité</h4>
                     <ul>
-                        <li>Vitesse de remontée : 15-17 m/min max</li>
-                        <li>Palier de sécurité toujours recommandé</li>
-                        <li>Toujours plus profond en premier</li>
-                        <li>Intervalle minimum : 15 minutes</li>
-                        <li>Ne jamais plonger seul</li>
-                        <li>S'hydrater avant et après</li>
+                        <li>🏊 Vitesse de remontée : 15-17 m/min maximum</li>
+                        <li>🛑 Palier de sécurité toujours recommandé à 6m</li>
+                        <li>📊 Plongez toujours plus profond en premier</li>
+                        <li>⏱️ Intervalle minimum : 15 minutes en surface</li>
+                        <li>👥 Ne jamais plonger seul</li>
+                        <li>💧 S'hydrater avant et après la plongée</li>
+                        <li>🚫 Éviter l'alcool après la plongée (12-24h)</li>
+                        <li>✅ Vérifier matériel et palanquée avant mise à l'eau</li>
                     </ul>
+                </div>
+            </div>
+
+            <!-- PLONGÉE 1 -->
+            <div class="section">
+                <div class="collapsible-header">
+                    <span class="collapsible-title">🌊 Plongée 1</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="input-card">
+                        <div class="input-group">
+                            <label class="input-label">Profondeur (mètres)</label>
+                            <div class="input-control">
+                                <button class="btn-control" onclick="adjustValue('depth1', -1)">-</button>
+                                <div class="slider-container">
+                                    <input type="range" class="slider" id="depth1" min="6" max="65" value="20" step="1" oninput="updateValue('depth1')">
+                                    <div class="value-display" id="depth1-value">20 m</div>
+                                </div>
+                                <button class="btn-control" onclick="adjustValue('depth1', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Durée (minutes)</label>
+                            <div class="input-control">
+                                <button class="btn-control" onclick="adjustValue('time1', -5)">-</button>
+                                <div class="slider-container">
+                                    <input type="range" class="slider" id="time1" min="5" max="60" value="45" step="5" oninput="updateValue('time1')">
+                                    <div class="value-display" id="time1-value">45 min</div>
+                                </div>
+                                <button class="btn-control" onclick="adjustValue('time1', 5)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-label">Palier à 6m</div>
+                        <div class="result-value" id="palier1">-- min</div>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-label">Groupe de Plongée Successive (GPS)</div>
+                        <div class="result-value" id="gps1">--</div>
+                    </div>
+
+                    <div class="result-box success">
+                        <div class="result-label">Durée totale remontée</div>
+                        <div class="result-value" id="remontee1">-- min</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLONGÉE SUCCESSIVE -->
+            <div class="section">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="successive" onchange="toggleSuccessive()">
+                    <label for="successive">Plongée successive ?</label>
+                </div>
+            </div>
+
+            <!-- INTERVALLE + PLONGÉE 2 (CACHÉ PAR DÉFAUT) -->
+            <div id="successive-section" class="hidden-section">
+                <!-- INTERVALLE -->
+                <div class="section">
+                    <div class="collapsible-header">
+                        <span class="collapsible-title">⏱️ Intervalle de Surface</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="input-card">
+                            <div class="input-group">
+                                <label class="input-label">Durée de l'intervalle (minutes)</label>
+                                <div class="input-control">
+                                    <button class="btn-control" onclick="adjustValue('interval', -15)">-</button>
+                                    <div class="slider-container">
+                                        <input type="range" class="slider" id="interval" min="15" max="720" value="60" step="15" oninput="updateValue('interval')">
+                                        <div class="value-display" id="interval-value">60 min</div>
+                                    </div>
+                                    <button class="btn-control" onclick="adjustValue('interval', 15)">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="result-box warning">
+                            <div class="result-label">Azote résiduel après intervalle</div>
+                            <div class="result-value" id="azoteResiduel">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLONGÉE 2 -->
+                <div class="section">
+                    <div class="collapsible-header">
+                        <span class="collapsible-title">🤿 Plongée 2 (Successive)</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="input-card">
+                            <div class="input-group">
+                                <label class="input-label">Profondeur (mètres)</label>
+                                <div class="input-control">
+                                    <button class="btn-control" onclick="adjustValue('depth2', -1)">-</button>
+                                    <div class="slider-container">
+                                        <input type="range" class="slider" id="depth2" min="6" max="65" value="15" step="1" oninput="updateValue('depth2')">
+                                        <div class="value-display" id="depth2-value">15 m</div>
+                                    </div>
+                                    <button class="btn-control" onclick="adjustValue('depth2', 1)">+</button>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label class="input-label">Durée (minutes)</label>
+                                <div class="input-control">
+                                    <button class="btn-control" onclick="adjustValue('time2', -5)">-</button>
+                                    <div class="slider-container">
+                                        <input type="range" class="slider" id="time2" min="5" max="60" value="30" step="5" oninput="updateValue('time2')">
+                                        <div class="value-display" id="time2-value">30 min</div>
+                                    </div>
+                                    <button class="btn-control" onclick="adjustValue('time2', 5)">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="result-box warning">
+                            <div class="result-label">Majoration (azote résiduel)</div>
+                            <div class="result-value" id="majoration">-- min</div>
+                        </div>
+
+                        <div class="result-box">
+                            <div class="result-label">Durée fictive</div>
+                            <div class="result-value" id="dureeFictive">-- min</div>
+                        </div>
+
+                        <div class="result-box">
+                            <div class="result-label">Palier à 6m</div>
+                            <div class="result-value" id="palier2">-- min</div>
+                        </div>
+
+                        <div class="result-box">
+                            <div class="result-label">Nouveau GPS</div>
+                            <div class="result-value" id="gps2">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET PROFIL -->
+        <div id="profile" class="tab-content">
+            <div class="section">
+                <div class="collapsible-header">
+                    <span class="collapsible-title">📊 Profil de Plongée</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <canvas id="profileCanvas"></canvas>
                 </div>
             </div>
         </div>
@@ -616,6 +848,20 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- MENU RAPIDE -->
+    <div class="quick-menu" id="quickMenu">
+        <button class="quick-btn" onclick="switchTab('planner')">📊 Plan</button>
+        <button class="quick-btn" onclick="switchTab('profile')">📈 Profil</button>
+        <button class="quick-btn" onclick="switchTab('tables')">📋 Tables</button>
+        <button class="quick-btn" onclick="scrollToAlerts()">⚠️ Alertes</button>
+    </div>
+
+    <!-- FOOTER ALERTES -->
+    <div class="footer" id="footer">
+        <div class="footer-title">⚠️ Alertes de Sécurité</div>
+        <div class="footer-content" id="alerts"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -728,7 +974,28 @@
 
             if (tabName === 'tables') {
                 generateTables();
+            } else if (tabName === 'profile') {
+                setTimeout(() => updateChart(), 100);
             }
+        }
+
+        function toggleSuccessive() {
+            const isChecked = document.getElementById('successive').checked;
+            const section = document.getElementById('successive-section');
+            section.classList.toggle('show', isChecked);
+            calculate();
+        }
+
+        function setupCollapsibles() {
+            document.querySelectorAll('.collapsible-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const icon = this.querySelector('.toggle-icon');
+                    
+                    content.classList.toggle('collapsed');
+                    icon.classList.toggle('collapsed');
+                });
+            });
         }
 
         function adjustValue(id, delta) {
@@ -783,6 +1050,7 @@
             const interval = parseInt(document.getElementById('interval').value) || 0;
             const depth2 = parseInt(document.getElementById('depth2').value) || 0;
             const time2 = parseInt(document.getElementById('time2').value) || 0;
+            const isSuccessive = document.getElementById('successive').checked;
 
             if (depth1 > 0 && time1 > 0) {
                 const palier1 = getTableValue(tablesPaliers, depth1, time1);
@@ -793,7 +1061,7 @@
                 document.getElementById('gps1').textContent = gps1;
                 document.getElementById('remontee1').textContent = remontee1 + ' min';
 
-                if (interval > 0 && gps1) {
+                if (isSuccessive && interval > 0 && gps1) {
                     const azoteResiduel = getAzoteValue(gps1, interval);
                     document.getElementById('azoteResiduel').textContent = azoteResiduel;
 
@@ -820,59 +1088,142 @@
             const depth2 = parseInt(document.getElementById('depth2').value) || 0;
             const interval = parseInt(document.getElementById('interval').value) || 0;
             const palier1 = parseInt(document.getElementById('palier1').textContent) || 0;
+            const isSuccessive = document.getElementById('successive').checked;
 
             let alerts = '';
 
             if (depth1 > 60) {
-                alerts += '<div class="alert danger">⛔ Plongée > 60m - DANGER!</div>';
+                alerts += '<div class="alert danger">⛔ Plongée > 60m - DANGER EXTRÊME!</div>';
             } else if (depth1 > 40) {
                 alerts += '<div class="alert warning">⚠️ Plongée profonde (>40m) - Vigilance accrue</div>';
             } else if (depth1 > 0) {
                 alerts += '<div class="alert success">✅ Profondeur sûre</div>';
             }
 
-            if (palier1 > 20) {
+            if (palier1 > 30) {
+                alerts += '<div class="alert danger">🔴 Palier très long (>30min) - Vérifier calculs!</div>';
+            } else if (palier1 > 20) {
                 alerts += '<div class="alert warning">⚠️ Palier long (>20min) - Risque accru</div>';
             } else if (palier1 > 0) {
-                alerts += '<div class="alert info">✅ Palier dans les normes</div>';
+                alerts += '<div class="alert success">✅ Palier dans les normes</div>';
             }
 
-            if (depth2 > 0 && depth2 > depth1) {
-                alerts += '<div class="alert danger">⛔ ERREUR: Plongée successive plus profonde!</div>';
-            } else if (depth2 > 0) {
-                alerts += '<div class="alert success">✅ Séquence de profondeur correcte</div>';
-            }
+            if (isSuccessive) {
+                if (depth2 > depth1) {
+                    alerts += '<div class="alert danger">⛔ ERREUR: Plongée 2 plus profonde que Plongée 1!</div>';
+                } else {
+                    alerts += '<div class="alert success">✅ Séquence de profondeur correcte</div>';
+                }
 
-            if (interval > 0 && interval < 15) {
-                alerts += '<div class="alert warning">⚠️ Intervalle très court (<15min)</div>';
-            } else if (interval >= 15) {
-                alerts += '<div class="alert success">✅ Intervalle suffisant</div>';
+                if (interval < 15) {
+                    alerts += '<div class="alert danger">🔴 Intervalle trop court (<15min)</div>';
+                } else if (interval < 30) {
+                    alerts += '<div class="alert warning">⚠️ Intervalle court - Vigilance</div>';
+                } else {
+                    alerts += '<div class="alert success">✅ Intervalle suffisant</div>';
+                }
             }
 
             document.getElementById('alerts').innerHTML = alerts;
         }
 
+        function scrollToAlerts() {
+            document.getElementById('footer').scrollIntoView({ behavior: 'smooth' });
+        }
+
         function updateChart() {
             const depth1 = parseInt(document.getElementById('depth1').value) || 0;
             const time1 = parseInt(document.getElementById('time1').value) || 0;
+            const depth2 = parseInt(document.getElementById('depth2').value) || 0;
+            const time2 = parseInt(document.getElementById('time2').value) || 0;
+            const interval = parseInt(document.getElementById('interval').value) || 0;
             const palier1 = parseInt(document.getElementById('palier1').textContent) || 0;
-            const remonteeTime = Math.ceil(depth1 / 15);
+            const palier2 = parseInt(document.getElementById('palier2').textContent) || 0;
+            const isSuccessive = document.getElementById('successive').checked;
 
-            const data = {
-                labels: ['0', '2', 2 + time1, 2 + time1 + remonteeTime, 2 + time1 + remonteeTime + palier1, 2 + time1 + remonteeTime + palier1 + 1],
-                datasets: [{
-                    label: 'Profondeur (m)',
-                    data: [0, -depth1, -depth1, -6, -6, 0],
-                    borderColor: '#00ffff',
-                    backgroundColor: 'rgba(0, 255, 255, 0.1)',
+            const remonteeTime1 = Math.ceil(depth1 / 15);
+
+            // Données plongée 1
+            const labels1 = ['0', '2', `${2 + time1}`, `${2 + time1 + remonteeTime1}`, `${2 + time1 + remonteeTime1 + palier1}`, `${2 + time1 + remonteeTime1 + palier1 + 1}`];
+            const data1 = [0, -depth1, -depth1, -6, -6, 0];
+
+            let datasets = [{
+                label: 'Plongée 1',
+                data: data1,
+                borderColor: '#00ccff',
+                backgroundColor: 'rgba(0, 204, 255, 0.15)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0,
+                pointBackgroundColor: '#00ccff',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5
+            }];
+
+            let allLabels = labels1;
+
+            if (isSuccessive && depth2 > 0) {
+                const remonteeTime2 = Math.ceil(depth2 / 15);
+                const timeOffset = 2 + time1 + remonteeTime1 + palier1 + 1 + interval;
+                
+                const labels2 = [
+                    `${timeOffset}`, 
+                    `${timeOffset + 1}`, 
+                    `${timeOffset + 1 + time2}`, 
+                    `${timeOffset + 1 + time2 + remonteeTime2}`, 
+                    `${timeOffset + 1 + time2 + remonteeTime2 + palier2}`, 
+                    `${timeOffset + 1 + time2 + remonteeTime2 + palier2 + 1}`
+                ];
+                
+                const data2 = [0, -depth2, -depth2, -6, -6, 0];
+                
+                allLabels = [...labels1, ...labels2];
+                
+                datasets.push({
+                    label: 'Plongée 2',
+                    data: [...Array(labels1.length).fill(null), ...data2],
+                    borderColor: '#aa00ff',
+                    backgroundColor: 'rgba(170, 0, 255, 0.15)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0,
-                    pointBackgroundColor: '#00ffff',
+                    pointBackgroundColor: '#aa00ff',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointRadius: 5
-                }]
+                });
+
+                // Ajouter zones dangereuses
+                datasets.push({
+                    label: 'Zone dangereuse (>40m)',
+                    data: [-40, -40, -40, -40, -40, -40, -40, -40, -40, -40, -40, -40],
+                    borderColor: 'rgba(255, 0, 0, 0.3)',
+                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                    borderDash: [5, 5],
+                    fill: false,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0
+                });
+            } else {
+                // Zone dangereuse
+                datasets.push({
+                    label: 'Zone dangereuse (>40m)',
+                    data: [-40, -40, -40, -40, -40, -40],
+                    borderColor: 'rgba(255, 0, 0, 0.3)',
+                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                    borderDash: [5, 5],
+                    fill: false,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0
+                });
+            }
+
+            const data = {
+                labels: allLabels,
+                datasets: datasets
             };
 
             const config = {
@@ -882,10 +1233,13 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: { 
+                            display: true,
+                            labels: { color: '#fff', font: { size: 12 } }
+                        },
                         title: {
                             display: true,
-                            text: 'Profil de Plongée 1',
+                            text: isSuccessive ? 'Profil de Plongée (Successive)' : 'Profil de Plongée',
                             color: '#00ffff',
                             font: { size: 16, weight: 'bold' }
                         }
@@ -923,25 +1277,29 @@
             html += '</tbody>';
             document.getElementById('tablePaliers').innerHTML = html;
 
-            // Table GPS
+            // Table GPS avec couleurs
             html = '<thead><tr><th>Prof</th>';
             times.forEach(t => html += `<th>${t}min</th>`);
             html += '</tr></thead><tbody>';
             depths.forEach(d => {
                 html += `<tr><td><b>${d}m</b></td>`;
-                tablesGPS[d].forEach(g => html += `<td>${g}</td>`);
+                tablesGPS[d].forEach(g => {
+                    html += `<td><span class="gps-cell gps-${g}">${g}</span></td>`;
+                });
                 html += '</tr>';
             });
             html += '</tbody>';
             document.getElementById('tableGPS').innerHTML = html;
 
-            // Table Azote
+            // Table Azote avec couleurs
             html = '<thead><tr><th>GPS</th>';
             intervals.forEach(i => html += `<th>${i}min</th>`);
             html += '</tr></thead><tbody>';
             Object.keys(tablesAzote).forEach(gps => {
-                html += `<tr><td><b>${gps}</b></td>`;
-                tablesAzote[gps].forEach(a => html += `<td>${a}</td>`);
+                html += `<tr><td><span class="gps-cell gps-${gps}"><b>${gps}</b></span></td>`;
+                tablesAzote[gps].forEach(a => {
+                    html += `<td><span class="gps-cell gps-${a}">${a}</span></td>`;
+                });
                 html += '</tr>';
             });
             html += '</tbody>';
@@ -952,7 +1310,7 @@
             depths.forEach(d => html += `<th>${d}m</th>`);
             html += '</tr></thead><tbody>';
             Object.keys(tablesMajorations).forEach(azote => {
-                html += `<tr><td><b>${azote}</b></td>`;
+                html += `<tr><td><span class="gps-cell gps-${azote}"><b>${azote}</b></span></td>`;
                 tablesMajorations[azote].forEach(m => html += `<td>${m}</td>`);
                 html += '</tr>';
             });
@@ -961,7 +1319,10 @@
         }
 
         // Init
-        calculate();
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCollapsibles();
+            calculate();
+        });
     </script>
 </body>
 </html>
