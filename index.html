@@ -2,7 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#001a33">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MN90Mobile">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22MN90Mobile%22,%22short_name%22:%22MN90%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23001a33%22,%22theme_color%22:%22%23001a33%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23001a33' width='192' height='192'/><text x='96' y='120' font-size='100' text-anchor='middle' fill='%2300ffff' font-weight='bold'>🤿</text></svg>%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
     <title>🤿 MN90Mobile</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
@@ -27,9 +32,50 @@
             text-align: center;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
             z-index: 100;
+            position: relative;
+            flex-shrink: 0;
         }
 
-        .header h1 { font-size: 18px; margin-bottom: 3px; }
+        .header h1 { 
+            font-size: 18px; 
+            margin-bottom: 3px; 
+        }
+
+        .header-footer {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 4px;
+            font-weight: 500;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-footer a, .header-footer button {
+            color: #00ffff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 10px;
+            padding: 0;
+            white-space: nowrap;
+        }
+
+        .header-footer a:hover, .header-footer button:hover {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+        }
+
+        .divider {
+            width: 1px;
+            height: 15px;
+            background: rgba(0, 255, 255, 0.3);
+        }
 
         .tabs {
             display: flex;
@@ -37,6 +83,7 @@
             background: rgba(0, 51, 102, 0.8);
             padding: 6px;
             overflow-x: auto;
+            flex-shrink: 0;
         }
 
         .tab-btn {
@@ -58,35 +105,48 @@
 
         .content-wrapper {
             display: flex;
-            height: calc(100vh - 120px);
+            flex: 1;
             gap: 0;
             padding: 0;
-            flex: 1;
             position: relative;
             flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .left-panel {
-            flex: 0 0 auto;
+            flex: 1 1 auto;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 6px;
             padding: 8px;
             min-width: 100%;
-            min-height: 0;
+            min-height: 100px;
         }
 
         .splitter {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.6), rgba(0,255,255,0.3));
             cursor: row-resize;
-            border-top: 1px solid rgba(0,255,255,0.4);
-            border-bottom: 1px solid rgba(0,255,255,0.4);
+            border-top: 2px solid rgba(0,255,255,0.5);
+            border-bottom: 2px solid rgba(0,255,255,0.5);
             transition: background 0.2s;
             flex-shrink: 0;
             user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .splitter::after {
+            content: '═══';
+            color: rgba(0,255,255,0.8);
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .splitter:hover {
@@ -94,27 +154,30 @@
         }
 
         .right-panel {
-            flex: 0 0 25vh;
+            flex: 1 0 150px;
             display: flex;
             flex-direction: column;
             padding: 8px;
             min-height: 150px;
-            max-height: 70vh;
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
         }
 
-        /* RESPONSIVE MOBILE */
+        /* RESPONSIVE DESKTOP */
         @media (min-width: 1024px) {
             .content-wrapper {
                 flex-direction: row;
-                height: calc(100vh - 120px);
                 padding: 8px;
             }
 
             .left-panel {
                 flex: 0 0 35%;
-                padding-right: 8px;
+                padding-right: 0;
                 padding: 0 8px 8px 8px;
                 min-width: 250px;
+                min-height: auto;
+                max-height: none;
             }
 
             .splitter {
@@ -122,20 +185,24 @@
                 height: auto;
                 background: linear-gradient(90deg, rgba(0,255,255,0.3), rgba(0,255,255,0.6), rgba(0,255,255,0.3));
                 cursor: col-resize;
-                border-left: 1px solid rgba(0,255,255,0.4);
-                border-right: 1px solid rgba(0,255,255,0.4);
+                border-left: 2px solid rgba(0,255,255,0.5);
+                border-right: 2px solid rgba(0,255,255,0.5);
                 border-top: none;
                 border-bottom: none;
             }
 
+            .splitter::after {
+                content: '║║║';
+                font-size: 12px;
+            }
+
             .right-panel {
                 flex: 1;
-                padding-left: 8px;
+                padding-left: 0;
                 padding: 0 8px 8px 8px;
                 min-height: auto;
-                max-height: none;
-                min-width: 300px;
-                flex: 0 0 auto;
+                height: auto;
+                overflow: hidden;
             }
         }
 
@@ -154,8 +221,35 @@
             text-transform: uppercase;
         }
 
-        /* MOBILE OPTIMIZATIONS */
+        .paliers-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .palier-box {
+            flex: 1;
+        }
+
+        .palier-box .result-box {
+            margin: 0;
+        }
+
+        /* RESPONSIVE MOBILE */
         @media (max-width: 1023px) {
+            .left-panel {
+                flex: 1 1 auto;
+                min-height: 80px;
+                max-height: 70%;
+            }
+
+            .right-panel {
+                flex: 1 0 150px;
+                height: auto;
+                min-height: 150px;
+                max-height: 30%;
+            }
+
             .header h1 {
                 font-size: 16px;
             }
@@ -189,6 +283,7 @@
             .graph-container {
                 border-radius: 8px;
                 padding: 6px;
+                min-height: 130px;
             }
 
             .graph-explanation {
@@ -300,12 +395,27 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            min-height: 150px;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
         }
 
-        canvas {
-            flex: 1;
-            min-height: 100px;
+        #graph-title {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 1023px) {
+            #graph-title {
+                font-size: 11px;
+                margin-bottom: 2px;
+            }
         }
 
         @media (max-width: 1023px) {
@@ -313,17 +423,34 @@
                 border-radius: 8px;
                 padding: 6px;
                 min-height: 120px;
+                width: 100%;
+                height: 100%;
             }
+        }
+
+        #profileCanvas {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .graph-explanation {
             font-size: 10px;
             color: #00ffff;
-            margin-top: 8px;
-            padding: 8px;
+            margin-top: 6px;
+            padding: 6px;
             background: rgba(0, 255, 255, 0.1);
             border-radius: 6px;
-            line-height: 1.5;
+            line-height: 1.4;
+            flex-shrink: 0;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .graph-explanation.duo {
+            max-height: none;
+            overflow: visible;
         }
 
         .legend {
@@ -332,6 +459,7 @@
             font-size: 9px;
             margin-top: 6px;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
 
         .legend-item {
@@ -344,6 +472,22 @@
             width: 12px;
             height: 12px;
             border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 1023px) {
+            .graph-explanation {
+                font-size: 9px;
+                margin-top: 4px;
+                padding: 4px;
+                max-height: 60px;
+            }
+
+            .legend {
+                gap: 8px;
+                font-size: 8px;
+                margin-top: 4px;
+            }
         }
 
         .modal {
@@ -367,6 +511,24 @@
             max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 10px;
+                padding: 10px;
+                max-width: calc(100vw - 20px);
+                max-height: calc(100vh - 100px);
+                overflow: auto;
+            }
+
+            .tables-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
         }
 
         .close {
@@ -421,6 +583,24 @@
 
         table tr:nth-child(even) {
             background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* ZOOM MOBILE TABLES */
+        @media (max-width: 768px) {
+            table {
+                font-size: 10px;
+                transform: scale(1.2);
+                transform-origin: left top;
+                margin-bottom: 30px;
+            }
+
+            table caption {
+                font-size: 11px;
+            }
+
+            table th, table td {
+                padding: 3px 4px;
+            }
         }
 
         button {
@@ -614,7 +794,15 @@
 
     <div class="main-wrapper">
         <div class="header">
-            <h1>🤿 MN90Mobile - Planificateur de Plongée</h1>
+            <h1>🤿 MN90Mobile</h1>
+            <div class="header-footer">
+                Made with Love 🫧♥🤿 
+                <div class="divider"></div>
+                <a href="https://soaresden.github.io/MN90Mobile/" target="_blank">Soaresden's Github</a>
+                <div class="divider"></div>
+                <button id="installBtn" onclick="installApp()" style="display:none;">📱 Ajouter raccourci</button>
+                <button id="downloadBtn">📥 Télécharger hors ligne</button>
+            </div>
         </div>
 
         <div class="tabs">
@@ -647,14 +835,21 @@
                             <input type="range" id="time1" min="1" max="400" value="20" oninput="updateSlider(this); calculate()">
                         </div>
 
-                        <div class="result-box">
-                            <div class="result-label" style="color: #FFA500; font-weight: bold;">📊 Palier 6m</div>
-                            <div class="result-value" id="palier6m1">-- min</div>
+                        <div class="paliers-row">
+                            <div class="palier-box">
+                                <div class="result-box">
+                                    <div class="result-label" style="color: #FFA500; font-weight: bold;">📊 Palier 6m</div>
+                                    <div class="result-value" id="palier6m1">-- min</div>
+                                </div>
+                            </div>
+                            <div class="palier-box">
+                                <div class="result-box">
+                                    <div class="result-label" style="color: #22FF00; font-weight: bold;">📊 Palier 3m</div>
+                                    <div class="result-value" id="palier3m1">-- min</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="result-box">
-                            <div class="result-label" style="color: #22FF00; font-weight: bold;">📊 Palier 3m</div>
-                            <div class="result-value" id="palier3m1">-- min</div>
-                        </div>
+
                         <div class="result-box">
                             <div class="result-label">Temps total (DTR)</div>
                             <div class="result-value" id="total1">-- min</div>
@@ -713,14 +908,22 @@
                                 <div class="result-label">Majoration</div>
                                 <div class="result-value" id="majoration">-- min</div>
                             </div>
-                            <div class="result-box">
-                                <div class="result-label" style="color: #FFA500; font-weight: bold;">📊 Palier 6m</div>
-                                <div class="result-value" id="palier6m2">-- min</div>
+
+                            <div class="paliers-row">
+                                <div class="palier-box">
+                                    <div class="result-box">
+                                        <div class="result-label" style="color: #FFA500; font-weight: bold;">📊 Palier 6m</div>
+                                        <div class="result-value" id="palier6m2">-- min</div>
+                                    </div>
+                                </div>
+                                <div class="palier-box">
+                                    <div class="result-box">
+                                        <div class="result-label" style="color: #22FF00; font-weight: bold;">📊 Palier 3m</div>
+                                        <div class="result-value" id="palier3m2">-- min</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="result-box">
-                                <div class="result-label" style="color: #22FF00; font-weight: bold;">📊 Palier 3m</div>
-                                <div class="result-value" id="palier3m2">-- min</div>
-                            </div>
+
                             <div class="result-box">
                                 <div class="result-label">Temps total (DTR)</div>
                                 <div class="result-value" id="total2">-- min</div>
@@ -808,8 +1011,8 @@
 
                 <!-- TAB 2: TABLES BUTTON -->
                 <div id="tab2-left" style="display: none;">
-                    <button onclick="openTablesModal()" style="margin-top: 50%; padding: 15px; font-size: 14px; font-weight: bold;">📊 AFFICHER TABLES MN90 COMPLÈTES</button>
-                    <div class="info-box" style="margin-top: 20px;">
+                    <button onclick="openTablesModal()" style="padding: 12px; font-size: 12px; font-weight: bold; margin-bottom: 10px;">📊 AFFICHER TABLES MN90</button>
+                    <div class="info-box" style="margin-top: 0;">
                         Les tables MN90-FFESSM contiennent:<br>
                         • Tableau principal de désaturation<br>
                         • Tableau I: Azote résiduel<br>
@@ -866,6 +1069,51 @@
     </div>
 
     <script>
+        let deferredPrompt;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+        // Détecter si l'app peut être installée (Android/Chrome)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'inline';
+        });
+
+        function installApp() {
+            if (isIOS) {
+                // Instructions pour iOS
+                alert('📱 Pour ajouter MN90Mobile à votre écran d\'accueil :\n\n1. Appuyez sur le bouton Partage (↗️)\n2. Sélectionnez "Sur l\'écran d\'accueil"\n3. Appuyez sur "Ajouter"');
+            } else if (deferredPrompt) {
+                // Installation standard (Android)
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('App installée');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Afficher le bouton install pour iOS aussi
+        if (isIOS) {
+            document.getElementById('installBtn').style.display = 'inline';
+        }
+
+        // ===== TÉLÉCHARGEMENT LOCAL =====
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'MN90Mobile.html';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        });
+
         // ===== ANIMATIONS FOND MARIN =====
         function createUnderwater() {
             const underwater = document.getElementById('underwater');
@@ -929,6 +1177,7 @@
         document.getElementById('splitter').addEventListener('mousedown', (e) => {
             isDraggingSplitter = true;
             document.body.style.cursor = window.innerWidth >= 1024 ? 'col-resize' : 'row-resize';
+            document.body.style.userSelect = 'none';
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -943,11 +1192,17 @@
             if (isMobile) {
                 // Mode MOBILE: redimensionnement vertical
                 const newHeight = e.clientY - wrapperRect.top;
-                const percentage = (newHeight / wrapperRect.height) * 100;
-
-                if (percentage > 20 && percentage < 80) {
-                    leftPanel.style.flex = `0 0 ${percentage}%`;
-                    rightPanel.style.flex = `0 0 ${100 - percentage}%`;
+                const totalHeight = wrapperRect.height;
+                
+                // Minimum 100px pour left, maximum 80% pour left
+                if (newHeight > 100 && newHeight < totalHeight * 0.8) {
+                    leftPanel.style.maxHeight = newHeight + 'px';
+                    rightPanel.style.maxHeight = (totalHeight - newHeight - 8) + 'px';
+                    
+                    // Redimensionner le chart EN TEMPS RÉEL
+                    if (chart1) {
+                        chart1.resize();
+                    }
                 }
             } else {
                 // Mode DESKTOP: redimensionnement horizontal
@@ -956,6 +1211,11 @@
 
                 if (percentage > 20 && percentage < 80) {
                     leftPanel.style.flex = `0 0 ${percentage}%`;
+                    
+                    // Redimensionner le chart EN TEMPS RÉEL
+                    if (chart1) {
+                        chart1.resize();
+                    }
                 }
             }
         });
@@ -963,11 +1223,14 @@
         document.addEventListener('mouseup', () => {
             isDraggingSplitter = false;
             document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
         });
 
         // Redimensionner le chart quand la fenêtre change de taille
         window.addEventListener('resize', () => {
-            if (chart1) setTimeout(() => chart1.resize(), 100);
+            if (chart1) {
+                chart1.resize();
+            }
         });
 
         function switchTab(tabNum) {
@@ -990,16 +1253,20 @@
                 calculateOptimalDive();
             }
 
-            if (chart1) setTimeout(() => chart1.resize(), 100);
+            if (chart1) {
+                setTimeout(() => chart1.resize(), 100);
+            }
         }
 
         function updateSlider(slider) {
             const valSpan = document.getElementById(slider.id + '-val');
             if (valSpan) {
-                const unit = slider.id.includes('time') || slider.id.includes('interval') ? ' min' : 
-                            slider.id.includes('pression') ? ' bar' :
-                            slider.id.includes('conso') ? ' L/min' :
-                            slider.id.includes('bouteille') ? ' L' : ' m';
+                let unit = ' m';
+                if (slider.id.includes('time') || slider.id.includes('interval')) unit = ' min';
+                else if (slider.id.includes('pression') || slider.id.includes('secu')) unit = ' bar';
+                else if (slider.id.includes('conso')) unit = ' L/min';
+                else if (slider.id.includes('bouteille')) unit = ' L';
+                
                 valSpan.textContent = slider.value + unit;
             }
         }
@@ -1098,17 +1365,23 @@
                         pointBorderWidth: 2,
                         segment: {
                             borderColor: (ctx) => {
-                                const point = data[ctx.p0DataIndex];
-                                if (!point) return '#FF99FF';
-                                if (point.phase === 'palier6m') return '#FFA500';
-                                if (point.phase === 'palier3m') return '#22FF00';
-                                return '#FF99FF';
+                                try {
+                                    const p0Index = ctx.p0DataIndex;
+                                    const p1Index = ctx.p1DataIndex;
+                                    if (p0Index === undefined || data[p0Index] === undefined) return '#ffffff';
+                                    const point = data[p0Index];
+                                    if (point.phase === 'palier6m') return '#FFA500';
+                                    if (point.phase === 'palier3m') return '#22FF00';
+                                    return '#ffffff';
+                                } catch (e) {
+                                    return '#ffffff';
+                                }
                             }
                         },
-                        borderColor: '#FF99FF',
-                        pointBackgroundColor: '#FF99FF',
+                        borderColor: '#ffffff',
+                        pointBackgroundColor: '#ffffff',
                         pointBorderColor: '#fff',
-                        backgroundColor: 'rgba(255, 153, 255, 0.1)'
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)'
                     }]
                 },
                 options: {
@@ -1167,6 +1440,7 @@
                 Temps total: <strong>${(descente + time1 + remontee6 + palier6m1 + remontee3 + palier3m1 + 0.5).toFixed(1)} min</strong> 🎯
             `;
             document.getElementById('graph-explanation').innerHTML = explication;
+            document.getElementById('graph-explanation').classList.remove('duo');
         }
 
         function updateChartDuoPlongees(depth1, time1, palier6m1, palier3m1, descente, remontee6, remontee3,
@@ -1183,8 +1457,7 @@
                 { x: descente + time1 + remontee6 + palier6m1, y: -6, phase: 'palier6m' },
                 { x: descente + time1 + remontee6 + palier6m1 + remontee3, y: -3, phase: 'palier3m' },
                 { x: totalP1, y: -3, phase: 'palier3m' },
-                { x: totalP1, y: 0, phase: 'surface' },
-                { x: startP2, y: 0, phase: 'surface' }
+                { x: totalP1, y: 0, phase: 'surface' }
             ];
 
             const data2 = [
@@ -1306,6 +1579,7 @@
                 <strong>⏱️ Durée totale:</strong> ${(startP2 + descente2 + time2 + remontee6_2 + palier6m2 + remontee3_2 + palier3m2 + 0.5).toFixed(1)} min 🎯
             `;
             document.getElementById('graph-explanation').innerHTML = explication;
+            document.getElementById('graph-explanation').classList.add('duo');
         }
 
         function togglePlongee2() {
@@ -1316,12 +1590,11 @@
 
         function calculateOptimalDive() {
             const prof = parseInt(document.getElementById('prof-auto').value);
-            const conso = parseInt(document.getElementById('conso-auto').value);  // Conso RÉELLE à profondeur
+            const conso = parseInt(document.getElementById('conso-auto').value);
             const bouteille = parseInt(document.getElementById('bouteille-auto').value);
             const pression = parseInt(document.getElementById('pression-auto').value);
             const secu = parseInt(document.getElementById('secu-auto').value);
 
-            // La consommation est déjà à profondeur, pas besoin de coefficient
             const pressureUsable = pression - secu;
             const airAvailable = bouteille * pressureUsable;
 
@@ -1332,7 +1605,6 @@
             const tableDepth = findClosestTable(prof);
             let optimalTime = 0, palier6m = 0, palier3m = 0;
 
-            // Boucle pour trouver le temps optimal
             for (let entry of officialTables[tableDepth]) {
                 const timeFond = entry[0];
                 const p6 = entry[2];
@@ -1341,9 +1613,8 @@
                 const remontee6 = (prof - 6) / 6;
                 const remontee3 = 3 / 6;
                 
-                // Consommation réelle à profondeur au fond
-                const consoRemontee = conso * 0.4;  // Estimation: moins profond = moins de conso
-                const consoPaliers = conso * 0.3;   // À 3-6m, encore moins
+                const consoRemontee = conso * 0.4;
+                const consoPaliers = conso * 0.3;
                 
                 const totalConso = (timeFond * conso) + ((descente + remontee6 + remontee3) * consoRemontee) + ((p6 + p3) * consoPaliers);
 
@@ -1358,9 +1629,6 @@
             const totalTime = Math.ceil(optimalTime + (prof/15) + ((prof-6)/6) + palier6m + (3/6) + palier3m);
             document.getElementById('autonomy-optimal').textContent = totalTime + ' min';
 
-            const descente = prof / 15;
-            const remontee6 = (prof - 6) / 6;
-            const remontee3 = 3 / 6;
             const explication = `
                 <strong>🎯 Plongée Optimale:</strong><br>
                 À <strong>${prof}m</strong> avec une consommation réelle de <strong>${conso} L/min</strong>,
@@ -1377,10 +1645,6 @@
             const timeDescent = depth / 15;
             const timeRem6 = (depth - 6) / 6;
             const timeRem3 = 3 / 6;
-            const conso = parseInt(document.getElementById('conso-auto').value);
-            const bouteille = parseInt(document.getElementById('bouteille-auto').value);
-            const pression = parseInt(document.getElementById('pression-auto').value);
-            const secu = parseInt(document.getElementById('secu-auto').value);
 
             const data = [
                 { x: 0, y: 0, phase: 'surface' },
@@ -1393,117 +1657,28 @@
                 { x: timeDescent + timeFond + timeRem6 + palier6m + timeRem3 + palier3m + 0.5, y: 0, phase: 'surface' }
             ];
 
-            const getPressureColor = (pressBar) => {
-                const percentage = pressBar / pression;
-                if (percentage >= 0.75) return '#00FF00';
-                if (percentage >= 0.5) return '#FFFF00';
-                if (percentage >= 0.25) return '#FF6600';
-                if (pressBar > secu) return '#FF3333';
-                return '#000000';
-            };
-
-            const pressureData = [];
-            let currentPressure = pression;
-
-            pressureData.push({ x: 0, y: currentPressure, yAxisID: 'y1', color: getPressureColor(currentPressure) });
-
-            // Descente - consommation progressive
-            for (let t = 0; t <= timeDescent; t += 0.1) {
-                const profAtT = (t / timeDescent) * depth;
-                const consoAtT = conso * (profAtT / depth);  // Proportionnel à la profondeur atteinte
-                currentPressure = pression - (consoAtT * t / bouteille);
-                pressureData.push({ x: t, y: Math.max(0, currentPressure), yAxisID: 'y1', color: getPressureColor(Math.max(0, currentPressure)) });
-            }
-            currentPressure = pression - (conso * timeDescent / bouteille);
-
-            // Fond - consommation constante
-            for (let t = 0; t <= timeFond; t += 0.1) {
-                currentPressure = pression - (conso * (timeDescent + t) / bouteille);
-                pressureData.push({ x: timeDescent + t, y: Math.max(0, currentPressure), yAxisID: 'y1', color: getPressureColor(Math.max(0, currentPressure)) });
-            }
-            currentPressure = pression - (conso * timeFond / bouteille + conso * timeDescent / bouteille);
-
-            // Remontée 6m - consommation réduite
-            const consoRem6 = conso * 0.5;
-            for (let t = 0; t <= timeRem6; t += 0.1) {
-                currentPressure = pression - (conso * timeFond / bouteille + conso * timeDescent / bouteille + consoRem6 * t / bouteille);
-                pressureData.push({ x: timeDescent + timeFond + t, y: Math.max(0, currentPressure), yAxisID: 'y1', color: getPressureColor(Math.max(0, currentPressure)) });
-            }
-
-            // Palier 6m
-            const consoPalier6 = conso * 0.4;
-            for (let t = 0; t <= palier6m; t += 0.1) {
-                currentPressure = pression - (conso * timeFond / bouteille + conso * timeDescent / bouteille + consoRem6 * timeRem6 / bouteille + consoPalier6 * t / bouteille);
-                pressureData.push({ x: timeDescent + timeFond + timeRem6 + t, y: Math.max(0, currentPressure), yAxisID: 'y1', color: getPressureColor(Math.max(0, currentPressure)) });
-            }
-
-            // Remontée 3m
-            const consoRem3 = conso * 0.3;
-            for (let t = 0; t <= timeRem3; t += 0.1) {
-                currentPressure = pression - (conso * timeFond / bouteille + conso * timeDescent / bouteille + consoRem6 * timeRem6 / bouteille + consoPalier6 * palier6m / bouteille + consoRem3 * t / bouteille);
-                pressureData.push({ x: timeDescent + timeFond + timeRem6 + palier6m + t, y: Math.max(0, currentPressure), yAxisID: 'y1', color: getPressureColor(Math.max(0, currentPressure)) });
-            }
-
-            // Palier 3m
-            const consoPalier3 = conso * 0.25;
-            for (let t = 0; t <= palier3m; t += 0.1) {
-                currentPressure = pression - (conso * timeFond / bouteille + conso * timeDescent / bouteille + consoRem6 * timeRem6 / bouteille + consoPalier6 * palier6m / bouteille + consoRem3 * timeRem3 / bouteille + consoPalier3 * t / bouteille);
-                pressureData.push({ x: timeDescent + timeFond + timeRem6 + palier6m + timeRem3 + t, y: Math.max(0, currentPressure), yAxisID: 'y1', color: getPressureColor(Math.max(0, currentPressure)) });
-            }
-
-            const finalPressure = Math.max(0, pression - (conso * timeFond / bouteille + conso * timeDescent / bouteille + consoRem6 * timeRem6 / bouteille + consoPalier6 * palier6m / bouteille + consoRem3 * timeRem3 / bouteille + consoPalier3 * palier3m / bouteille));
-            pressureData.push({ x: timeDescent + timeFond + timeRem6 + palier6m + timeRem3 + palier3m + 0.5, y: finalPressure, yAxisID: 'y1', color: getPressureColor(finalPressure) });
-
-            const isSafe = finalPressure >= secu;
-            const statusColor = isSafe ? '#22FF00' : '#FF3333';
-            const statusText = isSafe ? `✅ SÉCURISÉ! Vous remonterez avec ${Math.round(finalPressure)} bar (réserve: ${secu} bar)` : `⚠️ DANGER! Vous serez à ${Math.round(finalPressure)} bar (réserve: ${secu} bar)`;
-
-            document.getElementById('autonomy-explanation').innerHTML = `
-                <strong>🎯 TEST DE FAISABILITÉ:</strong><br>
-                <span style="color: ${statusColor};">${statusText}</span>
-            `;
-
             const config = {
                 type: 'line',
                 data: {
-                    datasets: [
-                        {
-                            label: `Profil: ${timeFond}min @ ${depth}m`,
-                            data: data,
-                            borderColor: '#FF99FF',
-                            backgroundColor: 'rgba(255, 153, 255, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0,
-                            pointRadius: 0,
-                            yAxisID: 'y',
-                            segment: {
-                                borderColor: (ctx) => {
-                                    const point = data[ctx.p0DataIndex];
-                                    if (!point) return '#FF99FF';
-                                    if (point.phase === 'palier6m') return '#FFA500';
-                                    if (point.phase === 'palier3m') return '#22FF00';
-                                    return '#FF99FF';
-                                }
-                            }
-                        },
-                        {
-                            label: 'Pression (bar)',
-                            data: pressureData,
-                            borderColor: '#00CCFF',
-                            backgroundColor: 'rgba(0, 204, 255, 0)',
-                            borderWidth: 3,
-                            fill: false,
-                            tension: 0.1,
-                            pointRadius: 0,
-                            yAxisID: 'y1',
-                            segment: {
-                                borderColor: (ctx) => {
-                                    return pressureData[ctx.p0DataIndex]?.color || '#00CCFF';
-                                }
+                    datasets: [{
+                        label: `Profil: ${timeFond}min @ ${depth}m`,
+                        data: data,
+                        borderColor: '#FF99FF',
+                        backgroundColor: 'rgba(255, 153, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0,
+                        pointRadius: 0,
+                        segment: {
+                            borderColor: (ctx) => {
+                                const point = data[ctx.p0DataIndex];
+                                if (!point) return '#FF99FF';
+                                if (point.phase === 'palier6m') return '#FFA500';
+                                if (point.phase === 'palier3m') return '#22FF00';
+                                return '#FF99FF';
                             }
                         }
-                    ]
+                    }]
                 },
                 options: {
                     responsive: true,
@@ -1521,15 +1696,6 @@
                             max: 2,
                             ticks: { color: '#FF99FF', font: { size: 9 } },
                             grid: { color: 'rgba(255, 153, 255, 0.1)' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            position: 'right',
-                            title: { display: true, text: 'Pression (bar)', color: '#00CCFF', font: { weight: 'bold' } },
-                            min: 0,
-                            max: pression + 20,
-                            ticks: { color: '#00CCFF', font: { size: 9 } },
-                            grid: { drawOnChartArea: false }
                         },
                         x: {
                             type: 'linear',
