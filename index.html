@@ -140,6 +140,7 @@
             justify-content: center;
             position: relative;
             z-index: 10;
+            touch-action: none;
         }
 
         .splitter::after {
@@ -240,14 +241,14 @@
             .left-panel {
                 flex: 1 1 auto;
                 min-height: 80px;
-                max-height: 70%;
+                overflow-y: auto;
             }
 
             .right-panel {
                 flex: 1 0 150px;
                 height: auto;
                 min-height: 150px;
-                max-height: 30%;
+                overflow-y: auto;
             }
 
             .header h1 {
@@ -1174,14 +1175,15 @@
         let isDraggingSplitter = false;
 
         // Gestion du splitter redimensionnable (mobile ET desktop)
-        document.getElementById('splitter').addEventListener('mousedown', (e) => {
+        function startDrag(e) {
             isDraggingSplitter = true;
-            document.body.style.cursor = window.innerWidth >= 1024 ? 'col-resize' : 'row-resize';
             document.body.style.userSelect = 'none';
-        });
+            if (e.preventDefault) e.preventDefault();
+        }
 
-        document.addEventListener('mousemove', (e) => {
+        function moveDrag(e) {
             if (!isDraggingSplitter) return;
+            e.preventDefault?.();
 
             const contentWrapper = document.querySelector('.content-wrapper');
             const leftPanel = document.querySelector('.left-panel');
@@ -1189,24 +1191,35 @@
             const wrapperRect = contentWrapper.getBoundingClientRect();
             const isMobile = window.innerWidth < 1024;
 
+            // Récupérer les coordonnées (souris ou tactile)
+            let clientY = e.clientY;
+            let clientX = e.clientX;
+            
+            if (e.touches && e.touches.length > 0) {
+                clientY = e.touches[0].clientY;
+                clientX = e.touches[0].clientX;
+            }
+
             if (isMobile) {
-                // Mode MOBILE: redimensionnement vertical
-                const newHeight = e.clientY - wrapperRect.top;
+                // Mode MOBILE: redimensionnement vertical - utiliser FLEX au lieu de maxHeight
+                const newHeight = clientY - wrapperRect.top;
                 const totalHeight = wrapperRect.height;
                 
-                // Minimum 100px pour left, maximum 80% pour left
-                if (newHeight > 100 && newHeight < totalHeight * 0.8) {
-                    leftPanel.style.maxHeight = newHeight + 'px';
-                    rightPanel.style.maxHeight = (totalHeight - newHeight - 8) + 'px';
+                // Minimum 80px pour left, maximum 85% pour left
+                if (newHeight > 80 && newHeight < totalHeight * 0.85) {
+                    const rightHeight = totalHeight - newHeight - 12; // 12px = splitter + padding
+                    
+                    leftPanel.style.flex = `0 0 ${newHeight}px`;
+                    rightPanel.style.flex = `0 0 ${rightHeight}px`;
                     
                     // Redimensionner le chart EN TEMPS RÉEL
                     if (chart1) {
-                        chart1.resize();
+                        setTimeout(() => chart1.resize(), 5);
                     }
                 }
             } else {
                 // Mode DESKTOP: redimensionnement horizontal
-                const newWidth = e.clientX - wrapperRect.left;
+                const newWidth = clientX - wrapperRect.left;
                 const percentage = (newWidth / wrapperRect.width) * 100;
 
                 if (percentage > 20 && percentage < 80) {
@@ -1214,17 +1227,26 @@
                     
                     // Redimensionner le chart EN TEMPS RÉEL
                     if (chart1) {
-                        chart1.resize();
+                        setTimeout(() => chart1.resize(), 5);
                     }
                 }
             }
-        });
+        }
 
-        document.addEventListener('mouseup', () => {
+        function stopDrag() {
             isDraggingSplitter = false;
-            document.body.style.cursor = 'default';
             document.body.style.userSelect = 'auto';
-        });
+        }
+
+        // Events SOURIS
+        document.getElementById('splitter').addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', moveDrag);
+        document.addEventListener('mouseup', stopDrag);
+
+        // Events TACTILE - non-passive pour supporter preventDefault
+        document.getElementById('splitter').addEventListener('touchstart', startDrag, false);
+        document.addEventListener('touchmove', moveDrag, false);
+        document.addEventListener('touchend', stopDrag, false);
 
         // Redimensionner le chart quand la fenêtre change de taille
         window.addEventListener('resize', () => {
@@ -1249,7 +1271,7 @@
                 document.getElementById('graph-title').textContent = 'Profil de Plongée';
                 calculate();
             } else if (tabNum === 1) {
-                document.getElementById('graph-title').textContent = 'Profil Optimal (Rose)';
+                document.getElementById('graph-title').textContent = 'Profil Optimal + Courbe Autonomie';
                 calculateOptimalDive();
             }
 
@@ -1629,15 +1651,6 @@
             const totalTime = Math.ceil(optimalTime + (prof/15) + ((prof-6)/6) + palier6m + (3/6) + palier3m);
             document.getElementById('autonomy-optimal').textContent = totalTime + ' min';
 
-            const explication = `
-                <strong>🎯 Plongée Optimale:</strong><br>
-                À <strong>${prof}m</strong> avec une consommation réelle de <strong>${conso} L/min</strong>,
-                vous pouvez faire <strong>${optimalTime} min au fond</strong>.
-                Temps total estimé: <strong>${totalTime} min</strong> (descente + fond + paliers + remontée).
-                Vous arriverez avec votre réserve de <strong>${secu} bar</strong>. ✓ Sécurisé!
-            `;
-            document.getElementById('autonomy-explanation').innerHTML = explication;
-
             drawOptimalProfile(prof, optimalTime, palier6m, palier3m);
         }
 
@@ -1646,6 +1659,15 @@
             const timeRem6 = (depth - 6) / 6;
             const timeRem3 = 3 / 6;
 
+            // Récupérer les paramètres pour calculer l'autonomie
+            const conso = parseInt(document.getElementById('conso-auto').value);
+            const bouteille = parseInt(document.getElementById('bouteille-auto').value);
+            const pression = parseInt(document.getElementById('pression-auto').value);
+            const secu = parseInt(document.getElementById('secu-auto').value);
+            const pressureUsable = pression - secu;
+            const airAvailable = bouteille * pressureUsable;
+
+            // Profil de plongée principal
             const data = [
                 { x: 0, y: 0, phase: 'surface' },
                 { x: timeDescent, y: -depth, phase: 'fond' },
@@ -1657,41 +1679,116 @@
                 { x: timeDescent + timeFond + timeRem6 + palier6m + timeRem3 + palier3m + 0.5, y: 0, phase: 'surface' }
             ];
 
+            // === COURBE D'AUTONOMIE ===
+            // Calcul de l'autonomie en fonction de la profondeur (Loi de Dalton)
+            const autonomyData = [];
+            
+            // Traverser les profondeurs de 0 à depth max
+            for (let prof = 0; prof <= depth; prof += 1) {
+                // Rapport de pression (1 + prof/10) pour eau douce
+                const pressureRatio = 1 + prof / 10;
+                
+                // Conso réelle à cette profondeur (Loi de Dalton)
+                const consoAtDepth = conso * pressureRatio;
+                
+                // Autonomie: air disponible / conso
+                const autonomyMinutes = consoAtDepth > 0 ? airAvailable / consoAtDepth : 0;
+                
+                autonomyData.push({
+                    x: prof * 0.3,
+                    y: -prof,
+                    autonomy: autonomyMinutes,
+                    depth: prof,
+                    conso: consoAtDepth.toFixed(1)
+                });
+            }
+
+            // Calcul des seuils
+            const maxAutonomy = Math.max(...autonomyData.map(d => d.autonomy));
+            const midAutonomy = maxAutonomy / 2;
+            const reserveAutonomy = maxAutonomy * 0.2;
+
             const config = {
                 type: 'line',
                 data: {
-                    datasets: [{
-                        label: `Profil: ${timeFond}min @ ${depth}m`,
-                        data: data,
-                        borderColor: '#FF99FF',
-                        backgroundColor: 'rgba(255, 153, 255, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0,
-                        pointRadius: 0,
-                        segment: {
-                            borderColor: (ctx) => {
-                                const point = data[ctx.p0DataIndex];
-                                if (!point) return '#FF99FF';
-                                if (point.phase === 'palier6m') return '#FFA500';
-                                if (point.phase === 'palier3m') return '#22FF00';
-                                return '#FF99FF';
+                    datasets: [
+                        // Dataset 1: Profil de plongée
+                        {
+                            label: `Profil: ${timeFond}min @ ${depth}m`,
+                            data: data,
+                            borderColor: '#FF99FF',
+                            backgroundColor: 'rgba(255, 153, 255, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0,
+                            pointRadius: 0,
+                            segment: {
+                                borderColor: (ctx) => {
+                                    const point = data[ctx.p0DataIndex];
+                                    if (!point) return '#FF99FF';
+                                    if (point.phase === 'palier6m') return '#FFA500';
+                                    if (point.phase === 'palier3m') return '#22FF00';
+                                    return '#FF99FF';
+                                }
+                            }
+                        },
+                        // Dataset 2: Courbe d'autonomie avec zone colorée
+                        {
+                            label: 'Autonomie réelle (Loi Dalton)',
+                            data: autonomyData,
+                            borderColor: '#00FFFF',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.5,
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 1,
+                            pointBackgroundColor: '#00FFFF',
+                            segment: {
+                                borderColor: (ctx) => {
+                                    const point = autonomyData[ctx.p0DataIndex];
+                                    if (!point) return '#00FFFF';
+                                    
+                                    // Vert: 100% à 50%
+                                    if (point.autonomy >= midAutonomy) return '#22FF00';
+                                    // Orange: 50% à 20%
+                                    if (point.autonomy >= reserveAutonomy) return '#FFA500';
+                                    // Rouge: sous 20%
+                                    return '#FF0000';
+                                }
                             }
                         }
-                    }]
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: '#fff', font: { size: 10 } } },
-                        tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.9)', bodyColor: '#fff', borderWidth: 2 }
+                        legend: { 
+                            labels: { color: '#fff', font: { size: 9 } },
+                            position: 'top'
+                        },
+                        tooltip: { 
+                            backgroundColor: 'rgba(0, 0, 0, 0.95)', 
+                            bodyColor: '#fff', 
+                            borderWidth: 2,
+                            borderColor: '#00FFFF',
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.datasetIndex === 1) {
+                                        const point = autonomyData[context.dataIndex];
+                                        return `📊 À ${point.depth}m: ${point.autonomy.toFixed(1)}min (conso: ${point.conso}L/min)`;
+                                    }
+                                    return context.raw.label || '';
+                                }
+                            }
+                        }
                     },
                     scales: {
                         y: {
                             type: 'linear',
                             position: 'left',
-                            title: { display: true, text: 'Profondeur (m)', color: '#FF99FF', font: { weight: 'bold' } },
+                            title: { display: true, text: 'Profondeur (m)', color: '#FF99FF', font: { weight: 'bold', size: 11 } },
                             min: -depth - 2,
                             max: 2,
                             ticks: { color: '#FF99FF', font: { size: 9 } },
@@ -1699,7 +1796,7 @@
                         },
                         x: {
                             type: 'linear',
-                            title: { display: true, text: 'Temps (min)', color: '#fff' },
+                            title: { display: true, text: 'Position de plongée', color: '#fff' },
                             ticks: { color: '#aaa', font: { size: 9 } },
                             grid: { color: 'rgba(255, 255, 255, 0.1)' }
                         }
@@ -1710,6 +1807,18 @@
             if (chart1) chart1.destroy();
             const ctx = document.getElementById('profileCanvas');
             chart1 = new Chart(ctx, config);
+
+            // Mise à jour de l'explication
+            const consoAtMaxDepth = conso * (1 + depth/10);
+            const explication = `
+                <strong>🫁 Courbe d'Autonomie (Loi de Dalton):</strong><br>
+                À <strong>${depth}m</strong>: conso réelle = <strong>${consoAtMaxDepth.toFixed(1)} L/min</strong> (vs ${conso} en surface)<br>
+                <strong style="color: #22FF00;">🟢 Vert</strong> (100→50%): autonomie max | 
+                <strong style="color: #FFA500;">🟠 Orange</strong> (50→20%): prudence | 
+                <strong style="color: #FF0000;">🔴 Rouge</strong> (&lt;20%): réserve critique<br>
+                ✅ Air dispo: ${airAvailable.toFixed(1)}L | 🕐 Max autonomie: ${maxAutonomy.toFixed(1)} min
+            `;
+            document.getElementById('autonomy-explanation').innerHTML = explication;
         }
 
         function openTablesModal() {
