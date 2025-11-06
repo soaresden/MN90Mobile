@@ -18,6 +18,14 @@
             const m = minutes % 60;
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
+        
+        function minToHHMMSS(minutes) {
+            const totalSeconds = Math.round(minutes * 60);
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
 
         const mn90Tables = [{prof:6,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'A'},{prof:6,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:6,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:6,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:6,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:6,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:6,time:180,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:6,time:240,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:6,time:315,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:6,time:360,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:8,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:8,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:8,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:8,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:8,time:90,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:8,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:8,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:8,time:165,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:8,time:195,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:8,time:255,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:8,time:300,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:8,time:360,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'M'},{prof:10,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:10,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:10,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:10,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:10,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:10,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:10,time:120,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:10,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:10,time:165,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:10,time:180,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:10,time:240,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'M'},{prof:10,time:255,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'N'},{prof:10,time:315,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'O'},{prof:10,time:330,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'P'},{prof:10,time:360,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:2,gps:'P'},{prof:12,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'A'},{prof:12,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:12,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:12,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:12,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:12,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:12,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:12,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:12,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:12,time:50,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:12,time:55,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:12,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:12,time:65,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:12,time:70,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:12,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:12,time:80,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:12,time:85,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:12,time:90,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:12,time:95,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:12,time:100,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:12,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:12,time:110,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:12,time:115,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:12,time:120,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:12,time:130,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:12,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:12,time:140,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'L'},{prof:12,time:150,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:6,gps:'M'},{prof:12,time:160,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:8,gps:'M'},{prof:12,time:170,p15:0,p12:0,p9:0,p6:0,p3:7,dtr:9,gps:'N'},{prof:12,time:180,p15:0,p12:0,p9:0,p6:0,p3:9,dtr:11,gps:'N'},{prof:12,time:190,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:13,gps:'N'},{prof:12,time:200,p15:0,p12:0,p9:0,p6:0,p3:13,dtr:15,gps:'O'},{prof:12,time:210,p15:0,p12:0,p9:0,p6:0,p3:14,dtr:16,gps:'O'},{prof:12,time:220,p15:0,p12:0,p9:0,p6:0,p3:15,dtr:17,gps:'O'},{prof:12,time:230,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'O'},{prof:12,time:240,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:19,gps:'O'},{prof:12,time:250,p15:0,p12:0,p9:0,p6:0,p3:18,dtr:20,gps:'P'},{prof:12,time:255,p15:0,p12:0,p9:0,p6:0,p3:19,dtr:21,gps:'P'},{prof:12,time:270,p15:0,p12:0,p9:0,p6:0,p3:22,dtr:24,gps:'P'},{prof:15,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'A'},{prof:15,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:15,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:15,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:15,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:15,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:15,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:15,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:15,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:15,time:50,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:15,time:55,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:15,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:15,time:65,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:15,time:70,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:15,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:15,time:80,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'J'},{prof:15,time:85,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:6,gps:'K'},{prof:15,time:90,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:8,gps:'K'},{prof:15,time:95,p15:0,p12:0,p9:0,p6:0,p3:8,dtr:10,gps:'L'},{prof:15,time:100,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:13,gps:'L'},{prof:15,time:105,p15:0,p12:0,p9:0,p6:0,p3:13,dtr:15,gps:'L'},{prof:15,time:110,p15:0,p12:0,p9:0,p6:0,p3:15,dtr:17,gps:'M'},{prof:15,time:115,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:19,gps:'M'},{prof:15,time:120,p15:0,p12:0,p9:0,p6:0,p3:18,dtr:20,gps:'M'},{prof:18,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:18,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:18,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'C'},{prof:18,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:18,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:18,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:18,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:18,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'G'},{prof:18,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:18,time:50,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:18,time:55,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:3,gps:'I'},{prof:18,time:60,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:7,gps:'J'},{prof:18,time:65,p15:0,p12:0,p9:0,p6:0,p3:8,dtr:10,gps:'J'},{prof:18,time:70,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:13,gps:'K'},{prof:18,time:75,p15:0,p12:0,p9:0,p6:0,p3:14,dtr:16,gps:'K'},{prof:18,time:80,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:19,gps:'L'},{prof:18,time:85,p15:0,p12:0,p9:0,p6:0,p3:21,dtr:23,gps:'L'},{prof:18,time:90,p15:0,p12:0,p9:0,p6:0,p3:23,dtr:25,gps:'M'},{prof:18,time:95,p15:0,p12:0,p9:0,p6:0,p3:26,dtr:28,gps:'M'},{prof:18,time:100,p15:0,p12:0,p9:0,p6:0,p3:28,dtr:30,gps:'M'},{prof:18,time:105,p15:0,p12:0,p9:0,p6:0,p3:31,dtr:33,gps:'N'},{prof:18,time:110,p15:0,p12:0,p9:0,p6:0,p3:34,dtr:36,gps:'N'},{prof:18,time:115,p15:0,p12:0,p9:0,p6:0,p3:36,dtr:38,gps:'N'},{prof:18,time:120,p15:0,p12:0,p9:0,p6:0,p3:38,dtr:40,gps:'O'},{prof:20,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:20,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:20,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:20,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:20,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:20,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:20,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'G'},{prof:20,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:20,time:45,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:3,gps:'I'},{prof:20,time:50,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:6,gps:'I'},{prof:20,time:55,p15:0,p12:0,p9:0,p6:0,p3:9,dtr:11,gps:'J'},{prof:20,time:60,p15:0,p12:0,p9:0,p6:0,p3:13,dtr:15,gps:'K'},{prof:20,time:65,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'K'},{prof:20,time:70,p15:0,p12:0,p9:0,p6:0,p3:20,dtr:22,gps:'L'},{prof:20,time:75,p15:0,p12:0,p9:0,p6:0,p3:24,dtr:26,gps:'L'},{prof:20,time:80,p15:0,p12:0,p9:0,p6:0,p3:27,dtr:29,gps:'M'},{prof:20,time:85,p15:0,p12:0,p9:0,p6:0,p3:30,dtr:32,gps:'M'},{prof:20,time:90,p15:0,p12:0,p9:0,p6:0,p3:34,dtr:36,gps:'M'},{prof:22,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:22,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'C'},{prof:22,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:22,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:22,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:22,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'G'},{prof:22,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:22,time:40,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'I'},{prof:22,time:45,p15:0,p12:0,p9:0,p6:0,p3:7,dtr:9,gps:'I'},{prof:22,time:50,p15:0,p12:0,p9:0,p6:0,p3:12,dtr:14,gps:'J'},{prof:22,time:55,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'K'},{prof:22,time:60,p15:0,p12:0,p9:0,p6:0,p3:20,dtr:22,gps:'K'},{prof:22,time:65,p15:0,p12:0,p9:0,p6:0,p3:25,dtr:27,gps:'L'},{prof:22,time:70,p15:0,p12:0,p9:0,p6:0,p3:29,dtr:31,gps:'L'},{prof:22,time:75,p15:0,p12:0,p9:0,p6:0,p3:33,dtr:35,gps:'M'},{prof:22,time:80,p15:0,p12:0,p9:0,p6:0,p3:37,dtr:39,gps:'M'},{prof:22,time:85,p15:0,p12:0,p9:0,p6:0,p3:41,dtr:43,gps:'N'},{prof:22,time:90,p15:0,p12:0,p9:0,p6:0,p3:44,dtr:46,gps:'N'},{prof:25,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:25,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'C'},{prof:25,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:25,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:25,time:25,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:3,gps:'F'},{prof:25,time:30,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'H'},{prof:25,time:35,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:7,gps:'I'},{prof:25,time:40,p15:0,p12:0,p9:0,p6:0,p3:10,dtr:12,gps:'J'},{prof:25,time:45,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'J'},{prof:25,time:50,p15:0,p12:0,p9:0,p6:0,p3:21,dtr:23,gps:'K'},{prof:25,time:55,p15:0,p12:0,p9:0,p6:0,p3:27,dtr:29,gps:'L'},{prof:25,time:60,p15:0,p12:0,p9:0,p6:0,p3:32,dtr:34,gps:'L'},{prof:25,time:65,p15:0,p12:0,p9:0,p6:0,p3:37,dtr:39,gps:'M'},{prof:25,time:70,p15:0,p12:0,p9:1,p6:41,p3:41,dtr:45,gps:'M'},{prof:25,time:75,p15:0,p12:0,p9:0,p6:4,p3:43,dtr:50,gps:'N'},{prof:25,time:80,p15:0,p12:0,p9:0,p6:7,p3:45,dtr:55,gps:'N'},{prof:25,time:85,p15:0,p12:0,p9:0,p6:9,p3:48,dtr:60,gps:'O'},{prof:25,time:90,p15:0,p12:0,p9:0,p6:11,p3:50,dtr:64,gps:'O'},{prof:28,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:28,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:28,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:28,time:20,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'F'},{prof:28,time:25,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'G'},{prof:28,time:30,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:9,gps:'H'},{prof:28,time:35,p15:0,p12:0,p9:0,p6:0,p3:12,dtr:15,gps:'I'},{prof:28,time:40,p15:0,p12:0,p9:0,p6:0,p3:19,dtr:22,gps:'J'},{prof:28,time:45,p15:0,p12:0,p9:0,p6:0,p3:25,dtr:28,gps:'K'},{prof:28,time:50,p15:0,p12:0,p9:0,p6:0,p3:32,dtr:35,gps:'L'},{prof:28,time:55,p15:0,p12:0,p9:0,p6:2,p3:36,dtr:41,gps:'M'},{prof:28,time:60,p15:0,p12:0,p9:0,p6:4,p3:40,dtr:47,gps:'M'},{prof:28,time:65,p15:0,p12:0,p9:0,p6:8,p3:43,dtr:54,gps:'N'},{prof:28,time:70,p15:0,p12:0,p9:0,p6:11,p3:46,dtr:60,gps:'N'},{prof:28,time:75,p15:0,p12:0,p9:0,p6:14,p3:48,dtr:65,gps:'O'},{prof:28,time:80,p15:0,p12:0,p9:0,p6:17,p3:50,dtr:70,gps:'O'},{prof:28,time:85,p15:0,p12:0,p9:0,p6:20,p3:53,dtr:76,gps:'O'},{prof:28,time:90,p15:0,p12:0,p9:0,p6:23,p3:56,dtr:82,gps:'P'},{prof:30,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:30,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:30,time:15,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'E'},{prof:30,time:20,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'F'},{prof:30,time:25,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:7,gps:'H'},{prof:30,time:30,p15:0,p12:0,p9:0,p6:0,p3:9,dtr:12,gps:'I'},{prof:30,time:35,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:20,gps:'J'},{prof:30,time:40,p15:0,p12:0,p9:0,p6:0,p3:24,dtr:27,gps:'K'},{prof:30,time:45,p15:0,p12:0,p9:0,p6:1,p3:31,dtr:35,gps:'L'},{prof:30,time:50,p15:0,p12:0,p9:0,p6:3,p3:36,dtr:42,gps:'M'},{prof:30,time:55,p15:0,p12:0,p9:0,p6:6,p3:39,dtr:48,gps:'M'},{prof:30,time:60,p15:0,p12:0,p9:0,p6:10,p3:43,dtr:56,gps:'N'},{prof:30,time:65,p15:0,p12:0,p9:0,p6:14,p3:46,dtr:63,gps:'N'},{prof:30,time:70,p15:0,p12:0,p9:0,p6:17,p3:48,dtr:68,gps:'O'},{prof:32,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'B'},{prof:32,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'D'},{prof:32,time:15,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'E'},{prof:32,time:20,p15:0,p12:0,p9:0,p6:0,p3:3,dtr:6,gps:'G'},{prof:32,time:25,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:9,gps:'H'},{prof:32,time:30,p15:0,p12:0,p9:0,p6:0,p3:14,dtr:17,gps:'I'},{prof:32,time:35,p15:0,p12:0,p9:0,p6:0,p3:22,dtr:25,gps:'K'},{prof:32,time:40,p15:0,p12:0,p9:0,p6:1,p3:29,dtr:33,gps:'K'},{prof:32,time:45,p15:0,p12:0,p9:0,p6:4,p3:34,dtr:41,gps:'L'},{prof:32,time:50,p15:0,p12:0,p9:0,p6:7,p3:39,dtr:49,gps:'M'},{prof:32,time:55,p15:0,p12:0,p9:0,p6:11,p3:43,dtr:57,gps:'N'},{prof:32,time:60,p15:0,p12:0,p9:0,p6:15,p3:46,dtr:64,gps:'N'},{prof:32,time:65,p15:0,p12:0,p9:0,p6:19,p3:48,dtr:70,gps:'O'},{prof:32,time:70,p15:0,p12:0,p9:0,p6:23,p3:50,dtr:76,gps:'O'},{prof:35,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:35,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'D'},{prof:35,time:15,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'F'},{prof:35,time:20,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:8,gps:'H'},{prof:35,time:25,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:14,gps:'I'},{prof:35,time:30,p15:0,p12:0,p9:0,p6:1,p3:20,dtr:24,gps:'J'},{prof:35,time:35,p15:0,p12:0,p9:0,p6:2,p3:27,dtr:32,gps:'K'},{prof:35,time:40,p15:0,p12:0,p9:0,p6:5,p3:34,dtr:42,gps:'L'},{prof:35,time:45,p15:0,p12:0,p9:0,p6:9,p3:39,dtr:51,gps:'M'},{prof:35,time:50,p15:0,p12:0,p9:0,p6:14,p3:43,dtr:60,gps:'N'},{prof:35,time:55,p15:0,p12:0,p9:0,p6:18,p3:47,dtr:68,gps:'N'},{prof:35,time:60,p15:0,p12:0,p9:0,p6:22,p3:50,dtr:75,gps:'O'},{prof:35,time:65,p15:0,p12:0,p9:2,p6:26,p3:52,dtr:84,gps:'*'},{prof:35,time:70,p15:0,p12:0,p9:4,p6:28,p3:57,dtr:93,gps:'*'},{prof:38,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:38,time:10,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'E'},{prof:38,time:15,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:7,gps:'F'},{prof:38,time:20,p15:0,p12:0,p9:0,p6:0,p3:8,dtr:11,gps:'H'},{prof:38,time:25,p15:0,p12:0,p9:0,p6:1,p3:16,dtr:21,gps:'J'},{prof:38,time:30,p15:0,p12:0,p9:0,p6:3,p3:24,dtr:31,gps:'K'},{prof:38,time:35,p15:0,p12:0,p9:0,p6:5,p3:33,dtr:42,gps:'L'},{prof:38,time:40,p15:0,p12:0,p9:0,p6:10,p3:38,dtr:52,gps:'M'},{prof:38,time:45,p15:0,p12:0,p9:0,p6:15,p3:43,dtr:62,gps:'N'},{prof:38,time:50,p15:0,p12:0,p9:0,p6:20,p3:47,dtr:71,gps:'N'},{prof:38,time:55,p15:0,p12:0,p9:2,p6:23,p3:50,dtr:79,gps:'O'},{prof:38,time:60,p15:0,p12:0,p9:5,p6:27,p3:53,dtr:89,gps:'P'},{prof:38,time:65,p15:0,p12:0,p9:8,p6:29,p3:58,dtr:99,gps:'*'},{prof:38,time:70,p15:0,p12:0,p9:11,p6:31,p3:62,dtr:108,gps:'*'},{prof:40,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:40,time:10,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'E'},{prof:40,time:15,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:7,gps:'G'},{prof:40,time:20,p15:0,p12:0,p9:0,p6:1,p3:9,dtr:14,gps:'H'},{prof:40,time:25,p15:0,p12:0,p9:0,p6:2,p3:19,dtr:25,gps:'J'},{prof:40,time:30,p15:0,p12:0,p9:0,p6:4,p3:28,dtr:36,gps:'K'},{prof:40,time:35,p15:0,p12:0,p9:0,p6:8,p3:35,dtr:47,gps:'L'},{prof:40,time:40,p15:0,p12:0,p9:0,p6:13,p3:40,dtr:57,gps:'M'},{prof:40,time:45,p15:0,p12:0,p9:1,p6:18,p3:45,dtr:68,gps:'N'},{prof:40,time:50,p15:0,p12:0,p9:2,p6:23,p3:48,dtr:77,gps:'O'},{prof:40,time:55,p15:0,p12:0,p9:5,p6:26,p3:52,dtr:87,gps:'O'},{prof:40,time:60,p15:0,p12:0,p9:8,p6:29,p3:57,dtr:98,gps:'P'},{prof:40,time:65,p15:0,p12:0,p9:12,p6:31,p3:61,dtr:108,gps:'*'},{prof:40,time:70,p15:0,p12:0,p9:15,p6:33,p3:66,dtr:118,gps:'*'},{prof:42,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:42,time:10,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:6,gps:'E'},{prof:42,time:15,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:9,gps:'G'},{prof:42,time:20,p15:0,p12:0,p9:0,p6:1,p3:12,dtr:17,gps:'I'},{prof:42,time:25,p15:0,p12:0,p9:0,p6:3,p3:22,dtr:29,gps:'J'},{prof:42,time:30,p15:0,p12:0,p9:0,p6:6,p3:31,dtr:41,gps:'L'},{prof:42,time:35,p15:0,p12:0,p9:0,p6:11,p3:37,dtr:52,gps:'M'},{prof:42,time:40,p15:0,p12:0,p9:1,p6:16,p3:43,dtr:64,gps:'N'},{prof:42,time:45,p15:0,p12:0,p9:3,p6:21,p3:47,dtr:75,gps:'*'},{prof:42,time:50,p15:0,p12:0,p9:6,p6:24,p3:50,dtr:84,gps:'*'},{prof:42,time:55,p15:0,p12:0,p9:8,p6:29,p3:55,dtr:96,gps:'*'},{prof:42,time:60,p15:0,p12:0,p9:13,p6:30,p3:60,dtr:107,gps:'*'},{prof:45,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:45,time:10,p15:0,p12:0,p9:0,p6:0,p3:3,dtr:7,gps:'F'},{prof:45,time:15,p15:0,p12:0,p9:0,p6:1,p3:6,dtr:11,gps:'H'},{prof:45,time:20,p15:0,p12:0,p9:0,p6:3,p3:15,dtr:22,gps:'I'},{prof:45,time:25,p15:0,p12:0,p9:0,p6:5,p3:25,dtr:34,gps:'K'},{prof:45,time:30,p15:0,p12:0,p9:0,p6:9,p3:35,dtr:48,gps:'L'},{prof:45,time:35,p15:0,p12:0,p9:1,p6:15,p3:40,dtr:60,gps:'M'},{prof:45,time:40,p15:0,p12:0,p9:3,p6:20,p3:46,dtr:73,gps:'N'},{prof:45,time:45,p15:0,p12:0,p9:6,p6:24,p3:50,dtr:84,gps:'*'},{prof:45,time:50,p15:0,p12:0,p9:10,p6:28,p3:54,dtr:96,gps:'*'},{prof:45,time:55,p15:0,p12:0,p9:14,p6:30,p3:60,dtr:108,gps:'*'},{prof:45,time:60,p15:0,p12:1,p9:18,p6:32,p3:65,dtr:121,gps:'*'},{prof:48,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:4,gps:'D'},{prof:48,time:10,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:8,gps:'F'},{prof:48,time:15,p15:0,p12:0,p9:0,p6:2,p3:7,dtr:13,gps:'H'},{prof:48,time:20,p15:0,p12:0,p9:0,p6:4,p3:19,dtr:27,gps:'J'},{prof:48,time:25,p15:0,p12:0,p9:0,p6:7,p3:30,dtr:41,gps:'K'},{prof:48,time:30,p15:0,p12:0,p9:1,p6:12,p3:37,dtr:55,gps:'M'},{prof:48,time:35,p15:0,p12:0,p9:3,p6:18,p3:44,dtr:70,gps:'N'},{prof:48,time:40,p15:0,p12:0,p9:6,p6:23,p3:48,dtr:82,gps:'O'},{prof:48,time:45,p15:0,p12:0,p9:10,p6:27,p3:53,dtr:95,gps:'*'},{prof:48,time:50,p15:0,p12:1,p9:14,p6:30,p3:59,dtr:109,gps:'*'},{prof:48,time:55,p15:0,p12:2,p9:18,p6:32,p3:64,dtr:121,gps:'*'},{prof:48,time:60,p15:0,p12:5,p9:19,p6:36,p3:70,dtr:135,gps:'*'},{prof:50,time:5,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:5,gps:'D'},{prof:50,time:10,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:8,gps:'F'},{prof:50,time:15,p15:0,p12:0,p9:0,p6:2,p3:9,dtr:15,gps:'H'},{prof:50,time:20,p15:0,p12:0,p9:0,p6:4,p3:22,dtr:30,gps:'J'},{prof:50,time:25,p15:0,p12:0,p9:1,p6:8,p3:32,dtr:46,gps:'L'},{prof:50,time:30,p15:0,p12:0,p9:2,p6:14,p3:39,dtr:60,gps:'M'},{prof:50,time:35,p15:0,p12:0,p9:5,p6:20,p3:45,dtr:75,gps:'N'},{prof:50,time:40,p15:0,p12:0,p9:9,p6:24,p3:50,dtr:88,gps:'O'},{prof:50,time:45,p15:0,p12:1,p9:12,p6:29,p3:55,dtr:102,gps:'*'},{prof:50,time:50,p15:0,p12:2,p9:17,p6:30,p3:62,dtr:116,gps:'*'},{prof:50,time:55,p15:0,p12:5,p9:19,p6:34,p3:67,dtr:130,gps:'*'},{prof:52,time:5,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:5,gps:'D'},{prof:52,time:10,p15:0,p12:0,p9:0,p6:1,p3:4,dtr:10,gps:'F'},{prof:52,time:15,p15:0,p12:0,p9:0,p6:3,p3:10,dtr:18,gps:'I'},{prof:52,time:20,p15:0,p12:0,p9:1,p6:5,p3:23,dtr:34,gps:'K'},{prof:52,time:25,p15:0,p12:0,p9:2,p6:9,p3:34,dtr:50,gps:'L'},{prof:52,time:30,p15:0,p12:0,p9:4,p6:15,p3:41,dtr:65,gps:'M'},{prof:52,time:35,p15:0,p12:0,p9:6,p6:22,p3:47,dtr:80,gps:'O'},{prof:52,time:40,p15:0,p12:1,p9:10,p6:26,p3:52,dtr:94,gps:'O'},{prof:52,time:45,p15:0,p12:2,p9:15,p6:29,p3:59,dtr:110,gps:'*'},{prof:52,time:50,p15:0,p12:5,p9:17,p6:32,p3:64,dtr:123,gps:'*'},{prof:52,time:55,p15:0,p12:8,p9:19,p6:36,p3:71,dtr:139,gps:'*'},{prof:55,time:5,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:5,gps:'D'},{prof:55,time:10,p15:0,p12:0,p9:0,p6:1,p3:5,dtr:11,gps:'G'},{prof:55,time:15,p15:0,p12:0,p9:0,p6:4,p3:13,dtr:22,gps:'I'},{prof:55,time:20,p15:0,p12:0,p9:1,p6:6,p3:27,dtr:39,gps:'K'},{prof:55,time:25,p15:0,p12:0,p9:3,p6:11,p3:37,dtr:56,gps:'M'},{prof:55,time:30,p15:0,p12:0,p9:6,p6:18,p3:44,dtr:73,gps:'N'},{prof:55,time:35,p15:0,p12:1,p9:9,p6:23,p3:50,dtr:88,gps:'O'},{prof:55,time:40,p15:0,p12:3,p9:12,p6:29,p3:55,dtr:104,gps:'P'},{prof:55,time:45,p15:0,p12:5,p9:17,p6:31,p3:62,dtr:120,gps:'*'},{prof:55,time:50,p15:0,p12:8,p9:19,p6:35,p3:69,dtr:136,gps:'*'},{prof:55,time:55,p15:0,p12:12,p9:22,p6:37,p3:76,dtr:152,gps:'*'},{prof:58,time:5,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:7,gps:'D'},{prof:58,time:10,p15:0,p12:0,p9:0,p6:2,p3:5,dtr:12,gps:'G'},{prof:58,time:15,p15:0,p12:0,p9:1,p6:4,p3:16,dtr:26,gps:'J'},{prof:58,time:20,p15:0,p12:0,p9:2,p6:7,p3:30,dtr:44,gps:'K'},{prof:58,time:25,p15:0,p12:0,p9:4,p6:13,p3:40,dtr:62,gps:'M'},{prof:58,time:30,p15:0,p12:1,p9:7,p6:21,p3:46,dtr:81,gps:'N'},{prof:58,time:35,p15:0,p12:2,p9:11,p6:26,p3:52,dtr:97,gps:'O'},{prof:58,time:40,p15:0,p12:5,p9:15,p6:30,p3:59,dtr:115,gps:'P'},{prof:58,time:45,p15:0,p12:8,p9:18,p6:33,p3:66,dtr:131,gps:'*'},{prof:58,time:50,p15:1,p12:11,p9:21,p6:37,p3:74,dtr:150,gps:'*'},{prof:58,time:55,p15:3,p12:14,p9:23,p6:39,p3:83,dtr:168,gps:'*'},{prof:60,time:5,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:7,gps:'D'},{prof:60,time:10,p15:0,p12:0,p9:0,p6:2,p3:6,dtr:13,gps:'G'},{prof:60,time:15,p15:0,p12:0,p9:1,p6:4,p3:19,dtr:29,gps:'J'},{prof:60,time:20,p15:0,p12:0,p9:3,p6:8,p3:32,dtr:48,gps:'L'},{prof:60,time:25,p15:0,p12:0,p9:5,p6:15,p3:41,dtr:66,gps:'M'},{prof:60,time:30,p15:0,p12:1,p9:8,p6:22,p3:48,dtr:85,gps:'O'},{prof:60,time:35,p15:0,p12:4,p9:11,p6:28,p3:54,dtr:103,gps:'P'},{prof:60,time:40,p15:0,p12:6,p9:17,p6:30,p3:62,dtr:121,gps:'P'},{prof:60,time:45,p15:1,p12:9,p9:19,p6:35,p3:69,dtr:139,gps:'*'},{prof:60,time:50,p15:2,p12:13,p9:22,p6:37,p3:78,dtr:158,gps:'*'},{prof:60,time:55,p15:5,p12:15,p9:24,p6:40,p3:88,dtr:178,gps:'*'},{prof:62,time:5,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:7,gps:'*'},{prof:62,time:10,p15:0,p12:0,p9:0,p6:2,p3:7,dtr:14,gps:'*'},{prof:62,time:15,p15:0,p12:0,p9:1,p6:5,p3:21,dtr:33,gps:'*'},{prof:65,time:5,p15:0,p12:0,p9:0,p6:0,p3:3,dtr:8,gps:'*'},{prof:65,time:10,p15:0,p12:0,p9:0,p6:3,p3:8,dtr:16,gps:'*'},{prof:65,time:15,p15:0,p12:0,p9:2,p6:5,p3:24,dtr:37,gps:'*'}];
 
@@ -48,7 +56,7 @@
             const descentRate = 16;
             const descentTime = prof / descentRate;
             
-            // DESCENTE (couleur spécifiée, par défaut Cyan)
+            // DESCENTE (couleur de la courbe)
             for (let i = 0; i <= descentTime; i += 0.5) {
                 const depth = (i / descentTime) * prof;
                 depths.push(depth);
@@ -56,55 +64,57 @@
                 t = i;
             }
             
-            // FOND (Gris)
+            // FOND (couleur de la courbe, pas gris)
             const bottomEnd = descentTime + time;
             for (let i = Math.ceil(t + 1); i <= bottomEnd; i++) {
                 depths.push(prof);
-                borderColors.push('#888888');
+                borderColors.push(color);
             }
             t = bottomEnd;
             
-            // REMONTÉE + PALIER 6M
-            if (row.p6 > 0) {
-                const ascent6m = (prof - 6) / descentRate;
-                for (let i = 0.5; i <= ascent6m; i += 0.5) {
-                    const d = prof - (i / ascent6m) * (prof - 6);
-                    depths.push(d);
-                    borderColors.push('#FFA500'); // ORANGE pour remontée
-                }
-                t += ascent6m;
-                
-                // Palier 6m - JAUNE VIF
-                for (let i = 0; i < row.p6; i += 0.5) {
-                    depths.push(6);
-                    borderColors.push('#FFFF00');  // ← JAUNE
-                }
-                t += row.p6;
-            }
+            // Définir les paliers et leurs couleurs
+            const stopDefinitions = [
+                { depth: 15, time: row.p15 || 0, color: '#FF99FF' }, // Magenta
+                { depth: 12, time: row.p12 || 0, color: '#00DDDD' }, // Cyan clair
+                { depth: 9, time: row.p9 || 0, color: '#00FF88' },   // Vert clair
+                { depth: 6, time: row.p6 || 0, color: '#FFA500' },   // Orange
+                { depth: 3, time: row.p3 || 0, color: '#00FF99' }    // Vert
+            ];
             
-            // REMONTÉE + PALIER 3M
-            if (row.p3 > 0 || row.p6 === 0) {
-                const startDepth = row.p6 > 0 ? 6 : prof;
-                const ascent3m = Math.abs(startDepth - 3) / descentRate;
-                
-                for (let i = 0.5; i <= ascent3m; i += 0.5) {
-                    const d = startDepth - (i / ascent3m) * (startDepth - 3);
-                    depths.push(d);
-                    borderColors.push('#FFA500'); // ORANGE pour remontée
-                }
-                t += ascent3m;
-                
-                // Palier 3m - TURQUOISE/CYAN
-                if (row.p3 > 0) {
-                    for (let i = 0; i < row.p3; i += 0.5) {
-                        depths.push(3);
-                        borderColors.push('#00FFFF');  // ← CYAN
+            let currentDepth = prof;
+            
+            // Traiter les paliers du plus profond au moins profond
+            for (let stop of stopDefinitions) {
+                if (stop.time > 0) {
+                    // REMONTÉE jusqu'au palier
+                    const ascentToStop = (currentDepth - stop.depth) / descentRate;
+                    for (let i = 0.5; i <= ascentToStop; i += 0.5) {
+                        const d = currentDepth - (i / ascentToStop) * (currentDepth - stop.depth);
+                        depths.push(d);
+                        borderColors.push(color);
                     }
-                    t += row.p3;
+                    t += ascentToStop;
+                    
+                    // PALIER avec sa couleur propre
+                    for (let i = 0; i < stop.time; i += 0.5) {
+                        depths.push(stop.depth);
+                        borderColors.push(stop.color);
+                    }
+                    t += stop.time;
+                    currentDepth = stop.depth;
                 }
             }
             
             // SURFACE
+            if (currentDepth > 0) {
+                const ascentToSurface = currentDepth / descentRate;
+                for (let i = 0.5; i <= ascentToSurface; i += 0.5) {
+                    const d = currentDepth - (i / ascentToSurface) * currentDepth;
+                    depths.push(d);
+                    borderColors.push(color);
+                }
+            }
+            
             depths.push(0);
             borderColors.push(color);
             
@@ -142,7 +152,11 @@
             
             const controlsDiv = document.getElementById('aut' + curveNum + '-controls');
             if (controlsDiv) {
-                controlsDiv.style.display = controlsDiv.style.display === 'none' ? 'block' : 'none';
+                if (controlsDiv.style.display === 'none' || controlsDiv.style.display === '') {
+                    controlsDiv.style.display = 'grid';
+                } else {
+                    controlsDiv.style.display = 'none';
+                }
             }
         }
         
@@ -173,31 +187,43 @@
                 }
             }
             
-            const step = paramType === 'prof' ? 1 : 1;
-            if (paramType === 'prof') {
-                window.autonomyParams['curve' + curveNum].prof = Math.max(6, window.autonomyParams['curve' + curveNum].prof + (delta * step));
-            } else {
-                window.autonomyParams['curve' + curveNum].conso = Math.max(5, window.autonomyParams['curve' + curveNum].conso + (delta * step));
-            }
+            const params = window.autonomyParams['curve' + curveNum];
             
-            document.getElementById('aut' + curveNum + '-prof-val').textContent = window.autonomyParams['curve' + curveNum].prof;
-            document.getElementById('aut' + curveNum + '-conso-val').textContent = window.autonomyParams['curve' + curveNum].conso;
+            if (paramType === 'prof') {
+                params.prof = Math.max(6, params.prof + delta);
+                document.getElementById('aut' + curveNum + '-prof-val').textContent = params.prof;
+            } else if (paramType === 'conso') {
+                params.conso = Math.max(5, params.conso + delta);
+                document.getElementById('aut' + curveNum + '-conso-val').textContent = params.conso;
+            } else if (paramType === 'vol') {
+                params.vol = Math.max(3, params.vol + delta);
+                document.getElementById('aut' + curveNum + '-vol-val').textContent = params.vol;
+            } else if (paramType === 'press') {
+                params.press = Math.max(100, params.press + (delta * 5));
+                document.getElementById('aut' + curveNum + '-press-val').textContent = params.press;
+            } else if (paramType === 'safety') {
+                params.safety = Math.max(20, params.safety + (delta * 5));
+                document.getElementById('aut' + curveNum + '-safety-val').textContent = params.safety;
+            }
             
             drawAutonomyChart();
         }
         
         // Calculer la pression résiduelle de la bouteille au fil du profil de plongée
+        // P1*V1 = P2*V2 : Loi des gaz parfaits
         function calculateBottleResidualPressure(depthProfile, consumption, initialPress, volume) {
             const pressureData = [];
             let currentPressure = initialPress;
             
             for (let i = 0; i < depthProfile.length; i++) {
                 const depth = depthProfile[i];
-                const atmosphericPressure = 1 + depth / 10;
-                const consumptionAtDepth = consumption * atmosphericPressure;
                 
-                // Consommer 1 minute d'air à cette profondeur
-                currentPressure -= consumptionAtDepth / volume;
+                // Ne consommer que sous l'eau
+                if (depth > 0) {
+                    const atmosphericPressure = 1 + depth / 10;
+                    const consumptionAtDepth = consumption * atmosphericPressure;
+                    currentPressure -= consumptionAtDepth / volume;
+                }
                 
                 pressureData.push(Math.max(0, currentPressure));
             }
@@ -238,17 +264,19 @@
                 const safety = parseInt(el5.value) || 50;
                 
                 // Mettre à jour l'affichage de la profondeur
-                document.getElementById('aut1-prof-display').textContent = prof;
+                const el1ProfDisplay = document.getElementById('aut1-prof-display');
+                if (el1ProfDisplay) el1ProfDisplay.textContent = prof;
                 
                 console.log('Paramètres autonomie:', {prof, conso, vol, press, safety});
                 
                 const airAvailable = (press - safety) * vol;
                 if (airAvailable <= 0) {
-                    document.getElementById('aut1-maxtime').textContent = 'Pression invalide';
+                    const el = document.getElementById('aut1-maxtime');
+                    if (el) el.textContent = 'Pression invalide';
                     return;
                 }
                 
-                // Calculer le temps max pour cette profondeur
+                // Calculer le temps max pour cette profondeur en finissant à exactement 50 bar
                 let maxBottomTime = 0;
                 let bestRow = null;
                 
@@ -256,41 +284,63 @@
                     const row = searchTable(prof, time);
                     if (!row) break;
                     
-                    const descentTime = prof / 16;
-                    const palierTime = (row.p6 || 0) + (row.p3 || 0);
-                    const bottomConso = conso * time;
-                    const descentConso = conso * descentTime;
-                    const ascentTime = (prof - 3) / 16;
-                    const ascentConso = conso * ascentTime;
-                    const palierConso = conso * 0.7 * (palierTime + 1);
-                    const totalConso = bottomConso + descentConso + ascentConso + palierConso;
+                    // Construire le profil complet
+                    const curve = buildDiveProfileCurve(prof, time, row);
+                    // Calculer la pression réelle à chaque point
+                    const pressureData = calculateBottleResidualPressure(curve.depths, conso, press, vol);
+                    const finalPressure = pressureData[pressureData.length - 1];
                     
-                    if (totalConso <= airAvailable) {
+                    // On cherche le temps qui nous laisse juste à la limite de sécurité (50 bar)
+                    if (finalPressure >= safety) {
                         maxBottomTime = time;
                         bestRow = row;
                     } else {
+                        // On a dépassé : on peut s'arrêter
                         break;
                     }
                 }
                 
                 if (!bestRow) {
-                    document.getElementById('aut1-maxtime').textContent = 'Impossible';
+                    const el = document.getElementById('aut1-maxtime');
+                    if (el) el.textContent = 'Impossible';
                     return;
                 }
                 
                 // Afficher le temps max
                 const el1MaxTime = document.getElementById('aut1-maxtime');
-                if (el1MaxTime) el1MaxTime.textContent = minToHHMM(maxBottomTime);
+                if (el1MaxTime) el1MaxTime.textContent = minToHHMMSS(maxBottomTime);
                 
-                // Calculer et afficher le temps total (fond + paliers)
-                const totalDiveTime = maxBottomTime + (bestRow.p6 || 0) + (bestRow.p3 || 0);
+                // Calculer et afficher le temps total (fond + TOUS les paliers)
+                const totalDiveTime = maxBottomTime + (bestRow.p15 || 0) + (bestRow.p12 || 0) + (bestRow.p9 || 0) + (bestRow.p6 || 0) + (bestRow.p3 || 0);
                 const el1TotalTime = document.getElementById('aut1-totaltime');
-                if (el1TotalTime) el1TotalTime.textContent = minToHHMM(totalDiveTime);
+                if (el1TotalTime) el1TotalTime.textContent = minToHHMMSS(totalDiveTime);
+                
+                // Afficher les détails d'autonomie
+                const volDispo = (press - safety) * vol;
+                const timeAvailable = Math.floor(volDispo / conso);
+                
+                const el1CalcStep1 = document.getElementById('aut1-calc-step1');
+                const el1CalcStep1b = document.getElementById('aut1-calc-step1b');
+                const el1CalcResult1 = document.getElementById('aut1-calc-result1');
+                const el1CalcStep2 = document.getElementById('aut1-calc-step2');
+                const el1CalcStep2b = document.getElementById('aut1-calc-step2b');
+                const el1CalcResult2 = document.getElementById('aut1-calc-result2');
+                
+                if (el1CalcStep1) el1CalcStep1.textContent = (press - safety);
+                if (el1CalcStep1b) el1CalcStep1b.textContent = vol;
+                if (el1CalcResult1) el1CalcResult1.textContent = volDispo;
+                if (el1CalcStep2) el1CalcStep2.textContent = volDispo;
+                if (el1CalcStep2b) el1CalcStep2b.textContent = conso;
+                if (el1CalcResult2) el1CalcResult2.textContent = timeAvailable;
                 
                 // Tracer la courbe 1
                 const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('Erreur: impossible d\'obtenir le contexte 2D du canvas');
+                    return;
+                }
                 
-                const curve1 = buildDiveProfileCurve(prof, maxBottomTime, bestRow);
+                const curve1 = buildDiveProfileCurve(prof, maxBottomTime, bestRow, '#FFFF00');
                 const labels = Array.from({length: curve1.depths.length}, (_, i) => i);
                 
                 // Calculer la pression de la bouteille au fil du temps
@@ -298,12 +348,12 @@
                 
                 console.log('Curve1 depths:', curve1.depths.length, 'Pressure data:', pressureData.length);
                 
-                const datasets = [{
-                    label: `Courbe 1 - ${prof}m / ${minToHHMM(maxBottomTime)}`,
+                let datasets = [{
+                    label: `C1`,
                     data: curve1.depths,
                     borderColor: '#FFFF00',
-                    backgroundColor: 'rgba(255, 255, 0, 0.1)',
-                    fill: true,
+                    backgroundColor: 'transparent',
+                    fill: false,
                     tension: 0.3,
                     pointRadius: 0,
                     borderWidth: 2.5,
@@ -313,10 +363,10 @@
                     }
                 },
                 {
-                    label: `🫁 Pression Bouteille (${vol}L)`,
+                    label: `C1 🫁`,
                     data: pressureData,
-                    borderColor: '#FF6B6B',
-                    backgroundColor: 'rgba(255, 107, 107, 0.05)',
+                    borderColor: '#FFFF00',
+                    backgroundColor: 'rgba(255, 255, 0, 0.05)',
                     fill: false,
                     tension: 0.3,
                     pointRadius: 0,
@@ -327,9 +377,9 @@
                 
                 // Ajouter courbes 2-4 si activées
                 const curveConfigs = [
-                    { id: 2, color: '#00FF00', label: 'Courbe 2' },
-                    { id: 3, color: '#FF99FF', label: 'Courbe 3' },
-                    { id: 4, color: '#00FFFF', label: 'Courbe 4' }
+                    { id: 2, color: '#00FF00', label: 'C2' },
+                    { id: 3, color: '#FF99FF', label: 'C3' },
+                    { id: 4, color: '#00FFFF', label: 'C4' }
                 ];
                 
                 for (let cfg of curveConfigs) {
@@ -353,34 +403,115 @@
                     for (let time = 5; time <= 300; time += 1) {
                         const r = searchTable(params.prof, time);
                         if (!r) break;
-                        const dt = params.prof / 16, pt = (r.p6 || 0) + (r.p3 || 0);
-                        const bc = params.conso * time, dc = params.conso * dt;
-                        const at = (params.prof - 3) / 16, ac = params.conso * at;
-                        const pc = params.conso * 0.7 * (pt + 1);
-                        if (bc + dc + ac + pc <= air) { maxTime = time; row2 = r; } else break;
+                        
+                        // Construire le profil complet
+                        const curveTemp = buildDiveProfileCurve(params.prof, time, r, cfg.color);
+                        // Calculer la pression réelle
+                        const pressureTemp = calculateBottleResidualPressure(curveTemp.depths, params.conso, params.press, params.vol);
+                        const finalPress = pressureTemp[pressureTemp.length - 1];
+                        
+                        if (finalPress >= params.safety) {
+                            maxTime = time;
+                            row2 = r;
+                        } else {
+                            break;
+                        }
                     }
                     
                     if (row2) {
-                        const curve2 = buildDiveProfileCurve(params.prof, maxTime, row2);
+                        const curve2 = buildDiveProfileCurve(params.prof, maxTime, row2, cfg.color);
+                        const pressureData2 = calculateBottleResidualPressure(curve2.depths, params.conso, params.press, params.vol);
+                        
+                        // Ajouter le profil de plongée (trait plein)
                         datasets.push({
-                            label: cfg.label + ` - ${params.prof}m / ${minToHHMM(maxTime)}`,
+                            label: `${cfg.label}`,
                             data: curve2.depths,
                             borderColor: cfg.color,
                             backgroundColor: 'transparent',
                             fill: false,
                             tension: 0.3,
                             pointRadius: 0,
-                            borderWidth: 2,
+                            borderWidth: 2.5,
                             yAxisID: 'y',
-                            borderDash: [5, 5],
                             segment: {
                                 borderColor: (context) => curve2.borderColors[context.p0DataIndex] || cfg.color
                             }
                         });
+                        
+                        // Ajouter la courbe de pression bouteille (pointillée)
+                        datasets.push({
+                            label: `${cfg.label} 🫁`,
+                            data: pressureData2,
+                            borderColor: cfg.color,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2,
+                            borderDash: [3, 3],
+                            yAxisID: 'y2'
+                        });
                         const maxTimeEl = document.getElementById('aut' + cfg.id + '-maxtime');
-                        if (maxTimeEl) maxTimeEl.textContent = minToHHMM(maxTime);
+                        if (maxTimeEl) maxTimeEl.textContent = minToHHMMSS(maxTime);
+                        
+                        // Calculer et afficher le temps total (fond + paliers)
+                        const totalTime = maxTime + (row2.p15 || 0) + (row2.p12 || 0) + (row2.p9 || 0) + (row2.p6 || 0) + (row2.p3 || 0);
+                        const totalTimeEl = document.getElementById('aut' + cfg.id + '-totaltime');
+                        if (totalTimeEl) totalTimeEl.textContent = minToHHMMSS(totalTime);
+                        
+                        // Afficher les détails d'autonomie pour C2, C3, C4
+                        const volDispo = (params.press - params.safety) * params.vol;
+                        const timeAvailable = Math.floor(volDispo / params.conso);
+                        
+                        const calcStep1 = document.getElementById('aut' + cfg.id + '-calc-step1');
+                        const calcStep1b = document.getElementById('aut' + cfg.id + '-calc-step1b');
+                        const calcResult1 = document.getElementById('aut' + cfg.id + '-calc-result1');
+                        const calcStep2 = document.getElementById('aut' + cfg.id + '-calc-step2');
+                        const calcStep2b = document.getElementById('aut' + cfg.id + '-calc-step2b');
+                        const calcResult2 = document.getElementById('aut' + cfg.id + '-calc-result2');
+                        
+                        if (calcStep1) calcStep1.textContent = (params.press - params.safety);
+                        if (calcStep1b) calcStep1b.textContent = params.vol;
+                        if (calcResult1) calcResult1.textContent = volDispo;
+                        if (calcStep2) calcStep2.textContent = volDispo;
+                        if (calcStep2b) calcStep2b.textContent = params.conso;
+                        if (calcResult2) calcResult2.textContent = timeAvailable;
                     }
                 }
+                
+                // Calculer la profondeur max et le temps max parmi TOUTES les courbes
+                let maxDepth = prof + 5;
+                let maxTimeData = curve1.depths.length;
+                
+                for (let dataset of datasets) {
+                    if (dataset.data && dataset.data.length > 0) {
+                        maxDepth = Math.max(maxDepth, Math.max(...dataset.data.filter(d => d != null)));
+                        maxTimeData = Math.max(maxTimeData, dataset.data.length);
+                    }
+                }
+                
+                // Ajouter une marge
+                maxDepth = Math.ceil(maxDepth + 2);
+                maxTimeData = Math.ceil(maxTimeData * 1.05);
+                
+                // Calculer min et max de pression basés sur les DONNÉES RÉELLES des courbes de pression
+                let pressureMin = press;
+                let pressureMax = safety;
+                
+                for (let dataset of datasets) {
+                    // Regarder tous les datasets (les courbes de pression bouteille contiennent les vraies données)
+                    if (dataset.data && dataset.data.length > 0) {
+                        const dataValues = dataset.data.filter(d => d != null && typeof d === 'number');
+                        if (dataValues.length > 0) {
+                            pressureMin = Math.min(pressureMin, Math.min(...dataValues));
+                            pressureMax = Math.max(pressureMax, Math.max(...dataValues));
+                        }
+                    }
+                }
+                
+                // Ajouter une petite marge
+                pressureMin = Math.floor(pressureMin - 5);
+                pressureMax = Math.ceil(pressureMax + 5);
                 
                 // Créer le chart avec AXE SECONDAIRE pour l'autonomie
                 window.autonomyChart = new Chart(ctx, {
@@ -394,7 +525,7 @@
                         maintainAspectRatio: false,
                         interaction: { mode: 'nearest', intersect: false },
                         plugins: {
-                            legend: { labels: { color: '#00ffff', font: { size: 11 } } },
+                            legend: { display: false },
                             tooltip: {
                                 backgroundColor: 'rgba(0,0,0,0.9)',
                                 titleColor: '#ffff00',
@@ -410,7 +541,7 @@
                                 position: 'left',
                                 reverse: true,
                                 min: 0,
-                                max: prof + 10,
+                                max: maxDepth,
                                 title: { display: true, text: 'Profondeur (m)', color: '#FFFF00', font: { size: 12, weight: 'bold' } },
                                 ticks: { color: '#FFFF00' },
                                 grid: { color: 'rgba(255, 255, 0, 0.2)' }
@@ -419,8 +550,8 @@
                                 type: 'linear',
                                 display: true,
                                 position: 'right',
-                                min: 0,
-                                max: press,
+                                min: pressureMin,
+                                max: pressureMax,
                                 title: { display: true, text: 'Pression (bar)', color: '#FF6B6B', font: { size: 12, weight: 'bold' } },
                                 ticks: { color: '#FF6B6B' },
                                 grid: { drawOnChartArea: false, color: 'rgba(255, 107, 107, 0.1)' }
@@ -433,6 +564,37 @@
                         }
                     }
                 });
+                
+                // Générer une légende personnalisée
+                const legendContainer = document.getElementById('autonomy-legend');
+                if (legendContainer) {
+                    legendContainer.innerHTML = '';
+                    
+                    // Créer la légende groupée par couple (profil + pression) - format compact
+                    let legendHTML = '';
+                    
+                    for (let cfg of [{ id: 1, color: '#FFFF00', label: 'C1' }, { id: 2, color: '#00FF00', label: 'C2' }, { id: 3, color: '#FF99FF', label: 'C3' }, { id: 4, color: '#00FFFF', label: 'C4' }]) {
+                        const checkbox = cfg.id === 1 ? true : (document.getElementById('aut' + cfg.id + '-enable')?.checked || false);
+                        if (cfg.id === 1 || checkbox) {
+                            legendHTML += `
+                                <div style="display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; background: rgba(${cfg.color === '#FFFF00' ? '255,255,0' : cfg.color === '#00FF00' ? '0,255,0' : cfg.color === '#FF99FF' ? '255,153,255' : '0,255,255'},0.1); border-left: 2px solid ${cfg.color}; border-radius: 3px; font-size: 9px;">
+                                    <div style="display: flex; align-items: center; gap: 3px;">
+                                        <div style="width: 8px; height: 2px; background: ${cfg.color};"></div>
+                                        <span style="color: ${cfg.color}; font-weight: bold;">${cfg.label}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 3px;">
+                                        <svg width="8" height="2" style="overflow: visible;">
+                                            <line x1="0" y1="1" x2="8" y2="1" stroke="${cfg.color}" stroke-width="1.5" stroke-dasharray="2,2"/>
+                                        </svg>
+                                        <span style="color: ${cfg.color};">🫁</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    legendContainer.innerHTML = legendHTML;
+                }
                 
                 console.log('Chart créé avec succès');
             } catch (error) {
@@ -475,36 +637,51 @@
         }
 
         function calculate() {
-            const depth = parseInt(document.getElementById('depth1').value);
-            const time = parseInt(document.getElementById('time1').value);
-            const row = searchTable(depth, time);
-            
-            // Générer la ligne des paliers
-            let paliersLine = [];
-            if (row.p15 && row.p15 > 0) paliersLine.push(`15m: ${row.p15}min`);
-            if (row.p12 && row.p12 > 0) paliersLine.push(`12m: ${row.p12}min`);
-            if (row.p9 && row.p9 > 0) paliersLine.push(`9m: ${row.p9}min`);
-            if (row.p6 && row.p6 > 0) paliersLine.push(`6m: ${row.p6}min`);
-            if (row.p3 && row.p3 > 0) paliersLine.push(`3m: ${row.p3}min`);
-            
-            document.getElementById('paliers-line').textContent = paliersLine.length > 0 ? paliersLine.join(' / ') : 'Aucun';
-            document.getElementById('dtr1').textContent = row.dtr + ' min';
-            document.getElementById('gps1').textContent = row.gps;
-            
-            const warningMsg = row.gps === '*' ? '⚠️ PLONGÉES SUCCESSIVES INTERDITES' : '';
-            document.getElementById('warning1').innerHTML = warningMsg;
-            document.getElementById('warning1').style.display = warningMsg ? 'block' : 'none';
-            
-            const totalTime = time + row.p6 + row.p3 + 3;
-            document.getElementById('total1').textContent = minToHHMM(totalTime);
-            
-            // Gérer l'affichage de la 2e plongée
-            const dive2Checkbox = document.getElementById('dive2-checkbox');
-            const dive2Options = document.getElementById('dive2-options');
-            dive2Options.style.display = dive2Checkbox.checked ? 'block' : 'none';
-            
-            // Tracer le profil (avec 2e plongée si cochée)
-            drawDiveProfile(depth, time, row, dive2Checkbox.checked ? parseInt(document.getElementById('dive2-interval').value) : 0);
+            try {
+                // Détruire le chart précédent pour forcer la recréation
+                if (chart1) {
+                    chart1.destroy();
+                    chart1 = null;
+                }
+                
+                const depth = parseInt(document.getElementById('depth1').value);
+                const time = parseInt(document.getElementById('time1').value);
+                const row = searchTable(depth, time);
+                
+                if (!row) {
+                    console.error('Pas de ligne trouvée pour', depth, time);
+                    return;
+                }
+                
+                // Générer la ligne des paliers
+                let paliersLine = [];
+                if (row.p15 && row.p15 > 0) paliersLine.push(`15m: ${row.p15}min`);
+                if (row.p12 && row.p12 > 0) paliersLine.push(`12m: ${row.p12}min`);
+                if (row.p9 && row.p9 > 0) paliersLine.push(`9m: ${row.p9}min`);
+                if (row.p6 && row.p6 > 0) paliersLine.push(`6m: ${row.p6}min`);
+                if (row.p3 && row.p3 > 0) paliersLine.push(`3m: ${row.p3}min`);
+                
+                document.getElementById('paliers-line').textContent = paliersLine.length > 0 ? paliersLine.join(' / ') : 'Aucun';
+                document.getElementById('dtr1').textContent = row.dtr + ' min';
+                document.getElementById('gps1').textContent = row.gps;
+                
+                const warningMsg = row.gps === '*' ? '⚠️ PLONGÉES SUCCESSIVES INTERDITES' : '';
+                document.getElementById('warning1').innerHTML = warningMsg;
+                document.getElementById('warning1').style.display = warningMsg ? 'block' : 'none';
+                
+                const totalTime = time + row.p6 + row.p3 + 3;
+                document.getElementById('total1').textContent = minToHHMM(totalTime);
+                
+                // Gérer l'affichage de la 2e plongée
+                const dive2Checkbox = document.getElementById('dive2-checkbox');
+                const dive2Options = document.getElementById('dive2-options');
+                dive2Options.style.display = dive2Checkbox.checked ? 'block' : 'none';
+                
+                // Tracer le profil (avec 2e plongée si cochée)
+                drawDiveProfile(depth, time, row, dive2Checkbox.checked ? parseInt(document.getElementById('dive2-interval').value) : 0);
+            } catch (error) {
+                console.error('Erreur dans calculate():', error);
+            }
         }
         
         function generateSuggestions(depth) {
@@ -636,7 +813,12 @@
         function drawDiveProfile(maxDepth, bottomTime, row, dive2Interval = 0) {
             const canvas = document.getElementById('profileCanvas');
             const ctx = canvas.getContext('2d');
+            
+            // Détruire les charts précédents
             if (chart1) chart1.destroy();
+            if (window.autonomyChart) window.autonomyChart.destroy();
+            chart1 = null;
+            window.autonomyChart = null;
             
             // Afficher/masquer le toggle pour vue superposée si 2e plongée
             const toggleLabel = document.getElementById('view-toggle-label-menu');
@@ -648,23 +830,10 @@
                 document.getElementById('view-toggle').checked = false;
             }
             
-            // Titre avec résultats au format table MN90
+            // Titre simple
             const titleEl = document.getElementById('graph-title');
             if (titleEl) {
-                let titleHTML = `📊 <strong>${maxDepth}m et ${minToHHMM(bottomTime)} au fond :</strong> `;
-                
-                // Construire la liste des paliers
-                let paliers = [];
-                if (row.p15 > 0) paliers.push(`<span style="color:#FF99FF; text-shadow:0 0 8px #FF99FF; font-weight:bold;">P15m: ${row.p15}min</span>`);
-                if (row.p12 > 0) paliers.push(`<span style="color:#00DDDD; text-shadow:0 0 8px #00DDDD; font-weight:bold;">P12m: ${row.p12}min</span>`);
-                if (row.p9 > 0) paliers.push(`<span style="color:#00FF88; text-shadow:0 0 8px #00FF88; font-weight:bold;">P9m: ${row.p9}min</span>`);
-                if (row.p6 > 0) paliers.push(`<span style="color:#FFD700; text-shadow:0 0 8px #FFD700; font-weight:bold;">P6m: ${row.p6}min</span>`);
-                if (row.p3 > 0) paliers.push(`<span style="color:#00FF99; text-shadow:0 0 8px #00FF99; font-weight:bold;">P3m: ${row.p3}min</span>`);
-                titleHTML += paliers.length > 0 ? paliers.join(' / ') : '<span style="color:#888;">Aucun</span>';
-                titleHTML += ` / <span style="color:#FFA500; text-shadow:0 0 8px #FFA500; font-weight:bold;">DTR ${row.dtr}min</span>`;
-                titleHTML += ` / <span style="color:#FF6347; text-shadow:0 0 8px #FF6347; font-weight:bold; font-size:1.1em;">GPS: ${row.gps}</span>`;
-                
-                titleEl.innerHTML = titleHTML;
+                titleEl.textContent = '📊 Profil de Plongée';
             }
             
             // Récupérer les paramètres de la 2e plongée
@@ -687,8 +856,8 @@
                 document.getElementById('gps2').textContent = dive2Row.gps;
             }
             
-            const curve1 = buildDiveProfileCurve(maxDepth, bottomTime, row);
-            const curve2 = dive2Interval > 0 ? buildDiveProfileCurve(dive2Depth, dive2Time, dive2Row) : null;
+            const curve1 = buildDiveProfileCurve(maxDepth, bottomTime, row, '#FFDD88');
+            const curve2 = dive2Interval > 0 ? buildDiveProfileCurve(dive2Depth, dive2Time, dive2Row, '#BB88EE') : null;
             
             if (!superposedView) {
                 // MODE COMBINÉ - Chronologique
@@ -747,7 +916,7 @@
                     }
                 }];
                 
-                chart1 = createDiveChart(ctx, labels, datasets, Math.max(maxDepth, dive2Depth) + 15);
+                chart1 = createDiveChart(ctx, labels, datasets, Math.max(maxDepth, dive2Depth) + 5);
             } else {
                 // MODE SUPERPOSÉ - Les deux courbes côte à côte
                 const maxLen = Math.max(curve1.depths.length, curve2 ? curve2.depths.length : 0);
@@ -757,8 +926,8 @@
                     {
                         label: `🟦 Plongée 1 - ${maxDepth}m/${minToHHMM(bottomTime)}`,
                         data: curve1.depths.concat(Array(maxLen - curve1.depths.length).fill(null)),
-                        borderColor: '#00FFFF',
-                        backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                        borderColor: '#FFDD88',
+                        backgroundColor: 'rgba(255, 221, 136, 0.1)',
                         fill: true,
                         tension: 0.3,
                         pointRadius: 0,
@@ -766,7 +935,7 @@
                         segment: {
                             borderColor: (context) => {
                                 const idx = context.p0DataIndex;
-                                return idx < curve1.borderColors.length ? curve1.borderColors[idx] : '#00FFFF';
+                                return idx < curve1.borderColors.length ? curve1.borderColors[idx] : '#FFDD88';
                             }
                         }
                     }
@@ -776,8 +945,8 @@
                     datasets.push({
                         label: `🟧 Plongée 2 - ${dive2Depth}m/${minToHHMM(dive2Time)} (Intervalle: ${dive2Interval}min)`,
                         data: curve2.depths.concat(Array(maxLen - curve2.depths.length).fill(null)),
-                        borderColor: '#FFA500',
-                        backgroundColor: 'rgba(255, 165, 0, 0.05)',
+                        borderColor: '#BB88EE',
+                        backgroundColor: 'rgba(187, 136, 238, 0.05)',
                         fill: true,
                         tension: 0.3,
                         pointRadius: 0,
@@ -786,13 +955,13 @@
                         segment: {
                             borderColor: (context) => {
                                 const idx = context.p0DataIndex;
-                                return idx < curve2.borderColors.length ? curve2.borderColors[idx] : '#FFA500';
+                                return idx < curve2.borderColors.length ? curve2.borderColors[idx] : '#BB88EE';
                             }
                         }
                     });
                 }
                 
-                chart1 = createDiveChart(ctx, labels, datasets, Math.max(maxDepth, dive2Depth) + 15);
+                chart1 = createDiveChart(ctx, labels, datasets, Math.max(maxDepth, dive2Depth) + 5);
             }
         }
 
@@ -905,7 +1074,7 @@
                         <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P9</th>
                         <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P6</th>
                         <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P3</th>
-                        <th style="padding: 1px 0; border: 1px solid #00ffff; background: rgba(0,200,255,0.3); width: 10px;"><strong>D</strong></th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; background: rgba(0,200,255,0.3); width: 14px;"><strong>DTR</strong></th>
                         <th style="padding: 1px 0; border: 1px solid #00ffff; width: 12px;">GPS</th>
                     </tr></thead>
                     <tbody>`;
@@ -927,25 +1096,25 @@
                 html += '</tbody></table></div>';
             }
             // Tableau I - Azote Résiduel
-            html += '<div id="tableau-i" style="margin-bottom: 18px; background: rgba(255,153,0,0.1); padding: 10px; border-radius: 8px; border-left: 4px solid #FF9900;"><h3 style="color: #FF9900; margin-bottom: 10px; font-size: 12px;">📊 Tableau I - Azote Résiduel</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Évolution de l\'azote résiduel entre deux plongées</div><table style="width: 100%; border-collapse: collapse; font-size: 8px;"><thead><tr style="background: #4d3300;"><th style="border: 1px solid #FF9900; padding: 3px;">Groupe</th><th style="border: 1px solid #FF9900; padding: 3px;">00:15</th><th style="border: 1px solid #FF9900; padding: 3px;">00:30</th><th style="border: 1px solid #FF9900; padding: 3px;">00:45</th><th style="border: 1px solid #FF9900; padding: 3px;">01:00</th><th style="border: 1px solid #FF9900; padding: 3px;">02:00</th><th style="border: 1px solid #FF9900; padding: 3px;">03:00</th><th style="border: 1px solid #FF9900; padding: 3px;">04:00</th><th style="border: 1px solid #FF9900; padding: 3px;">05:00</th><th style="border: 1px solid #FF9900; padding: 3px;">06:00</th><th style="border: 1px solid #FF9900; padding: 3px;">08:00</th><th style="border: 1px solid #FF9900; padding: 3px;">12:00</th></tr></thead><tbody>';
+            html += '<div id="tableau-i" style="margin-bottom: 18px; background: rgba(255,153,0,0.1); padding: 10px; border-radius: 8px; border-left: 4px solid #FF9900;"><h3 style="color: #FF9900; margin-bottom: 10px; font-size: 12px;">📊 Tableau I - Azote Résiduel</h3><div style="font-size: 8px; color: #FFFFFF; margin-bottom: 8px;">Évolution de l\'azote résiduel entre deux plongées</div><table style="width: 100%; border-collapse: collapse; font-size: 8px;"><thead><tr style="background: #4d3300;"><th style="border: 1px solid #FF9900; padding: 3px;">Groupe</th><th style="border: 1px solid #FF9900; padding: 3px;">00:15</th><th style="border: 1px solid #FF9900; padding: 3px;">00:30</th><th style="border: 1px solid #FF9900; padding: 3px;">00:45</th><th style="border: 1px solid #FF9900; padding: 3px;">01:00</th><th style="border: 1px solid #FF9900; padding: 3px;">02:00</th><th style="border: 1px solid #FF9900; padding: 3px;">03:00</th><th style="border: 1px solid #FF9900; padding: 3px;">04:00</th><th style="border: 1px solid #FF9900; padding: 3px;">05:00</th><th style="border: 1px solid #FF9900; padding: 3px;">06:00</th><th style="border: 1px solid #FF9900; padding: 3px;">08:00</th><th style="border: 1px solid #FF9900; padding: 3px;">12:00</th></tr></thead><tbody>';
             const azote1Data = [['A','0.84','0.83','0.83','0.83','0.82','0.81','0.81','0.81','0.81','0.81','0.81'],['B','0.88','0.88','0.87','0.86','0.85','0.83','0.82','0.82','0.81','0.81','0.81'],['C','0.92','0.91','0.90','0.89','0.87','0.85','0.83','0.82','0.82','0.81','0.81'],['D','0.97','0.95','0.94','0.93','0.89','0.86','0.85','0.83','0.82','0.81','0.81'],['E','1.00','0.98','0.97','0.96','0.91','0.88','0.86','0.84','0.83','0.81','0.81'],['F','1.05','1.03','1.01','0.99','0.94','0.90','0.87','0.85','0.83','0.81','0.81'],['G','1.08','1.06','1.04','1.02','0.96','0.91','0.88','0.85','0.84','0.81','0.81'],['H','1.13','1.10','1.08','1.05','0.98','0.93','0.89','0.86','0.85','0.82','0.81'],['I','1.17','1.14','1.11','1.08','1.00','0.94','0.90','0.87','0.85','0.83','0.81'],['J','1.20','1.17','1.14','1.11','1.02','0.96','0.91','0.88','0.86','0.83','0.81'],['K','1.25','1.21','1.18','1.15','1.04','0.97','0.92','0.89','0.86','0.83','0.81'],['L','1.29','1.25','1.21','1.17','1.07','0.99','0.93','0.89','0.87','0.82','0.81'],['M','1.33','1.29','1.25','1.21','1.09','1.01','0.94','0.90','0.87','0.82','0.81'],['N','1.37','1.32','1.28','1.24','1.11','1.02','0.95','0.91','0.88','0.82','0.81'],['O','1.41','1.36','1.32','1.27','1.13','1.04','0.97','0.92','0.88','0.82','0.81'],['P','1.45','1.40','1.35','1.30','1.15','1.05','0.98','0.93','0.89','0.82','0.81']];
             for (let row of azote1Data) { html += '<tr style="color: #FF9900;"><td style="border: 1px solid rgba(255,153,0,0.3); padding: 3px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(255,153,0,0.3); padding: 3px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
             html += '</tbody></table></div>';
             
             // Tableau II - Majoration
-            html += '<div id="tableau-ii" style="margin-bottom: 18px; background: rgba(0,200,100,0.1); padding: 10px; border-radius: 8px; border-left: 4px solid #00FF99;"><h3 style="color: #00FF99; margin-bottom: 10px; font-size: 12px;">📊 Tableau II - Majoration</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Détermination de la majoration en minutes</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #003333;"><th style="border: 1px solid #00FF99; padding: 2px;">Azote</th><th style="border: 1px solid #00FF99; padding: 2px;">12</th><th style="border: 1px solid #00FF99; padding: 2px;">15</th><th style="border: 1px solid #00FF99; padding: 2px;">18</th><th style="border: 1px solid #00FF99; padding: 2px;">20</th><th style="border: 1px solid #00FF99; padding: 2px;">25</th><th style="border: 1px solid #00FF99; padding: 2px;">30</th><th style="border: 1px solid #00FF99; padding: 2px;">35</th><th style="border: 1px solid #00FF99; padding: 2px;">40</th><th style="border: 1px solid #00FF99; padding: 2px;">45</th><th style="border: 1px solid #00FF99; padding: 2px;">50</th><th style="border: 1px solid #00FF99; padding: 2px;">55</th><th style="border: 1px solid #00FF99; padding: 2px;">60</th></tr></thead><tbody>';
+            html += '<div id="tableau-ii" style="margin-bottom: 18px; background: rgba(0,200,100,0.1); padding: 10px; border-radius: 8px; border-left: 4px solid #00FF99;"><h3 style="color: #00FF99; margin-bottom: 10px; font-size: 12px;">📊 Tableau II - Majoration</h3><div style="font-size: 8px; color: #FFFFFF; margin-bottom: 8px;">Détermination de la majoration en minutes</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #003333;"><th style="border: 1px solid #00FF99; padding: 2px;">Azote</th><th style="border: 1px solid #00FF99; padding: 2px;">12</th><th style="border: 1px solid #00FF99; padding: 2px;">15</th><th style="border: 1px solid #00FF99; padding: 2px;">18</th><th style="border: 1px solid #00FF99; padding: 2px;">20</th><th style="border: 1px solid #00FF99; padding: 2px;">25</th><th style="border: 1px solid #00FF99; padding: 2px;">30</th><th style="border: 1px solid #00FF99; padding: 2px;">35</th><th style="border: 1px solid #00FF99; padding: 2px;">40</th><th style="border: 1px solid #00FF99; padding: 2px;">45</th><th style="border: 1px solid #00FF99; padding: 2px;">50</th><th style="border: 1px solid #00FF99; padding: 2px;">55</th><th style="border: 1px solid #00FF99; padding: 2px;">60</th></tr></thead><tbody>';
             const majorData = [['0.82','4','3','2','2','2','1','1','1','1','1','1','1'],['0.89','17','13','11','10','8','7','6','5','4','4','4','3'],['0.99','38','30','24','22','17','14','12','11','9','8','8','7'],['1.11','68','52','42','37','29','24','20','18','16','14','13','12'],['1.24','106','79','63','56','43','35','30','26','23','20','18','17'],['1.38','160','114','89','78','59','48','40','35','30','27','24','22']];
             for (let row of majorData) { html += '<tr style="color: #00FF99;"><td style="border: 1px solid rgba(0,255,153,0.3); padding: 2px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(0,255,153,0.3); padding: 2px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
             html += '</tbody></table></div></div>';
             
             // Tableau III - Oxygène
-            html += '<div id="tableau-iii" style="margin-bottom: 18px; background: rgba(255,0,255,0.08); padding: 10px; border-radius: 8px; border-left: 4px solid #FF00FF;"><h3 style="color: #FF00FF; margin-bottom: 10px; font-size: 12px;">📊 Tableau III - Oxygène Pur</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Diminution azote par inhalation O₂ en surface</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #330033;"><th style="border: 1px solid #FF00FF; padding: 2px;">Groupe</th><th style="border: 1px solid #FF00FF; padding: 2px;">Eq.</th><th style="border: 1px solid #FF00FF; padding: 2px;">15min</th><th style="border: 1px solid #FF00FF; padding: 2px;">30min</th><th style="border: 1px solid #FF00FF; padding: 2px;">45min</th><th style="border: 1px solid #FF00FF; padding: 2px;">60min</th><th style="border: 1px solid #FF00FF; padding: 2px;">90min</th><th style="border: 1px solid #FF00FF; padding: 2px;">120min</th><th style="border: 1px solid #FF00FF; padding: 2px;">150min</th><th style="border: 1px solid #FF00FF; padding: 2px;">180min</th></tr></thead><tbody>';
+            html += '<div id="tableau-iii" style="margin-bottom: 18px; background: rgba(255,0,255,0.08); padding: 10px; border-radius: 8px; border-left: 4px solid #FF00FF;"><h3 style="color: #FF00FF; margin-bottom: 10px; font-size: 12px;">📊 Tableau III - Oxygène Pur</h3><div style="font-size: 8px; color: #FFFFFF; margin-bottom: 8px;">Diminution azote par inhalation O₂ en surface</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #330033;"><th style="border: 1px solid #FF00FF; padding: 2px;">Groupe</th><th style="border: 1px solid #FF00FF; padding: 2px;">Eq.</th><th style="border: 1px solid #FF00FF; padding: 2px;">15min</th><th style="border: 1px solid #FF00FF; padding: 2px;">30min</th><th style="border: 1px solid #FF00FF; padding: 2px;">45min</th><th style="border: 1px solid #FF00FF; padding: 2px;">60min</th><th style="border: 1px solid #FF00FF; padding: 2px;">90min</th><th style="border: 1px solid #FF00FF; padding: 2px;">120min</th><th style="border: 1px solid #FF00FF; padding: 2px;">150min</th><th style="border: 1px solid #FF00FF; padding: 2px;">180min</th></tr></thead><tbody>';
             const oxygenData = [['A','0.84','0.80','-','-','-','-','-','-','-'],['B','0.89','0.85','0.82','0.79','-','-','-','-','-'],['E','1.02','0.98','0.94','0.90','0.86','0.82','0.80','-','-'],['I','1.20','1.15','1.10','1.05','1.01','0.97','0.93','0.89','0.85'],['M','1.38','1.32','1.27','1.21','1.16','1.11','1.06','1.02','0.98'],['P','1.51','1.45','1.38','1.33','1.27','1.22','1.16','1.11','1.07']];
             for (let row of oxygenData) { html += '<tr style="color: #FF00FF;"><td style="border: 1px solid rgba(255,0,255,0.3); padding: 2px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(255,0,255,0.3); padding: 2px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
             html += '</tbody></table></div></div>';
             
             // Tableau IV - Remontée
-            html += '<div id="tableau-iv" style="margin-bottom: 18px; background: rgba(255,100,100,0.08); padding: 10px; border-radius: 8px; border-left: 4px solid #FF6464;"><h3 style="color: #FF6464; margin-bottom: 10px; font-size: 12px;">📊 Tableau IV - Durée Remontée</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Remontée jusqu\'au premier palier + temps interpaliers (minutes)</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #330000;"><th style="border: 1px solid #FF6464; padding: 2px;">Palier</th><th style="border: 1px solid #FF6464; padding: 2px;">6min</th><th style="border: 1px solid #FF6464; padding: 2px;">10min</th><th style="border: 1px solid #FF6464; padding: 2px;">15min</th><th style="border: 1px solid #FF6464; padding: 2px;">20min</th><th style="border: 1px solid #FF6464; padding: 2px;">30min</th><th style="border: 1px solid #FF6464; padding: 2px;">40min</th><th style="border: 1px solid #FF6464; padding: 2px;">50min</th><th style="border: 1px solid #FF6464; padding: 2px;">60min</th><th style="border: 1px solid #FF6464; padding: 2px;">90min</th></tr></thead><tbody>';
+            html += '<div id="tableau-iv" style="margin-bottom: 18px; background: rgba(255,100,100,0.08); padding: 10px; border-radius: 8px; border-left: 4px solid #FF6464;"><h3 style="color: #FF6464; margin-bottom: 10px; font-size: 12px;">📊 Tableau IV - Durée Remontée</h3><div style="font-size: 8px; color: #FFFFFF; margin-bottom: 8px;">Remontée jusqu\'au premier palier + temps interpaliers (minutes)</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #330000;"><th style="border: 1px solid #FF6464; padding: 2px;">Palier</th><th style="border: 1px solid #FF6464; padding: 2px;">6min</th><th style="border: 1px solid #FF6464; padding: 2px;">10min</th><th style="border: 1px solid #FF6464; padding: 2px;">15min</th><th style="border: 1px solid #FF6464; padding: 2px;">20min</th><th style="border: 1px solid #FF6464; padding: 2px;">30min</th><th style="border: 1px solid #FF6464; padding: 2px;">40min</th><th style="border: 1px solid #FF6464; padding: 2px;">50min</th><th style="border: 1px solid #FF6464; padding: 2px;">60min</th><th style="border: 1px solid #FF6464; padding: 2px;">90min</th></tr></thead><tbody>';
             const remData = [['Sans','1','1','1','2','2','3','4','4','5'],['3m','1','1','2','2','3','4','4','5','5'],['6m','2','2','2','3','3','4','4','5','5'],['9m','2','2','2','3','3','4','5','5','6'],['12m','3','3','3','3','4','5','5','6','6'],['15m','3','3','3','4','4','5','5','6','6']];
             for (let row of remData) { html += '<tr style="color: #FF6464;"><td style="border: 1px solid rgba(255,100,100,0.3); padding: 2px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(255,100,100,0.3); padding: 2px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
             html += '</tbody></table></div></div>';
@@ -1033,6 +1202,55 @@
             }
         }
         function stopDrag() { isDraggingSplitter = false; document.body.style.userSelect = 'auto'; }
+        
+        function downloadApp() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'MN90Mobile-DecompDiver.html';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        
+        function showDisclaimer() {
+            const modal = document.getElementById('disclaimer-modal');
+            if (modal) modal.style.display = 'flex';
+        }
+        
+        function closeDisclaimer() {
+            const modal = document.getElementById('disclaimer-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                // Restaurer le scroll du body
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        // Afficher le disclaimer au chargement - TOUJOURS
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('disclaimer-modal');
+            if (modal) {
+                modal.style.display = 'flex !important';
+                modal.style.visibility = 'visible';
+                // Bloquer le scroll du body
+                document.body.style.overflow = 'hidden';
+            }
+        });
+        
+        // S'assurer que le disclaimer est visible au chargement initial
+        window.addEventListener('load', () => {
+            const modal = document.getElementById('disclaimer-modal');
+            if (modal) {
+                modal.style.display = 'flex !important';
+                modal.style.visibility = 'visible';
+                document.body.style.overflow = 'hidden';
+            }
+        });
+        
         window.addEventListener('resize', () => { if (chart1) chart1.resize(); });
         
         document.addEventListener('DOMContentLoaded', () => { 
@@ -1054,10 +1272,72 @@
         });
     </script>
     <style>
+        /* ANIMATIONS AQUATIQUES */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.6; }
+            50% { transform: translateY(-20px) translateX(10px); opacity: 0.8; }
+        }
+        @keyframes bubble-rise {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
+        }
+        @keyframes shark-swim {
+            0% { transform: translateX(-100%) scaleX(1); }
+            50% { transform: translateX(50vw) scaleX(1); }
+            100% { transform: translateX(100vw) scaleX(-1); }
+        }
+        @keyframes crab-walk {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(30px) rotate(-5deg); }
+            50% { transform: translateX(0) rotate(0deg); }
+            75% { transform: translateX(-30px) rotate(5deg); }
+        }
+        
+        .aquatic-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .main-wrapper { z-index: 10; position: relative; }
+        
+        .aquatic-elem {
+            position: absolute;
+            font-size: 2em;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(0,200,255,0.2));
+            animation: bubble-rise linear forwards;
+            pointer-events: none;
+        }
+        
+        .shark {
+            position: absolute;
+            font-size: 1.5em;
+            animation: shark-swim 20s linear infinite;
+            top: 20%;
+        }
+        
+        .crab {
+            position: absolute;
+            font-size: 1.3em;
+            animation: crab-walk 6s ease-in-out infinite;
+            bottom: 15%;
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(180deg, #001a33 0%, #003366 100%); color: #fff; height: 100vh; overflow: hidden; }
         .main-wrapper { height: 100vh; display: flex; flex-direction: column; }
-        .header { background: rgba(0,102,204,0.95); padding: 10px; text-align: center; flex-shrink: 0; }
+        .header { background: rgba(0,102,204,0.95); padding: 10px; text-align: center; flex-shrink: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         .tabs { display: flex; gap: 6px; background: rgba(0,51,102,0.8); padding: 6px; flex-shrink: 0; overflow-x: auto; }
         .tab-btn { padding: 6px 12px; cursor: pointer; border: 2px solid transparent; font-weight: 600; border-radius: 8px; background: rgba(0,153,255,0.2); color: #fff; font-size: 11px; white-space: nowrap; }
         .tab-btn.active { background: rgba(0,153,255,0.5); border-color: #00ffff; }
@@ -1072,7 +1352,7 @@
         #rightPanel { flex: 1; display: flex; flex-direction: column; padding: 8px; min-height: 150px; overflow: hidden; }
         .section { background: rgba(255,255,255,0.1); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); padding: 10px; }
         .section-title { font-size: 12px; color: #00ffff; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
-        .explanation { font-size: 11px; color: #aaa; margin-bottom: 12px; line-height: 1.4; }
+        .explanation { font-size: 11px; color: #FFFFFF; margin-bottom: 12px; line-height: 1.4; }
         .slider-group { margin-bottom: 10px; }
         .slider-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; }
         .slider-label span { color: #00ffff; font-weight: bold; }
@@ -1105,16 +1385,17 @@
 </head>
 <body>
     <div class="main-wrapper">
-        <div class="header">
+        <div class="header" style="position: relative;">
             <h1>🤿 MN90Mobile</h1>
             <div style="font-size: 10px; margin-top: 5px;">
-                <strong>364 LIGNES COMPLÈTES</strong> | Remontée 16 m/min | Tous Paliers (15m, 12m, 9m, 6m, 3m)
+                <strong>Planificateur de Plongee / Calcul d'Autonomie et Tables MN90</strong> - Made with love by <a href="https://github.com/Soaresden" target="_blank" style="color: #00ffff; text-decoration: none;">Soaresden</a> ♥🫧
             </div>
         </div>
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab(0)" style="background: rgba(255,221,136,0.3); border-color: #FFDD88; color: #FFDD88;">📊 Planificateur de Plongée</button>
             <button class="tab-btn" onclick="switchTab(1)">🫁 Autonomie</button>
             <button class="tab-btn" onclick="switchTab(2)">📋 Tables</button>
+            <button onclick="downloadApp()" style="margin-left: auto; background: rgba(0,255,255,0.2); border: 2px solid #00FFFF; color: #00FFFF; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; transition: all 0.3s;" onmouseover="this.style.background='rgba(0,255,255,0.4)'" onmouseout="this.style.background='rgba(0,255,255,0.2)'">⬇️ Télécharger Offline</button>
         </div>
         <div class="content-wrapper">
             <div class="left-panel">
@@ -1135,6 +1416,17 @@
                         <div style="background: rgba(20,20,20,0.8); padding: 10px; border-radius: 6px; margin: 10px 0; border: 2px solid #FFDD88; box-shadow: 0 0 15px rgba(255,221,136,0.2);">
                             <div style="font-size: 10px; color: #FFDD88; font-weight: bold; margin-bottom: 8px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">📊 Résultats 1e Plongée</div>
                             
+                            <!-- LÉGENDE DES PALIERS -->
+                            <div style="background: rgba(0,0,0,0.5); padding: 6px; border-radius: 4px; margin-bottom: 8px; font-size: 8px; border-left: 2px solid #FFDD88; text-align: center;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+                                    <span style="color: #FF99FF; font-weight: bold;">■ P15</span>
+                                    <span style="color: #00DDDD; font-weight: bold;">■ P12</span>
+                                    <span style="color: #00FF88; font-weight: bold;">■ P9</span>
+                                    <span style="color: #FFA500; font-weight: bold;">■ P6</span>
+                                    <span style="color: #00FF99; font-weight: bold;">■ P3</span>
+                                </div>
+                            </div>
+                            
                             <!-- PALIERS SUR UNE SEULE LIGNE -->
                             <div style="background: rgba(180,150,50,0.3); padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 9px; border-left: 2px solid #FFDD88;">
                                 <span style="color: #FFDD88; font-weight: bold;">Paliers:</span> <span id="paliers-line" style="color: #FFFF00; font-weight: bold;">--</span>
@@ -1142,19 +1434,19 @@
                             
                             <!-- TEMPS TOTAL -->
                             <div style="background: rgba(180,150,50,0.25); padding: 6px; border-radius: 4px; margin-bottom: 6px; text-align: center; border-left: 2px solid #FFDD88;">
-                                <div style="color: #aaa; font-size: 8px;">⏱️ TOTAL</div>
+                                <div style="color: #FFFFFF; font-size: 8px;">⏱️ TOTAL</div>
                                 <div style="color: #FFDD88; font-size: 16px; font-weight: bold;" id="total1">-- min</div>
                             </div>
                             
                             <!-- DTR ET GPS EN 2 BLOCS - SUPER VISIBLE -->
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                <div style="background: #003366; padding: 12px; border-radius: 6px; text-align: center; border: 2px solid #00FFFF; box-shadow: 0 0 15px rgba(0,255,255,0.6), inset 0 0 10px rgba(0,255,255,0.2);">
-                                    <div style="color: #00FFFF; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">⏱️ DTR</div>
-                                    <div style="color: #00FFFF; font-size: 20px; font-weight: bold; text-shadow: 0 0 12px #00FFFF, 0 0 25px #0088FF;" id="dtr1">--</div>
+                                <div style="background: #554400; padding: 12px; border-radius: 6px; text-align: center; border: 2px solid #FFDD88; box-shadow: 0 0 15px rgba(255,221,136,0.6), inset 0 0 10px rgba(255,221,136,0.2);">
+                                    <div style="color: #FFFFFF; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">⏱️ DTR</div>
+                                    <div style="color: #FFDD88; font-size: 20px; font-weight: bold; text-shadow: 0 0 12px #FFDD88, 0 0 25px #FF9900;" id="dtr1">--</div>
                                 </div>
-                                <div style="background: #003300; padding: 12px; border-radius: 6px; text-align: center; border: 2px solid #00FF00; box-shadow: 0 0 15px rgba(0,255,0,0.6), inset 0 0 10px rgba(0,255,0,0.2);">
-                                    <div style="color: #00FF00; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">🎯 GPS</div>
-                                    <div style="color: #00FF00; font-size: 20px; font-weight: bold; text-shadow: 0 0 12px #00FF00, 0 0 25px #00FF88;" id="gps1">--</div>
+                                <div style="background: #554400; padding: 12px; border-radius: 6px; text-align: center; border: 2px solid #FFDD88; box-shadow: 0 0 15px rgba(255,221,136,0.6), inset 0 0 10px rgba(255,221,136,0.2);">
+                                    <div style="color: #FFFFFF; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">🎯 GPS</div>
+                                    <div style="color: #FFDD88; font-size: 20px; font-weight: bold; text-shadow: 0 0 12px #FFDD88, 0 0 25px #FF9900;" id="gps1">--</div>
                                 </div>
                             </div>
                             <div id="warning1" class="warning-box" style="margin-top: 6px;"></div>
@@ -1191,20 +1483,31 @@
                                 <div style="background: rgba(20,20,20,0.8); padding: 10px; border-radius: 6px; margin-top: 10px; border: 2px solid #BB88EE; box-shadow: 0 0 15px rgba(187,136,238,0.15);">
                                     <div style="font-size: 10px; color: #BB88EE; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; text-align: center; letter-spacing: 1px;">📊 Résultats 2e Plongée</div>
                                     
+                                    <!-- LÉGENDE DES PALIERS 2E PLONGÉE -->
+                                    <div style="background: rgba(0,0,0,0.5); padding: 6px; border-radius: 4px; margin-bottom: 8px; font-size: 8px; border-left: 2px solid #BB88EE; text-align: center;">
+                                        <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+                                            <span style="color: #FF99FF; font-weight: bold;">■ P15</span>
+                                            <span style="color: #00DDDD; font-weight: bold;">■ P12</span>
+                                            <span style="color: #00FF88; font-weight: bold;">■ P9</span>
+                                            <span style="color: #FFA500; font-weight: bold;">■ P6</span>
+                                            <span style="color: #00FF99; font-weight: bold;">■ P3</span>
+                                        </div>
+                                    </div>
+                                    
                                     <!-- PALIERS 2E PLONGÉE -->
-                                    <div style="background: rgba(0,50,80,0.6); padding: 6px; border-radius: 4px; margin-bottom: 8px; font-size: 9px; border-left: 2px solid #00FFFF;">
-                                        <span style="color: #00FFFF; font-weight: bold;">Paliers:</span> <span id="paliers-line2" style="color: #FFFF00; font-weight: bold;">--</span>
+                                    <div style="background: rgba(100,50,150,0.3); padding: 6px; border-radius: 4px; margin-bottom: 8px; font-size: 9px; border-left: 2px solid #BB88EE;">
+                                        <span style="color: #BB88EE; font-weight: bold;">Paliers:</span> <span id="paliers-line2" style="color: #FFFF00; font-weight: bold;">--</span>
                                     </div>
                                     
                                     <!-- DTR ET GPS 2E PLONGÉE -->
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                        <div style="background: #003366; padding: 8px; border-radius: 6px; text-align: center; border: 2px solid #00FFFF; box-shadow: 0 0 12px rgba(0,255,255,0.5), inset 0 0 8px rgba(0,255,255,0.15);">
-                                            <div style="color: #00FFFF; font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ DTR</div>
-                                            <div style="color: #00FFFF; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #00FFFF, 0 0 20px #0088FF;" id="dtr2">--</div>
+                                        <div style="background: #330044; padding: 8px; border-radius: 6px; text-align: center; border: 2px solid #BB88EE; box-shadow: 0 0 12px rgba(187,136,238,0.5), inset 0 0 8px rgba(187,136,238,0.15);">
+                                            <div style="color: #FFFFFF; font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ DTR</div>
+                                            <div style="color: #EE99FF; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #BB88EE, 0 0 20px #FF99FF;" id="dtr2">--</div>
                                         </div>
-                                        <div style="background: #003300; padding: 8px; border-radius: 6px; text-align: center; border: 2px solid #00FF00; box-shadow: 0 0 12px rgba(0,255,0,0.5), inset 0 0 8px rgba(0,255,0,0.15);">
-                                            <div style="color: #00FF00; font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">🎯 GPS</div>
-                                            <div style="color: #00FF00; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF88;" id="gps2">--</div>
+                                        <div style="background: #330044; padding: 8px; border-radius: 6px; text-align: center; border: 2px solid #BB88EE; box-shadow: 0 0 12px rgba(187,136,238,0.5), inset 0 0 8px rgba(187,136,238,0.15);">
+                                            <div style="color: #FFFFFF; font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">🎯 GPS</div>
+                                            <div style="color: #EE99FF; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #BB88EE, 0 0 20px #FF99FF;" id="gps2">--</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1219,117 +1522,260 @@
                         <div class="explanation">Ajustez les sliders pour la 1ère courbe, puis utilisez +/- pour les autres.</div>
                         
                         <!-- COURBE 1 (SLIDERS) -->
-                        <div style="background: rgba(255,255,0,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #FFFF00; margin-bottom: 10px;">
-                            <div style="color: #FFFF00; font-weight: bold; margin-bottom: 8px; font-size: 11px;">◆ COURBE 1 (Jaune)</div>
+                        <div style="background: rgba(255,221,136,0.12); padding: 10px; border-radius: 8px; border: 2px solid #FFDD88; border-left: 4px solid #FFDD88; margin-bottom: 10px; box-shadow: 0 0 8px rgba(255,221,136,0.2);">
+                            <div style="color: #FFDD88; font-weight: bold; margin-bottom: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">◆ C1 - Courbe Jaune</div>
                             
                             <div class="slider-group">
-                                <div class="slider-label"><span>Profondeur Visée</span><span id="aut1-prof-val">20 m</span></div>
+                                <div class="slider-label"><span style="color: #FFFFFF; font-size: 10px;">Profondeur</span><span id="aut1-prof-val" style="color: #FFDD88; font-weight: bold;">20 m</span></div>
                                 <input type="range" id="aut1-prof" min="6" max="60" value="20" oninput="updateSlider(this); drawAutonomyChart()">
                             </div>
                             
                             <div class="slider-group">
-                                <div class="slider-label"><span>Consommation</span><span id="aut1-conso-val">15 L/min</span></div>
+                                <div class="slider-label"><span style="color: #FFFFFF; font-size: 10px;">Conso. Moy.</span><span id="aut1-conso-val" style="color: #FFDD88; font-weight: bold;">15 L/min</span></div>
                                 <input type="range" id="aut1-conso" min="5" max="40" value="15" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
                             </div>
                             
                             <div class="slider-group">
-                                <div class="slider-label"><span>Volume Bouteille</span><span id="aut1-vol-val">12 L</span></div>
+                                <div class="slider-label"><span style="color: #FFFFFF; font-size: 10px;">Volume</span><span id="aut1-vol-val" style="color: #FFDD88; font-weight: bold;">12 L</span></div>
                                 <input type="range" id="aut1-vol" min="3" max="20" value="12" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
                             </div>
                             
                             <div class="slider-group">
-                                <div class="slider-label"><span>Pression Initiale</span><span id="aut1-press-val">200 bar</span></div>
+                                <div class="slider-label"><span style="color: #FFFFFF; font-size: 10px;">Press. Initiale</span><span id="aut1-press-val" style="color: #FFDD88; font-weight: bold;">200 bar</span></div>
                                 <input type="range" id="aut1-press" min="100" max="300" value="200" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
                             </div>
                             
                             <div class="slider-group">
-                                <div class="slider-label"><span>Pression de Securité</span><span id="aut1-safety-val">50 bar</span></div>
+                                <div class="slider-label"><span style="color: #FFFFFF; font-size: 10px;">Press. Sécurité</span><span id="aut1-safety-val" style="color: #FFDD88; font-weight: bold;">50 bar</span></div>
                                 <input type="range" id="aut1-safety" min="20" max="100" value="50" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
                             </div>
                             
-                            <div style="background: rgba(255,255,0,0.2); padding: 8px; border-radius: 6px; margin-top: 8px; font-size: 10px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                    <div>
-                                        <div style="color: #FFFF00; font-weight: bold;">⏱️ Temps Max</div>
-                                        <div style="color: #FFFF00; font-size: 14px; font-weight: bold;">à <span id="aut1-prof-display">20</span>m</div>
-                                        <div style="color: #FFFF00; font-size: 16px; font-weight: bold;" id="aut1-maxtime">--:--</div>
+                            <div style="background: rgba(255,255,0,0.25); padding: 10px; border-radius: 6px; margin-top: 8px; border: 2px solid #FFFF00; box-shadow: 0 0 12px rgba(255,255,0,0.3);">
+                                <div style="display: flex; justify-content: space-around; align-items: center;">
+                                    <div style="text-align: center;">
+                                        <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ Max Fond</div>
+                                        <div style="color: #FFFF00; font-weight: bold; font-size: 16px;" id="aut1-maxtime">--:--:--</div>
                                     </div>
-                                    <div>
-                                        <div style="color: #FFFF00; font-weight: bold;">🕐 Temps Total</div>
-                                        <div style="color: #FFFF00; font-size: 12px;">Plongée + Paliers</div>
-                                        <div style="color: #FFFF00; font-size: 16px; font-weight: bold;" id="aut1-totaltime">--:--</div>
+                                    <div style="width: 2px; height: 40px; background: rgba(255,255,0,0.3);"></div>
+                                    <div style="text-align: center;">
+                                        <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">📊 Durée Totale</div>
+                                        <div style="color: #FFFF00; font-weight: bold; font-size: 16px;" id="aut1-totaltime">--:--:--</div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- CALCUL AUTONOMIE -->
+                            <div style="background: rgba(0,0,0,0.2); padding: 6px; border-radius: 4px; margin-top: 8px; font-family: 'Courier New', monospace; font-size: 9px; color: #FFFF00; line-height: 1.6;">
+                                <div><span id="aut1-calc-step1" style="color: #00FFFF;">150</span> bar × <span id="aut1-calc-step1b" style="color: #00FFFF;">12</span> L = <span id="aut1-calc-result1">1800</span> L</div>
+                                <div><span id="aut1-calc-step2">1800</span> L ÷ <span id="aut1-calc-step2b">15</span> L/min = <span id="aut1-calc-result2" style="color: #00FF99;">120</span> min</div>
                             </div>
                         </div>
                         
                         <!-- COURBES 2, 3, 4 (BOUTONS +/-) -->
                         <div id="aut-other-curves" style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                             <!-- Courbe 2 -->
-                            <div style="background: rgba(0,255,0,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #00FF00;">
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+                            <div style="background: rgba(0,255,0,0.12); padding: 10px; border-radius: 8px; border: 2px solid #00FF00; border-left: 4px solid #00FF00; box-shadow: 0 0 8px rgba(0,255,0,0.2);">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
                                     <input type="checkbox" id="aut2-enable" onchange="toggleCurveControls(2); drawAutonomyChart()" style="width: 16px; height: 16px;">
-                                    <span style="color: #00FF00; font-weight: bold; font-size: 11px;">◆ COURBE 2 (Vert)</span>
+                                    <span style="color: #00FF00; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">◆ C2 - Courbe Verte</span>
                                 </label>
-                                <div id="aut2-controls" style="display: none; font-size: 9px;">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 8px;">
-                                        <button onclick="modifyParam('aut2-prof', -1)">Prof −</button>
-                                        <div style="text-align: center; color: #00FF00;"><span id="aut2-prof-val">20</span>m</div>
-                                        <button onclick="modifyParam('aut2-prof', 1)">Prof +</button>
+                                <div id="aut2-controls" style="display: none; font-size: 9px; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div style="background: rgba(0,255,0,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FF00;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">PROFONDEUR</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut2-prof', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FF00; font-weight: bold; min-width: 32px;"><span id="aut2-prof-val">20</span>m</div>
+                                            <button onclick="modifyParam('aut2-prof', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
-                                        <button onclick="modifyParam('aut2-conso', -1)">Conso −</button>
-                                        <div style="text-align: center; color: #00FF00;"><span id="aut2-conso-val">15</span>L</div>
-                                        <button onclick="modifyParam('aut2-conso', 1)">Conso +</button>
+                                    <div style="background: rgba(0,255,0,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FF00;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">CONSOMMATION</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut2-conso', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FF00; font-weight: bold; min-width: 32px;"><span id="aut2-conso-val">15</span>L</div>
+                                            <button onclick="modifyParam('aut2-conso', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
                                     </div>
-                                    <div style="background: rgba(0,255,0,0.2); padding: 6px; border-radius: 4px; margin-top: 6px; text-align: center; color: #00FF00; font-weight: bold;">
-                                        Temps: <span id="aut2-maxtime">--:--</span>
+                                    <div style="background: rgba(0,255,0,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FF00;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">VOLUME</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut2-vol', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FF00; font-weight: bold; min-width: 32px;"><span id="aut2-vol-val">12</span>L</div>
+                                            <button onclick="modifyParam('aut2-vol', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(0,255,0,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FF00;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">PRESSION</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut2-press', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FF00; font-weight: bold; min-width: 32px;"><span id="aut2-press-val">200</span>b</div>
+                                            <button onclick="modifyParam('aut2-press', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(0,255,0,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FF00; grid-column: 1 / -1;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">SÉCURITÉ</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut2-safety', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FF00; font-weight: bold; min-width: 32px;"><span id="aut2-safety-val">50</span>b</div>
+                                            <button onclick="modifyParam('aut2-safety', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(0,255,0,0.25); padding: 10px; border-radius: 6px; margin-top: 4px; border: 2px solid #00FF00; box-shadow: 0 0 12px rgba(0,255,0,0.3); grid-column: 1 / -1;">
+                                        <div style="display: flex; justify-content: space-around; align-items: center;">
+                                            <div style="text-align: center;">
+                                                <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ Max Fond</div>
+                                                <div style="color: #00FF00; font-weight: bold; font-size: 16px;" id="aut2-maxtime">--:--:--</div>
+                                            </div>
+                                            <div style="width: 2px; height: 40px; background: rgba(0,255,0,0.3);"></div>
+                                            <div style="text-align: center;">
+                                                <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">📊 Durée Totale</div>
+                                                <div style="color: #00FF00; font-weight: bold; font-size: 16px;" id="aut2-totaltime">--:--:--</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- CALCUL AUTONOMIE C2 -->
+                                    <div style="background: rgba(0,0,0,0.2); padding: 6px; border-radius: 4px; margin-top: 4px; font-family: 'Courier New', monospace; font-size: 9px; color: #00FF00; line-height: 1.6; grid-column: 1 / -1;">
+                                        <div><span id="aut2-calc-step1" style="color: #00FFFF;">150</span> bar × <span id="aut2-calc-step1b" style="color: #00FFFF;">12</span> L = <span id="aut2-calc-result1">1800</span> L</div>
+                                        <div><span id="aut2-calc-step2">1800</span> L ÷ <span id="aut2-calc-step2b">15</span> L/min = <span id="aut2-calc-result2" style="color: #00FF99;">120</span> min</div>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Courbe 3 -->
-                            <div style="background: rgba(255,153,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #FF99FF;">
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+                            <div style="background: rgba(255,153,255,0.12); padding: 10px; border-radius: 8px; border: 2px solid #FF99FF; border-left: 4px solid #FF99FF; box-shadow: 0 0 8px rgba(255,153,255,0.2);">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
                                     <input type="checkbox" id="aut3-enable" onchange="toggleCurveControls(3); drawAutonomyChart()" style="width: 16px; height: 16px;">
-                                    <span style="color: #FF99FF; font-weight: bold; font-size: 11px;">◆ COURBE 3 (Magenta)</span>
+                                    <span style="color: #FF99FF; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">◆ C3 - Courbe Magenta</span>
                                 </label>
-                                <div id="aut3-controls" style="display: none; font-size: 9px;">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 8px;">
-                                        <button onclick="modifyParam('aut3-prof', -1)">Prof −</button>
-                                        <div style="text-align: center; color: #FF99FF;"><span id="aut3-prof-val">20</span>m</div>
-                                        <button onclick="modifyParam('aut3-prof', 1)">Prof +</button>
+                                <div id="aut3-controls" style="display: none; font-size: 9px; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div style="background: rgba(255,153,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #FF99FF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">PROFONDEUR</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut3-prof', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #FF99FF; font-weight: bold; min-width: 32px;"><span id="aut3-prof-val">20</span>m</div>
+                                            <button onclick="modifyParam('aut3-prof', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
-                                        <button onclick="modifyParam('aut3-conso', -1)">Conso −</button>
-                                        <div style="text-align: center; color: #FF99FF;"><span id="aut3-conso-val">15</span>L</div>
-                                        <button onclick="modifyParam('aut3-conso', 1)">Conso +</button>
+                                    <div style="background: rgba(255,153,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #FF99FF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">CONSOMMATION</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut3-conso', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #FF99FF; font-weight: bold; min-width: 32px;"><span id="aut3-conso-val">15</span>L</div>
+                                            <button onclick="modifyParam('aut3-conso', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
                                     </div>
-                                    <div style="background: rgba(255,153,255,0.2); padding: 6px; border-radius: 4px; margin-top: 6px; text-align: center; color: #FF99FF; font-weight: bold;">
-                                        Temps: <span id="aut3-maxtime">--:--</span>
+                                    <div style="background: rgba(255,153,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #FF99FF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">VOLUME</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut3-vol', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #FF99FF; font-weight: bold; min-width: 32px;"><span id="aut3-vol-val">12</span>L</div>
+                                            <button onclick="modifyParam('aut3-vol', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(255,153,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #FF99FF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">PRESSION</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut3-press', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #FF99FF; font-weight: bold; min-width: 32px;"><span id="aut3-press-val">200</span>b</div>
+                                            <button onclick="modifyParam('aut3-press', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(255,153,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #FF99FF; grid-column: 1 / -1;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">SÉCURITÉ</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut3-safety', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #FF99FF; font-weight: bold; min-width: 32px;"><span id="aut3-safety-val">50</span>b</div>
+                                            <button onclick="modifyParam('aut3-safety', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(255,153,255,0.25); padding: 10px; border-radius: 6px; margin-top: 4px; border: 2px solid #FF99FF; box-shadow: 0 0 12px rgba(255,153,255,0.3); grid-column: 1 / -1;">
+                                        <div style="display: flex; justify-content: space-around; align-items: center;">
+                                            <div style="text-align: center;">
+                                                <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ Max Fond</div>
+                                                <div style="color: #FF99FF; font-weight: bold; font-size: 16px;" id="aut3-maxtime">--:--:--</div>
+                                            </div>
+                                            <div style="width: 2px; height: 40px; background: rgba(255,153,255,0.3);"></div>
+                                            <div style="text-align: center;">
+                                                <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">📊 Durée Totale</div>
+                                                <div style="color: #FF99FF; font-weight: bold; font-size: 16px;" id="aut3-totaltime">--:--:--</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- CALCUL AUTONOMIE C3 -->
+                                    <div style="background: rgba(0,0,0,0.2); padding: 6px; border-radius: 4px; margin-top: 4px; font-family: 'Courier New', monospace; font-size: 9px; color: #FF99FF; line-height: 1.6; grid-column: 1 / -1;">
+                                        <div><span id="aut3-calc-step1" style="color: #00FFFF;">150</span> bar × <span id="aut3-calc-step1b" style="color: #00FFFF;">12</span> L = <span id="aut3-calc-result1">1800</span> L</div>
+                                        <div><span id="aut3-calc-step2">1800</span> L ÷ <span id="aut3-calc-step2b">15</span> L/min = <span id="aut3-calc-result2" style="color: #00FF99;">120</span> min</div>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Courbe 4 -->
-                            <div style="background: rgba(0,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #00FFFF;">
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+                            <div style="background: rgba(0,255,255,0.12); padding: 10px; border-radius: 8px; border: 2px solid #00FFFF; border-left: 4px solid #00FFFF; box-shadow: 0 0 8px rgba(0,255,255,0.2);">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
                                     <input type="checkbox" id="aut4-enable" onchange="toggleCurveControls(4); drawAutonomyChart()" style="width: 16px; height: 16px;">
-                                    <span style="color: #00FFFF; font-weight: bold; font-size: 11px;">◆ COURBE 4 (Cyan)</span>
+                                    <span style="color: #00FFFF; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">◆ C4 - Courbe Cyan</span>
                                 </label>
-                                <div id="aut4-controls" style="display: none; font-size: 9px;">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 8px;">
-                                        <button onclick="modifyParam('aut4-prof', -1)">Prof −</button>
-                                        <div style="text-align: center; color: #00FFFF;"><span id="aut4-prof-val">20</span>m</div>
-                                        <button onclick="modifyParam('aut4-prof', 1)">Prof +</button>
+                                <div id="aut4-controls" style="display: none; font-size: 9px; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div style="background: rgba(0,255,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FFFF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">PROFONDEUR</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut4-prof', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FFFF; font-weight: bold; min-width: 32px;"><span id="aut4-prof-val">20</span>m</div>
+                                            <button onclick="modifyParam('aut4-prof', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
-                                        <button onclick="modifyParam('aut4-conso', -1)">Conso −</button>
-                                        <div style="text-align: center; color: #00FFFF;"><span id="aut4-conso-val">15</span>L</div>
-                                        <button onclick="modifyParam('aut4-conso', 1)">Conso +</button>
+                                    <div style="background: rgba(0,255,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FFFF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">CONSOMMATION</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut4-conso', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FFFF; font-weight: bold; min-width: 32px;"><span id="aut4-conso-val">15</span>L</div>
+                                            <button onclick="modifyParam('aut4-conso', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
                                     </div>
-                                    <div style="background: rgba(0,255,255,0.2); padding: 6px; border-radius: 4px; margin-top: 6px; text-align: center; color: #00FFFF; font-weight: bold;">
-                                        Temps: <span id="aut4-maxtime">--:--</span>
+                                    <div style="background: rgba(0,255,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FFFF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">VOLUME</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut4-vol', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FFFF; font-weight: bold; min-width: 32px;"><span id="aut4-vol-val">12</span>L</div>
+                                            <button onclick="modifyParam('aut4-vol', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(0,255,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FFFF;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">PRESSION</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut4-press', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FFFF; font-weight: bold; min-width: 32px;"><span id="aut4-press-val">200</span>b</div>
+                                            <button onclick="modifyParam('aut4-press', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(0,255,255,0.08); padding: 8px; border-radius: 6px; border-left: 3px solid #00FFFF; grid-column: 1 / -1;">
+                                        <div style="color: #AAAAAA; font-size: 8px; margin-bottom: 4px;">SÉCURITÉ</div>
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <button onclick="modifyParam('aut4-safety', -1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">−</button>
+                                            <div style="text-align: center; color: #00FFFF; font-weight: bold; min-width: 32px;"><span id="aut4-safety-val">50</span>b</div>
+                                            <button onclick="modifyParam('aut4-safety', 1)" style="flex: 0 0 24px; padding: 4px 0; font-size: 10px;">+</button>
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(0,255,255,0.25); padding: 10px; border-radius: 6px; margin-top: 4px; border: 2px solid #00FFFF; box-shadow: 0 0 12px rgba(0,255,255,0.3); grid-column: 1 / -1;">
+                                        <div style="display: flex; justify-content: space-around; align-items: center;">
+                                            <div style="text-align: center;">
+                                                <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ Max Fond</div>
+                                                <div style="color: #00FFFF; font-weight: bold; font-size: 16px;" id="aut4-maxtime">--:--:--</div>
+                                            </div>
+                                            <div style="width: 2px; height: 40px; background: rgba(0,255,255,0.3);"></div>
+                                            <div style="text-align: center;">
+                                                <div style="color: #AAAAAA; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">📊 Durée Totale</div>
+                                                <div style="color: #00FFFF; font-weight: bold; font-size: 16px;" id="aut4-totaltime">--:--:--</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- CALCUL AUTONOMIE C4 -->
+                                    <div style="background: rgba(0,0,0,0.2); padding: 6px; border-radius: 4px; margin-top: 4px; font-family: 'Courier New', monospace; font-size: 9px; color: #00FFFF; line-height: 1.6; grid-column: 1 / -1;">
+                                        <div><span id="aut4-calc-step1" style="color: #00FFFF;">150</span> bar × <span id="aut4-calc-step1b" style="color: #00FFFF;">12</span> L = <span id="aut4-calc-result1">1800</span> L</div>
+                                        <div><span id="aut4-calc-step2">1800</span> L ÷ <span id="aut4-calc-step2b">15</span> L/min = <span id="aut4-calc-result2" style="color: #00FF99;">120</span> min</div>
                                     </div>
                                 </div>
                             </div>
@@ -1341,14 +1787,142 @@
             </div>
             <div class="splitter" id="splitter"></div>
             <div class="right-panel" id="rightPanel">
-                <div class="graph-container">
-                    <div style="margin-bottom: 8px;">
-                        <div style="color: #00ffff; font-weight: bold; font-size: 12px;" id="graph-title">Profil de Plongée</div>
+                <div class="graph-container" style="padding-top: 15px;">
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; flex-wrap: wrap;">
+                        <div>
+                            <div style="color: #00ffff; font-weight: bold; font-size: 12px;" id="graph-title">Profil de Plongée</div>
+                            <div style="font-size: 9px; color: #AAAAAA; margin-top: 3px;">
+                                🟠 P6 | 🟢 P3 | 🟣 P15 | 🔵 P12 | 🟡 P9
+                            </div>
+                        </div>
+                        <div id="autonomy-legend" style="font-size: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;"></div>
                     </div>
                     <canvas id="profileCanvas"></canvas>
                 </div>
             </div>
         </div>
     </div>
-</body>
-</html>
+    
+    <!-- MODAL DISCLAIMER -->
+    <div id="disclaimer-modal" style="display: flex !important; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 99999; justify-content: center; align-items: center; padding: 10px;">
+        <div style="background: linear-gradient(135deg, #001a33 0%, #003366 100%); border: 3px solid #00FFFF; border-radius: 12px; padding: 25px; max-width: 500px; width: 100%; max-height: 95vh; overflow-y: auto; box-shadow: 0 0 60px rgba(0,255,255,0.6);">
+            <div style="text-align: center; font-size: 40px; margin-bottom: 15px;">🤿❤️⚠️</div>
+            
+            <h2 style="color: #FFDD88; margin-bottom: 15px; text-align: center; font-size: 18px;">PLONGÉE RESPONSABLE</h2>
+            
+            <div style="background: rgba(0,255,255,0.1); border-left: 4px solid #00FFFF; padding: 12px; margin-bottom: 15px; border-radius: 4px; font-size: 12px; line-height: 1.6;">
+                <p style="color: #FFF; margin-bottom: 10px;">
+                    📚 <strong>Source:</strong> Tables MN90-FFESSM (Fédération Française d'Études et de Sports Sous-Marins)
+                </p>
+                <p style="color: #FFF; margin-bottom: 10px;">
+                    ✅ <strong>Responsable:</strong> Directeur de Plongée uniquement
+                </p>
+                <p style="color: #FFF; margin-bottom: 10px;">
+                    🏊 <strong>Conditions:</strong> Bonne santé, certification, respect des consignes
+                </p>
+                <p style="color: #FF6B6B; font-weight: bold;">
+                    ⚠️ Les accidents peuvent être graves ou mortels
+                </p>
+            </div>
+            
+            <div style="background: rgba(0,255,0,0.1); border-left: 4px solid #00FF00; padding: 12px; border-radius: 4px; margin-bottom: 15px; text-align: center;">
+                <p style="color: #00FF99; font-weight: bold; font-size: 13px; line-height: 1.6;">
+                    🌊 Prenez soin de vous<br>et des autres plongeurs 🫂<br><strong>Plongez en sécurité ! 🤿</strong>
+                </p>
+            </div>
+            
+            <div style="text-align: center; color: #00FFFF; font-style: italic; font-size: 11px; margin-bottom: 15px;">
+                — Créé par Denis S. 💙
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="closeDisclaimer()" style="background: linear-gradient(135deg, #00FFFF, #00DDDD); color: #001a33; border: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition: all 0.3s; box-shadow: 0 0 15px rgba(0,255,255,0.4); flex: 1; min-width: 120px;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    ✅ Je Plonge Responsable ❤️
+                </button>
+                <button onclick="window.location.href='https://www.ffessm.fr'" style="background: rgba(0,255,255,0.1); color: #00FFFF; border: 2px solid #00FFFF; padding: 12px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition: all 0.3s; flex: 1; min-width: 100px;" onmouseover="this.style.background='rgba(0,255,255,0.2)'" onmouseout="this.style.background='rgba(0,255,255,0.1)'">
+                    📚 FFESSM
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ANIMATIONS AQUATIQUES -->
+    <div class="aquatic-background" id="aquatic-bg"></div>
+    
+    <script>
+        // Générer des bulles aléatoires - LIGHT VERSION
+        function createBubbles() {
+            const container = document.getElementById('aquatic-bg');
+            if (!container) return;
+            const bubbleCount = 5;  // Réduit de 15 à 5
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                const size = (Math.random() * 15 + 5);
+                const left = (Math.random() * 100);
+                const delay = (Math.random() * 5);
+                const duration = (Math.random() * 8 + 12);
+                
+                bubble.style.width = size + 'px';
+                bubble.style.height = size + 'px';
+                bubble.style.left = left + '%';
+                bubble.style.top = '100vh';
+                bubble.style.animationDelay = delay + 's';
+                bubble.style.animationDuration = duration + 's';
+                bubble.style.opacity = '0.5';
+                
+                container.appendChild(bubble);
+                
+                setTimeout(() => {
+                    bubble.remove();
+                }, duration * 1000);
+            }
+        }
+        
+        // Créer une seule fois les bulles au chargement
+        createBubbles();
+        
+        // Créer les animaux - LIGHT VERSION
+        function createAnimals() {
+            const container = document.getElementById('aquatic-bg');
+            if (!container) return;
+            
+            // Un seul requin
+            const shark = document.createElement('div');
+            shark.className = 'shark';
+            shark.innerHTML = '🦈';
+            shark.style.top = (Math.random() * 30) + '%';
+            shark.style.left = '-10%';
+            shark.style.opacity = '0.3';
+            shark.style.fontSize = '1.2em';
+            container.appendChild(shark);
+            
+            // 3 poissons max au lieu de 5
+            const fishes = ['🐠', '🐟', '🦑'];
+            for (let i = 0; i < 3; i++) {
+                const fish = document.createElement('div');
+                fish.className = 'aquatic-elem';
+                fish.innerHTML = fishes[i];
+                fish.style.left = (Math.random() * 100) + '%';
+                fish.style.top = (Math.random() * 80) + '%';
+                fish.style.animationDuration = (Math.random() * 15 + 12) + 's';
+                fish.style.animationDelay = (Math.random() * 5) + 's';
+                fish.style.opacity = '0.4';
+                fish.style.fontSize = '1em';
+                container.appendChild(fish);
+            }
+            
+            // Un seul crabe
+            const crabs = document.createElement('div');
+            crabs.className = 'crab';
+            crabs.innerHTML = '🦀';
+            crabs.style.left = (Math.random() * 80 + 10) + '%';
+            crabs.style.opacity = '0.3';
+            crabs.style.fontSize = '1em';
+            container.appendChild(crabs);
+        }
+        
+        // Initialiser les animations
+        createAnimals();
+    </script>
