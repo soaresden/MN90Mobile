@@ -5,1278 +5,987 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#001a33">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MN90Mobile">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22MN90Mobile%22,%22short_name%22:%22MN90%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23001a33%22,%22theme_color%22:%22%23001a33%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23001a33' width='192' height='192'/><text x='96' y='120' font-size='100' text-anchor='middle' fill='%2300ffff' font-weight='bold'>🤿</text></svg>%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
-    <title>🤿 MN90Mobile</title>
+    <title>🤿 MN90Mobile - 364 LIGNES</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(180deg, #001a33 0%, #003366 50%, #004d99 100%);
-            min-height: 100vh;
-            color: #fff;
-            overflow: hidden;
-        }
-
-        .main-wrapper {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            background: linear-gradient(135deg, rgba(0, 102, 204, 0.95), rgba(0, 153, 255, 0.95));
-            padding: 8px 10px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            z-index: 100;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .header h1 { 
-            font-size: 18px; 
-            margin-bottom: 3px; 
-        }
-
-        .header-footer {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-top: 4px;
-            font-weight: 500;
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .header-footer a, .header-footer button {
-            color: #00ffff;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 10px;
-            padding: 0;
-            white-space: nowrap;
-        }
-
-        .header-footer a:hover, .header-footer button:hover {
-            color: #ffffff;
-            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
-        }
-
-        .divider {
-            width: 1px;
-            height: 15px;
-            background: rgba(0, 255, 255, 0.3);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 6px;
-            background: rgba(0, 51, 102, 0.8);
-            padding: 6px;
-            overflow-x: auto;
-            flex-shrink: 0;
-        }
-
-        .tab-btn {
-            padding: 6px 12px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            font-weight: 600;
-            border-radius: 8px;
-            background: rgba(0, 153, 255, 0.2);
-            color: #fff;
-            font-size: 11px;
-            white-space: nowrap;
-        }
-
-        .tab-btn.active {
-            background: rgba(0, 153, 255, 0.5);
-            border-color: #00ffff;
-        }
-
-        .content-wrapper {
-            display: flex;
-            flex: 1;
-            gap: 0;
-            padding: 0;
-            position: relative;
-            flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        .left-panel {
-            flex: 1 1 auto;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding: 8px;
-            min-width: 100%;
-            min-height: 100px;
-        }
-
-        .splitter {
-            width: 100%;
-            height: 8px;
-            background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.6), rgba(0,255,255,0.3));
-            cursor: row-resize;
-            border-top: 2px solid rgba(0,255,255,0.5);
-            border-bottom: 2px solid rgba(0,255,255,0.5);
-            transition: background 0.2s;
-            flex-shrink: 0;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 10;
-            touch-action: none;
-        }
-
-        .splitter::after {
-            content: '═══';
-            color: rgba(0,255,255,0.8);
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .splitter:hover {
-            background: linear-gradient(180deg, rgba(0,255,255,0.5), rgba(0,255,255,0.9), rgba(0,255,255,0.5));
-        }
-
-        .right-panel {
-            flex: 1 0 150px;
-            display: flex;
-            flex-direction: column;
-            padding: 8px;
-            min-height: 150px;
-            width: 100%;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        /* RESPONSIVE DESKTOP */
-        @media (min-width: 1024px) {
-            .content-wrapper {
-                flex-direction: row;
-                padding: 8px;
-            }
-
-            .left-panel {
-                flex: 0 0 35%;
-                padding-right: 0;
-                padding: 0 8px 8px 8px;
-                min-width: 250px;
-                min-height: auto;
-                max-height: none;
-            }
-
-            .splitter {
-                width: 6px;
-                height: auto;
-                background: linear-gradient(90deg, rgba(0,255,255,0.3), rgba(0,255,255,0.6), rgba(0,255,255,0.3));
-                cursor: col-resize;
-                border-left: 2px solid rgba(0,255,255,0.5);
-                border-right: 2px solid rgba(0,255,255,0.5);
-                border-top: none;
-                border-bottom: none;
-            }
-
-            .splitter::after {
-                content: '║║║';
-                font-size: 12px;
-            }
-
-            .right-panel {
-                flex: 1;
-                padding-left: 0;
-                padding: 0 8px 8px 8px;
-                min-height: auto;
-                height: auto;
-                overflow: hidden;
-            }
-        }
-
-        .section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px;
-        }
-
-        .section-title {
-            font-size: 12px;
-            color: #00ffff;
-            font-weight: bold;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .paliers-row {
-            display: flex;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .palier-box {
-            flex: 1;
-        }
-
-        .palier-box .result-box {
-            margin: 0;
-        }
-
-        /* RESPONSIVE MOBILE */
-        @media (max-width: 1023px) {
-            .left-panel {
-                flex: 1 1 auto;
-                min-height: 80px;
-                overflow-y: auto;
-            }
-
-            .right-panel {
-                flex: 1 0 150px;
-                height: auto;
-                min-height: 150px;
-                overflow-y: auto;
-            }
-
-            .header h1 {
-                font-size: 16px;
-            }
-
-            .tab-btn {
-                padding: 5px 10px;
-                font-size: 10px;
-            }
-
-            .section {
-                padding: 8px;
-                margin-bottom: 4px;
-            }
-
-            .result-box {
-                padding: 6px;
-                margin: 3px 0;
-                font-size: 10px;
-            }
-
-            .result-value {
-                font-size: 14px;
-                margin-top: 2px;
-            }
-
-            .slider-label {
-                font-size: 9px;
-                margin-bottom: 2px;
-            }
-
-            .graph-container {
-                border-radius: 8px;
-                padding: 6px;
-                min-height: 130px;
-            }
-
-            .graph-explanation {
-                font-size: 9px;
-                margin-top: 4px;
-                padding: 6px;
-            }
-
-            .legend {
-                gap: 6px;
-                font-size: 8px;
-                margin-top: 4px;
-            }
-
-            .info-box {
-                padding: 6px;
-                font-size: 9px;
-                margin-top: 4px;
-            }
-        }
-
-        .slider-group {
-            margin-bottom: 10px;
-        }
-
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            margin-bottom: 4px;
-        }
-
-        .slider-label span {
-            color: #00ffff;
-            font-weight: bold;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.2);
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #00ffff;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #00ffff;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            margin-right: 8px;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 12px;
-        }
-
-        .result-box {
-            background: rgba(0, 200, 255, 0.15);
-            padding: 8px;
-            border-radius: 8px;
-            border-left: 4px solid #00ffff;
-            margin: 4px 0;
-            font-size: 11px;
-        }
-
-        .result-label {
-            color: #aaa;
-            font-size: 9px;
-        }
-
-        .result-value {
-            color: #00ffff;
-            font-size: 16px;
-            font-weight: bold;
-            margin-top: 3px;
-        }
-
-        .graph-container {
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #00ffff;
-            border-radius: 12px;
-            padding: 10px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-            min-height: 0;
-        }
-
-        #graph-title {
-            color: #00ffff;
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 4px;
-            flex-shrink: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        @media (max-width: 1023px) {
-            #graph-title {
-                font-size: 11px;
-                margin-bottom: 2px;
-            }
-        }
-
-        @media (max-width: 1023px) {
-            .graph-container {
-                border-radius: 8px;
-                padding: 6px;
-                min-height: 120px;
-                width: 100%;
-                height: 100%;
-            }
-        }
-
-        #profileCanvas {
-            flex: 1;
-            min-height: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .graph-explanation {
-            font-size: 10px;
-            color: #00ffff;
-            margin-top: 6px;
-            padding: 6px;
-            background: rgba(0, 255, 255, 0.1);
-            border-radius: 6px;
-            line-height: 1.4;
-            flex-shrink: 0;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        .graph-explanation.duo {
-            max-height: none;
-            overflow: visible;
-        }
-
-        .legend {
-            display: flex;
-            gap: 12px;
-            font-size: 9px;
-            margin-top: 6px;
-            flex-wrap: wrap;
-            flex-shrink: 0;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 1023px) {
-            .graph-explanation {
-                font-size: 9px;
-                margin-top: 4px;
-                padding: 4px;
-                max-height: 60px;
-            }
-
-            .legend {
-                gap: 8px;
-                font-size: 8px;
-                margin-top: 4px;
-            }
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
-            overflow-y: auto;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, rgba(0, 51, 102, 0.95), rgba(0, 102, 204, 0.95));
-            margin: 20px;
-            padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #00ffff;
-            max-width: 1600px;
-            margin-left: auto;
-            margin-right: auto;
-            overflow-x: auto;
-            overflow-y: auto;
-        }
-
-        @media (max-width: 768px) {
-            .modal-content {
-                margin: 10px;
-                padding: 10px;
-                max-width: calc(100vw - 20px);
-                max-height: calc(100vh - 100px);
-                overflow: auto;
-            }
-
-            .tables-grid {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-        }
-
-        .close {
-            color: #00ffff;
-            float: right;
-            font-size: 28px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .close:hover {
-            color: #fff;
-        }
-
-        .modal h2 {
-            color: #00ffff;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        .tables-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
-            gap: 30px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 8px;
-        }
-
-        table caption {
-            color: #00ffff;
-            font-weight: bold;
-            margin-bottom: 8px;
-            text-align: left;
-            font-size: 10px;
-        }
-
-        table th, table td {
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            padding: 2px 3px;
-            text-align: center;
-        }
-
-        table th {
-            background: rgba(0, 153, 255, 0.3);
-            color: #00ffff;
-            font-weight: bold;
-        }
-
-        table tr:nth-child(even) {
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        /* ZOOM MOBILE TABLES */
-        @media (max-width: 768px) {
-            table {
-                font-size: 10px;
-                transform: scale(1.2);
-                transform-origin: left top;
-                margin-bottom: 30px;
-            }
-
-            table caption {
-                font-size: 11px;
-            }
-
-            table th, table td {
-                padding: 3px 4px;
-            }
-        }
-
-        button {
-            padding: 8px 12px;
-            background: rgba(0, 200, 255, 0.3);
-            border: 2px solid #00ccff;
-            border-radius: 6px;
-            color: #00ffff;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 600;
-            margin: 4px 0;
-            width: 100%;
-        }
-
-        button:hover {
-            background: rgba(0, 200, 255, 0.5);
-        }
-
-        .info-box {
-            background: rgba(255, 200, 0, 0.1);
-            border-left: 4px solid #FFC107;
-            padding: 8px;
-            margin-top: 8px;
-            font-size: 10px;
-            border-radius: 4px;
-            line-height: 1.4;
-        }
-
-        /* ANIMATIONS FOND MARIN */
-        @keyframes bubble-rise {
-            0% {
-                bottom: -10px;
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                bottom: 100vh;
-                opacity: 0;
-            }
-        }
-
-        @keyframes fish-swim {
-            0% {
-                left: -50px;
-                transform: scaleX(-1);
-            }
-            50% {
-                left: 50%;
-            }
-            100% {
-                left: 100vw;
-                transform: scaleX(-1);
-            }
-        }
-
-        @keyframes fish-swim-reverse {
-            0% {
-                right: -50px;
-                transform: scaleX(1);
-            }
-            50% {
-                right: 50%;
-            }
-            100% {
-                right: 100vw;
-                transform: scaleX(1);
-            }
-        }
-
-        @keyframes sway {
-            0%, 100% {
-                transform: translateX(0);
-            }
-            50% {
-                transform: translateX(10px);
-            }
-        }
-
-        .underwater-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .bubble {
-            position: absolute;
-            background: radial-gradient(circle at 30% 30%, rgba(100, 200, 255, 0.8), rgba(0, 150, 255, 0.3));
-            border-radius: 50%;
-            opacity: 0.6;
-            animation: bubble-rise linear infinite;
-        }
-
-        .bubble.small {
-            width: 5px;
-            height: 5px;
-            animation-duration: 4s;
-        }
-
-        .bubble.medium {
-            width: 10px;
-            height: 10px;
-            animation-duration: 5s;
-        }
-
-        .bubble.large {
-            width: 15px;
-            height: 15px;
-            animation-duration: 6s;
-        }
-
-        .fish-emoji {
-            position: absolute;
-            font-size: 30px;
-            opacity: 0.7;
-            animation: fish-swim linear infinite;
-        }
-
-        .fish-emoji.fish1 {
-            top: 15%;
-            animation-duration: 15s;
-            animation-delay: 0s;
-        }
-
-        .fish-emoji.fish2 {
-            top: 30%;
-            animation: fish-swim-reverse linear infinite;
-            animation-duration: 18s;
-            animation-delay: 2s;
-        }
-
-        .fish-emoji.fish3 {
-            top: 50%;
-            animation-duration: 20s;
-            animation-delay: 5s;
-        }
-
-        .fish-emoji.fish4 {
-            top: 70%;
-            animation: fish-swim-reverse linear infinite;
-            animation-duration: 16s;
-            animation-delay: 3s;
-        }
-
-        .seaweed {
-            position: absolute;
-            font-size: 40px;
-            opacity: 0.5;
-            animation: sway 3s ease-in-out infinite;
-        }
-
-        .seaweed.weed1 {
-            left: 5%;
-            bottom: 0;
-            animation-delay: 0s;
-        }
-
-        .seaweed.weed2 {
-            right: 10%;
-            bottom: 0;
-            animation-delay: 1s;
-        }
-
-        .seaweed.weed3 {
-            left: 25%;
-            bottom: 0;
-            animation-delay: 2s;
-        }
-
-        .main-wrapper {
-            position: relative;
-            z-index: 2;
-        }
-    </style>
-</head>
-<body>
-    <!-- Fond marin animé -->
-    <div class="underwater-background" id="underwater">
-        <!-- Les bulles seront générées par JS -->
-    </div>
-
-    <div class="main-wrapper">
-        <div class="header">
-            <h1>🤿 MN90Mobile</h1>
-            <div class="header-footer">
-                Made with Love 🫧♥🤿 
-                <div class="divider"></div>
-                <a href="https://soaresden.github.io/MN90Mobile/" target="_blank">Soaresden's Github</a>
-                <div class="divider"></div>
-                <button id="installBtn" onclick="installApp()" style="display:none;">📱 Ajouter raccourci</button>
-                <button id="downloadBtn">📥 Télécharger hors ligne</button>
-            </div>
-        </div>
-
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(0)">📊 Planificateur</button>
-            <button class="tab-btn" onclick="switchTab(1)">🫁 Autonomie Optimale</button>
-            <button class="tab-btn" onclick="switchTab(2)">📋 Tables MN90</button>
-        </div>
-
-        <div class="content-wrapper">
-            <!-- LEFT PANEL -->
-            <div class="left-panel">
-                <!-- TAB 0: PLANIFICATEUR -->
-                <div id="tab0-left" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
-                    <div class="section">
-                        <div class="section-title">⭐ Plongée 1</div>
-                        
-                        <div class="slider-group">
-                            <div class="slider-label">
-                                <span>Profondeur</span>
-                                <span id="depth1-val">20 m</span>
-                            </div>
-                            <input type="range" id="depth1" min="6" max="65" value="20" oninput="updateSlider(this); calculate()">
-                        </div>
-
-                        <div class="slider-group">
-                            <div class="slider-label">
-                                <span>Temps au fond</span>
-                                <span id="time1-val">20 min</span>
-                            </div>
-                            <input type="range" id="time1" min="1" max="400" value="20" oninput="updateSlider(this); calculate()">
-                        </div>
-
-                        <div class="paliers-row">
-                            <div class="palier-box">
-                                <div class="result-box">
-                                    <div class="result-label" style="color: #FFA500; font-weight: bold;">📊 Palier 6m</div>
-                                    <div class="result-value" id="palier6m1">-- min</div>
-                                </div>
-                            </div>
-                            <div class="palier-box">
-                                <div class="result-box">
-                                    <div class="result-label" style="color: #22FF00; font-weight: bold;">📊 Palier 3m</div>
-                                    <div class="result-value" id="palier3m1">-- min</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="result-box">
-                            <div class="result-label">Temps total (DTR)</div>
-                            <div class="result-value" id="total1">-- min</div>
-                        </div>
-                        <div class="result-box">
-                            <div class="result-label">GPS (Groupe de Plongée)</div>
-                            <div class="result-value" id="gps1">--</div>
-                        </div>
-
-                        <div class="info-box">
-                            <strong>ℹ️ Explication:</strong><br>
-                            • <strong style="color: #FFA500;">Palier 6m</strong> = Obligatoire selon MN90, dépend de la profondeur et durée<br>
-                            • <strong style="color: #22FF00;">Palier 3m</strong> = Sécurité supplémentaire pour diminuer risque d'ADD
-                        </div>
-                    </div>
-
-                    <div class="section">
-                        <div class="section-title">🔗 Plongée Successive</div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="plongee2" onchange="togglePlongee2()">
-                            <label>Ajouter 2ème plongée</label>
-                        </div>
-                    </div>
-
-                    <div id="plongee2-section" style="display: none; width: 100%;">
-                        <div class="section">
-                            <div class="section-title" style="color: #fff;">⏱️ Intervalle en Surface</div>
-                            <div class="slider-group">
-                                <div class="slider-label">
-                                    <span style="color: #fff;">Durée intervalle</span>
-                                    <span id="interval-val" style="color: #fff;">60 min</span>
-                                </div>
-                                <input type="range" id="interval" min="15" max="720" value="60" oninput="updateSlider(this); calculate()">
-                            </div>
-                        </div>
-
-                        <div class="section">
-                            <div class="section-title">⭐ Plongée 2</div>
-                            <div class="slider-group">
-                                <div class="slider-label">
-                                    <span>Profondeur</span>
-                                    <span id="depth2-val">15 m</span>
-                                </div>
-                                <input type="range" id="depth2" min="6" max="65" value="15" oninput="updateSlider(this); calculate()">
-                            </div>
-
-                            <div class="slider-group">
-                                <div class="slider-label">
-                                    <span>Temps au fond</span>
-                                    <span id="time2-val">20 min</span>
-                                </div>
-                                <input type="range" id="time2" min="1" max="400" value="20" oninput="updateSlider(this); calculate()">
-                            </div>
-
-                            <div class="result-box">
-                                <div class="result-label">Majoration</div>
-                                <div class="result-value" id="majoration">-- min</div>
-                            </div>
-
-                            <div class="paliers-row">
-                                <div class="palier-box">
-                                    <div class="result-box">
-                                        <div class="result-label" style="color: #FFA500; font-weight: bold;">📊 Palier 6m</div>
-                                        <div class="result-value" id="palier6m2">-- min</div>
-                                    </div>
-                                </div>
-                                <div class="palier-box">
-                                    <div class="result-box">
-                                        <div class="result-label" style="color: #22FF00; font-weight: bold;">📊 Palier 3m</div>
-                                        <div class="result-value" id="palier3m2">-- min</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="result-box">
-                                <div class="result-label">Temps total (DTR)</div>
-                                <div class="result-value" id="total2">-- min</div>
-                            </div>
-                            <div class="result-box">
-                                <div class="result-label">GPS (Groupe de Plongée)</div>
-                                <div class="result-value" id="gps2">--</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 1: AUTONOMIE -->
-                <div id="tab1-left" style="display: none; flex-direction: column; gap: 6px; width: 100%;">
-                    <div class="section">
-                        <div class="section-title">🫁 Paramètres Autonomie</div>
-                        
-                        <div class="slider-group">
-                            <div class="slider-label">
-                                <span>Profondeur visée</span>
-                                <span id="prof-auto-val">20 m</span>
-                            </div>
-                            <input type="range" id="prof-auto" min="6" max="60" value="20" oninput="updateSlider(this); calculateOptimalDive()">
-                        </div>
-
-                        <div class="slider-group">
-                            <div class="slider-label">
-                                <span>Conso moyenne en surface</span>
-                                <span id="conso-auto-val">20 L/min</span>
-                            </div>
-                            <input type="range" id="conso-auto" min="5" max="100" value="20" oninput="updateSlider(this); calculateOptimalDive()">
-                        </div>
-
-                        <div class="slider-group">
-                            <div class="slider-label">
-                                <span>Bouteille</span>
-                                <span id="bouteille-auto-val">12 L</span>
-                            </div>
-                            <input type="range" id="bouteille-auto" min="10" max="20" value="12" oninput="updateSlider(this); calculateOptimalDive()">
-                        </div>
-
-                        <div class="slider-group">
-                            <div class="slider-label">
-                                <span>Pression initiale</span>
-                                <span id="pression-auto-val">200 bar</span>
-                            </div>
-                            <input type="range" id="pression-auto" min="50" max="300" value="200" oninput="updateSlider(this); calculateOptimalDive()">
-                        </div>
-
-                        <div class="slider-group">
-                            <div class="slider-label">
-                                <span>Réserve de sécurité</span>
-                                <span id="secu-auto-val">50 bar</span>
-                            </div>
-                            <input type="range" id="secu-auto" min="0" max="100" value="50" oninput="updateSlider(this); calculateOptimalDive()">
-                        </div>
-
-                        <div class="section-title" style="margin-top: 15px;">📊 Résultats Autonomie</div>
-                        
-                        <div class="result-box">
-                            <div class="result-label">Pression utilisable</div>
-                            <div class="result-value" id="pressure-usable">-- bar</div>
-                        </div>
-                        <div class="result-box">
-                            <div class="result-label">Air disponible</div>
-                            <div class="result-value" id="air-available">-- L</div>
-                        </div>
-                        <div class="result-box">
-                            <div class="result-label">Conso réelle à profondeur</div>
-                            <div class="result-value" id="conso-depth">-- L/min</div>
-                        </div>
-                        <div class="result-box">
-                            <div class="result-label">Temps max au fond</div>
-                            <div class="result-value" id="time-max-fond">-- min</div>
-                        </div>
-                        <div class="result-box" style="border-left-color: #FF99FF;">
-                            <div class="result-label">⏱️ AUTONOMIE OPTIMALE (avec paliers)</div>
-                            <div class="result-value" id="autonomy-optimal" style="color: #FF99FF;">-- min</div>
-                        </div>
-
-                        <div class="info-box" id="autonomy-explanation">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 2: TABLES BUTTON -->
-                <div id="tab2-left" style="display: none;">
-                    <button onclick="openTablesModal()" style="padding: 12px; font-size: 12px; font-weight: bold; margin-bottom: 10px;">📊 AFFICHER TABLES MN90</button>
-                    <div class="info-box" style="margin-top: 0;">
-                        Les tables MN90-FFESSM contiennent:<br>
-                        • Tableau principal de désaturation<br>
-                        • Tableau I: Azote résiduel<br>
-                        • Tableau II: Majoration<br>
-                        • Tableau III: Réduction O2<br>
-                        • Tableau IV: Remontée
-                    </div>
-                </div>
-            </div>
-
-            <!-- SPLITTER -->
-            <div class="splitter" id="splitter"></div>
-
-            <!-- RIGHT PANEL: GRAPH -->
-            <div class="right-panel">
-                <div class="graph-container">
-                    <div style="color: #00ffff; font-weight: bold;" id="graph-title">Profil de Plongée</div>
-                    <canvas id="profileCanvas"></canvas>
-                    <div class="legend" id="graph-legend">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #FF99FF;"></div>
-                            <span>Plongée 1 (m)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #00CCFF;"></div>
-                            <span>Plongée 2 (m)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #ffffff;"></div>
-                            <span>Intervalle</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #FFA500;"></div>
-                            <span>Palier 6m</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #22FF00;"></div>
-                            <span>Palier 3m</span>
-                        </div>
-                    </div>
-                    <div class="graph-explanation" id="graph-explanation"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL TABLES -->
-    <div id="tablesModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeTablesModal()">&times;</span>
-            <h2>📊 Tables MN90-FFESSM (Plongée à l'Air) - COMPLÈTES</h2>
-            <div class="tables-grid" id="tables-container"></div>
-        </div>
-    </div>
-
     <script>
-        let deferredPrompt;
+        let currentTab = 0, chart1 = null, isDraggingSplitter = false;
+        let superposedView = false;
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        
+        function minToHHMM(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
 
-        // Détecter si l'app peut être installée (Android/Chrome)
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installBtn').style.display = 'inline';
-        });
+        const mn90Tables = [{prof:6,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'A'},{prof:6,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:6,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:6,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:6,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:6,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:6,time:180,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:6,time:240,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:6,time:315,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:6,time:360,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:8,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:8,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:8,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:8,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:8,time:90,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:8,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:8,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:8,time:165,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:8,time:195,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:8,time:255,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:8,time:300,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:8,time:360,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'M'},{prof:10,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:10,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:10,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:10,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:10,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:10,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:10,time:120,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:10,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:10,time:165,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:10,time:180,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:10,time:240,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'M'},{prof:10,time:255,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'N'},{prof:10,time:315,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'O'},{prof:10,time:330,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'P'},{prof:10,time:360,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:2,gps:'P'},{prof:12,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'A'},{prof:12,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:12,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:12,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:12,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:12,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:12,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:12,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:12,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:12,time:50,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:12,time:55,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:12,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:12,time:65,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:12,time:70,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:12,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:12,time:80,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:12,time:85,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:12,time:90,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:12,time:95,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:12,time:100,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:12,time:105,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:12,time:110,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:12,time:115,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:12,time:120,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'K'},{prof:12,time:130,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:12,time:135,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'L'},{prof:12,time:140,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'L'},{prof:12,time:150,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:6,gps:'M'},{prof:12,time:160,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:8,gps:'M'},{prof:12,time:170,p15:0,p12:0,p9:0,p6:0,p3:7,dtr:9,gps:'N'},{prof:12,time:180,p15:0,p12:0,p9:0,p6:0,p3:9,dtr:11,gps:'N'},{prof:12,time:190,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:13,gps:'N'},{prof:12,time:200,p15:0,p12:0,p9:0,p6:0,p3:13,dtr:15,gps:'O'},{prof:12,time:210,p15:0,p12:0,p9:0,p6:0,p3:14,dtr:16,gps:'O'},{prof:12,time:220,p15:0,p12:0,p9:0,p6:0,p3:15,dtr:17,gps:'O'},{prof:12,time:230,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'O'},{prof:12,time:240,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:19,gps:'O'},{prof:12,time:250,p15:0,p12:0,p9:0,p6:0,p3:18,dtr:20,gps:'P'},{prof:12,time:255,p15:0,p12:0,p9:0,p6:0,p3:19,dtr:21,gps:'P'},{prof:12,time:270,p15:0,p12:0,p9:0,p6:0,p3:22,dtr:24,gps:'P'},{prof:15,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'A'},{prof:15,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'B'},{prof:15,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:15,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'C'},{prof:15,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'D'},{prof:15,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:15,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'E'},{prof:15,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'F'},{prof:15,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:15,time:50,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'G'},{prof:15,time:55,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:15,time:60,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'H'},{prof:15,time:65,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:15,time:70,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'I'},{prof:15,time:75,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:1,gps:'J'},{prof:15,time:80,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'J'},{prof:15,time:85,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:6,gps:'K'},{prof:15,time:90,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:8,gps:'K'},{prof:15,time:95,p15:0,p12:0,p9:0,p6:0,p3:8,dtr:10,gps:'L'},{prof:15,time:100,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:13,gps:'L'},{prof:15,time:105,p15:0,p12:0,p9:0,p6:0,p3:13,dtr:15,gps:'L'},{prof:15,time:110,p15:0,p12:0,p9:0,p6:0,p3:15,dtr:17,gps:'M'},{prof:15,time:115,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:19,gps:'M'},{prof:15,time:120,p15:0,p12:0,p9:0,p6:0,p3:18,dtr:20,gps:'M'},{prof:18,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:18,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:18,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'C'},{prof:18,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:18,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:18,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:18,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:18,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'G'},{prof:18,time:45,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:18,time:50,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:18,time:55,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:3,gps:'I'},{prof:18,time:60,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:7,gps:'J'},{prof:18,time:65,p15:0,p12:0,p9:0,p6:0,p3:8,dtr:10,gps:'J'},{prof:18,time:70,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:13,gps:'K'},{prof:18,time:75,p15:0,p12:0,p9:0,p6:0,p3:14,dtr:16,gps:'K'},{prof:18,time:80,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:19,gps:'L'},{prof:18,time:85,p15:0,p12:0,p9:0,p6:0,p3:21,dtr:23,gps:'L'},{prof:18,time:90,p15:0,p12:0,p9:0,p6:0,p3:23,dtr:25,gps:'M'},{prof:18,time:95,p15:0,p12:0,p9:0,p6:0,p3:26,dtr:28,gps:'M'},{prof:18,time:100,p15:0,p12:0,p9:0,p6:0,p3:28,dtr:30,gps:'M'},{prof:18,time:105,p15:0,p12:0,p9:0,p6:0,p3:31,dtr:33,gps:'N'},{prof:18,time:110,p15:0,p12:0,p9:0,p6:0,p3:34,dtr:36,gps:'N'},{prof:18,time:115,p15:0,p12:0,p9:0,p6:0,p3:36,dtr:38,gps:'N'},{prof:18,time:120,p15:0,p12:0,p9:0,p6:0,p3:38,dtr:40,gps:'O'},{prof:20,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:20,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:20,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:20,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:20,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:20,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:20,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'G'},{prof:20,time:40,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:20,time:45,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:3,gps:'I'},{prof:20,time:50,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:6,gps:'I'},{prof:20,time:55,p15:0,p12:0,p9:0,p6:0,p3:9,dtr:11,gps:'J'},{prof:20,time:60,p15:0,p12:0,p9:0,p6:0,p3:13,dtr:15,gps:'K'},{prof:20,time:65,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'K'},{prof:20,time:70,p15:0,p12:0,p9:0,p6:0,p3:20,dtr:22,gps:'L'},{prof:20,time:75,p15:0,p12:0,p9:0,p6:0,p3:24,dtr:26,gps:'L'},{prof:20,time:80,p15:0,p12:0,p9:0,p6:0,p3:27,dtr:29,gps:'M'},{prof:20,time:85,p15:0,p12:0,p9:0,p6:0,p3:30,dtr:32,gps:'M'},{prof:20,time:90,p15:0,p12:0,p9:0,p6:0,p3:34,dtr:36,gps:'M'},{prof:22,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:22,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'C'},{prof:22,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:22,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:22,time:25,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'F'},{prof:22,time:30,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'G'},{prof:22,time:35,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'H'},{prof:22,time:40,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'I'},{prof:22,time:45,p15:0,p12:0,p9:0,p6:0,p3:7,dtr:9,gps:'I'},{prof:22,time:50,p15:0,p12:0,p9:0,p6:0,p3:12,dtr:14,gps:'J'},{prof:22,time:55,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'K'},{prof:22,time:60,p15:0,p12:0,p9:0,p6:0,p3:20,dtr:22,gps:'K'},{prof:22,time:65,p15:0,p12:0,p9:0,p6:0,p3:25,dtr:27,gps:'L'},{prof:22,time:70,p15:0,p12:0,p9:0,p6:0,p3:29,dtr:31,gps:'L'},{prof:22,time:75,p15:0,p12:0,p9:0,p6:0,p3:33,dtr:35,gps:'M'},{prof:22,time:80,p15:0,p12:0,p9:0,p6:0,p3:37,dtr:39,gps:'M'},{prof:22,time:85,p15:0,p12:0,p9:0,p6:0,p3:41,dtr:43,gps:'N'},{prof:22,time:90,p15:0,p12:0,p9:0,p6:0,p3:44,dtr:46,gps:'N'},{prof:25,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:25,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'C'},{prof:25,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:25,time:20,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:25,time:25,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:3,gps:'F'},{prof:25,time:30,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:4,gps:'H'},{prof:25,time:35,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:7,gps:'I'},{prof:25,time:40,p15:0,p12:0,p9:0,p6:0,p3:10,dtr:12,gps:'J'},{prof:25,time:45,p15:0,p12:0,p9:0,p6:0,p3:16,dtr:18,gps:'J'},{prof:25,time:50,p15:0,p12:0,p9:0,p6:0,p3:21,dtr:23,gps:'K'},{prof:25,time:55,p15:0,p12:0,p9:0,p6:0,p3:27,dtr:29,gps:'L'},{prof:25,time:60,p15:0,p12:0,p9:0,p6:0,p3:32,dtr:34,gps:'L'},{prof:25,time:65,p15:0,p12:0,p9:0,p6:0,p3:37,dtr:39,gps:'M'},{prof:25,time:70,p15:0,p12:0,p9:1,p6:41,p3:41,dtr:45,gps:'M'},{prof:25,time:75,p15:0,p12:0,p9:0,p6:4,p3:43,dtr:50,gps:'N'},{prof:25,time:80,p15:0,p12:0,p9:0,p6:7,p3:45,dtr:55,gps:'N'},{prof:25,time:85,p15:0,p12:0,p9:0,p6:9,p3:48,dtr:60,gps:'O'},{prof:25,time:90,p15:0,p12:0,p9:0,p6:11,p3:50,dtr:64,gps:'O'},{prof:28,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:28,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:28,time:15,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'E'},{prof:28,time:20,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'F'},{prof:28,time:25,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'G'},{prof:28,time:30,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:9,gps:'H'},{prof:28,time:35,p15:0,p12:0,p9:0,p6:0,p3:12,dtr:15,gps:'I'},{prof:28,time:40,p15:0,p12:0,p9:0,p6:0,p3:19,dtr:22,gps:'J'},{prof:28,time:45,p15:0,p12:0,p9:0,p6:0,p3:25,dtr:28,gps:'K'},{prof:28,time:50,p15:0,p12:0,p9:0,p6:0,p3:32,dtr:35,gps:'L'},{prof:28,time:55,p15:0,p12:0,p9:0,p6:2,p3:36,dtr:41,gps:'M'},{prof:28,time:60,p15:0,p12:0,p9:0,p6:4,p3:40,dtr:47,gps:'M'},{prof:28,time:65,p15:0,p12:0,p9:0,p6:8,p3:43,dtr:54,gps:'N'},{prof:28,time:70,p15:0,p12:0,p9:0,p6:11,p3:46,dtr:60,gps:'N'},{prof:28,time:75,p15:0,p12:0,p9:0,p6:14,p3:48,dtr:65,gps:'O'},{prof:28,time:80,p15:0,p12:0,p9:0,p6:17,p3:50,dtr:70,gps:'O'},{prof:28,time:85,p15:0,p12:0,p9:0,p6:20,p3:53,dtr:76,gps:'O'},{prof:28,time:90,p15:0,p12:0,p9:0,p6:23,p3:56,dtr:82,gps:'P'},{prof:30,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'B'},{prof:30,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:2,gps:'D'},{prof:30,time:15,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'E'},{prof:30,time:20,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'F'},{prof:30,time:25,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:7,gps:'H'},{prof:30,time:30,p15:0,p12:0,p9:0,p6:0,p3:9,dtr:12,gps:'I'},{prof:30,time:35,p15:0,p12:0,p9:0,p6:0,p3:17,dtr:20,gps:'J'},{prof:30,time:40,p15:0,p12:0,p9:0,p6:0,p3:24,dtr:27,gps:'K'},{prof:30,time:45,p15:0,p12:0,p9:0,p6:1,p3:31,dtr:35,gps:'L'},{prof:30,time:50,p15:0,p12:0,p9:0,p6:3,p3:36,dtr:42,gps:'M'},{prof:30,time:55,p15:0,p12:0,p9:0,p6:6,p3:39,dtr:48,gps:'M'},{prof:30,time:60,p15:0,p12:0,p9:0,p6:10,p3:43,dtr:56,gps:'N'},{prof:30,time:65,p15:0,p12:0,p9:0,p6:14,p3:46,dtr:63,gps:'N'},{prof:30,time:70,p15:0,p12:0,p9:0,p6:17,p3:48,dtr:68,gps:'O'},{prof:32,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'B'},{prof:32,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'D'},{prof:32,time:15,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'E'},{prof:32,time:20,p15:0,p12:0,p9:0,p6:0,p3:3,dtr:6,gps:'G'},{prof:32,time:25,p15:0,p12:0,p9:0,p6:0,p3:6,dtr:9,gps:'H'},{prof:32,time:30,p15:0,p12:0,p9:0,p6:0,p3:14,dtr:17,gps:'I'},{prof:32,time:35,p15:0,p12:0,p9:0,p6:0,p3:22,dtr:25,gps:'K'},{prof:32,time:40,p15:0,p12:0,p9:0,p6:1,p3:29,dtr:33,gps:'K'},{prof:32,time:45,p15:0,p12:0,p9:0,p6:4,p3:34,dtr:41,gps:'L'},{prof:32,time:50,p15:0,p12:0,p9:0,p6:7,p3:39,dtr:49,gps:'M'},{prof:32,time:55,p15:0,p12:0,p9:0,p6:11,p3:43,dtr:57,gps:'N'},{prof:32,time:60,p15:0,p12:0,p9:0,p6:15,p3:46,dtr:64,gps:'N'},{prof:32,time:65,p15:0,p12:0,p9:0,p6:19,p3:48,dtr:70,gps:'O'},{prof:32,time:70,p15:0,p12:0,p9:0,p6:23,p3:50,dtr:76,gps:'O'},{prof:35,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:35,time:10,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'D'},{prof:35,time:15,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'F'},{prof:35,time:20,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:8,gps:'H'},{prof:35,time:25,p15:0,p12:0,p9:0,p6:0,p3:11,dtr:14,gps:'I'},{prof:35,time:30,p15:0,p12:0,p9:0,p6:1,p3:20,dtr:24,gps:'J'},{prof:35,time:35,p15:0,p12:0,p9:0,p6:2,p3:27,dtr:32,gps:'K'},{prof:35,time:40,p15:0,p12:0,p9:0,p6:5,p3:34,dtr:42,gps:'L'},{prof:35,time:45,p15:0,p12:0,p9:0,p6:9,p3:39,dtr:51,gps:'M'},{prof:35,time:50,p15:0,p12:0,p9:0,p6:14,p3:43,dtr:60,gps:'N'},{prof:35,time:55,p15:0,p12:0,p9:0,p6:18,p3:47,dtr:68,gps:'N'},{prof:35,time:60,p15:0,p12:0,p9:0,p6:22,p3:50,dtr:75,gps:'O'},{prof:35,time:65,p15:0,p12:0,p9:2,p6:26,p3:52,dtr:84,gps:'*'},{prof:35,time:70,p15:0,p12:0,p9:4,p6:28,p3:57,dtr:93,gps:'*'},{prof:38,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:38,time:10,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:4,gps:'E'},{prof:38,time:15,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:7,gps:'F'},{prof:38,time:20,p15:0,p12:0,p9:0,p6:0,p3:8,dtr:11,gps:'H'},{prof:38,time:25,p15:0,p12:0,p9:0,p6:1,p3:16,dtr:21,gps:'J'},{prof:38,time:30,p15:0,p12:0,p9:0,p6:3,p3:24,dtr:31,gps:'K'},{prof:38,time:35,p15:0,p12:0,p9:0,p6:5,p3:33,dtr:42,gps:'L'},{prof:38,time:40,p15:0,p12:0,p9:0,p6:10,p3:38,dtr:52,gps:'M'},{prof:38,time:45,p15:0,p12:0,p9:0,p6:15,p3:43,dtr:62,gps:'N'},{prof:38,time:50,p15:0,p12:0,p9:0,p6:20,p3:47,dtr:71,gps:'N'},{prof:38,time:55,p15:0,p12:0,p9:2,p6:23,p3:50,dtr:79,gps:'O'},{prof:38,time:60,p15:0,p12:0,p9:5,p6:27,p3:53,dtr:89,gps:'P'},{prof:38,time:65,p15:0,p12:0,p9:8,p6:29,p3:58,dtr:99,gps:'*'},{prof:38,time:70,p15:0,p12:0,p9:11,p6:31,p3:62,dtr:108,gps:'*'},{prof:40,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:40,time:10,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:5,gps:'E'},{prof:40,time:15,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:7,gps:'G'},{prof:40,time:20,p15:0,p12:0,p9:0,p6:1,p3:9,dtr:14,gps:'H'},{prof:40,time:25,p15:0,p12:0,p9:0,p6:2,p3:19,dtr:25,gps:'J'},{prof:40,time:30,p15:0,p12:0,p9:0,p6:4,p3:28,dtr:36,gps:'K'},{prof:40,time:35,p15:0,p12:0,p9:0,p6:8,p3:35,dtr:47,gps:'L'},{prof:40,time:40,p15:0,p12:0,p9:0,p6:13,p3:40,dtr:57,gps:'M'},{prof:40,time:45,p15:0,p12:0,p9:1,p6:18,p3:45,dtr:68,gps:'N'},{prof:40,time:50,p15:0,p12:0,p9:2,p6:23,p3:48,dtr:77,gps:'O'},{prof:40,time:55,p15:0,p12:0,p9:5,p6:26,p3:52,dtr:87,gps:'O'},{prof:40,time:60,p15:0,p12:0,p9:8,p6:29,p3:57,dtr:98,gps:'P'},{prof:40,time:65,p15:0,p12:0,p9:12,p6:31,p3:61,dtr:108,gps:'*'},{prof:40,time:70,p15:0,p12:0,p9:15,p6:33,p3:66,dtr:118,gps:'*'},{prof:42,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:42,time:10,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:6,gps:'E'},{prof:42,time:15,p15:0,p12:0,p9:0,p6:0,p3:5,dtr:9,gps:'G'},{prof:42,time:20,p15:0,p12:0,p9:0,p6:1,p3:12,dtr:17,gps:'I'},{prof:42,time:25,p15:0,p12:0,p9:0,p6:3,p3:22,dtr:29,gps:'J'},{prof:42,time:30,p15:0,p12:0,p9:0,p6:6,p3:31,dtr:41,gps:'L'},{prof:42,time:35,p15:0,p12:0,p9:0,p6:11,p3:37,dtr:52,gps:'M'},{prof:42,time:40,p15:0,p12:0,p9:1,p6:16,p3:43,dtr:64,gps:'N'},{prof:42,time:45,p15:0,p12:0,p9:3,p6:21,p3:47,dtr:75,gps:'*'},{prof:42,time:50,p15:0,p12:0,p9:6,p6:24,p3:50,dtr:84,gps:'*'},{prof:42,time:55,p15:0,p12:0,p9:8,p6:29,p3:55,dtr:96,gps:'*'},{prof:42,time:60,p15:0,p12:0,p9:13,p6:30,p3:60,dtr:107,gps:'*'},{prof:45,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:3,gps:'C'},{prof:45,time:10,p15:0,p12:0,p9:0,p6:0,p3:3,dtr:7,gps:'F'},{prof:45,time:15,p15:0,p12:0,p9:0,p6:1,p3:6,dtr:11,gps:'H'},{prof:45,time:20,p15:0,p12:0,p9:0,p6:3,p3:15,dtr:22,gps:'I'},{prof:45,time:25,p15:0,p12:0,p9:0,p6:5,p3:25,dtr:34,gps:'K'},{prof:45,time:30,p15:0,p12:0,p9:0,p6:9,p3:35,dtr:48,gps:'L'},{prof:45,time:35,p15:0,p12:0,p9:1,p6:15,p3:40,dtr:60,gps:'M'},{prof:45,time:40,p15:0,p12:0,p9:3,p6:20,p3:46,dtr:73,gps:'N'},{prof:45,time:45,p15:0,p12:0,p9:6,p6:24,p3:50,dtr:84,gps:'*'},{prof:45,time:50,p15:0,p12:0,p9:10,p6:28,p3:54,dtr:96,gps:'*'},{prof:45,time:55,p15:0,p12:0,p9:14,p6:30,p3:60,dtr:108,gps:'*'},{prof:45,time:60,p15:0,p12:1,p9:18,p6:32,p3:65,dtr:121,gps:'*'},{prof:48,time:5,p15:0,p12:0,p9:0,p6:0,p3:0,dtr:4,gps:'D'},{prof:48,time:10,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:8,gps:'F'},{prof:48,time:15,p15:0,p12:0,p9:0,p6:2,p3:7,dtr:13,gps:'H'},{prof:48,time:20,p15:0,p12:0,p9:0,p6:4,p3:19,dtr:27,gps:'J'},{prof:48,time:25,p15:0,p12:0,p9:0,p6:7,p3:30,dtr:41,gps:'K'},{prof:48,time:30,p15:0,p12:0,p9:1,p6:12,p3:37,dtr:55,gps:'M'},{prof:48,time:35,p15:0,p12:0,p9:3,p6:18,p3:44,dtr:70,gps:'N'},{prof:48,time:40,p15:0,p12:0,p9:6,p6:23,p3:48,dtr:82,gps:'O'},{prof:48,time:45,p15:0,p12:0,p9:10,p6:27,p3:53,dtr:95,gps:'*'},{prof:48,time:50,p15:0,p12:1,p9:14,p6:30,p3:59,dtr:109,gps:'*'},{prof:48,time:55,p15:0,p12:2,p9:18,p6:32,p3:64,dtr:121,gps:'*'},{prof:48,time:60,p15:0,p12:5,p9:19,p6:36,p3:70,dtr:135,gps:'*'},{prof:50,time:5,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:5,gps:'D'},{prof:50,time:10,p15:0,p12:0,p9:0,p6:0,p3:4,dtr:8,gps:'F'},{prof:50,time:15,p15:0,p12:0,p9:0,p6:2,p3:9,dtr:15,gps:'H'},{prof:50,time:20,p15:0,p12:0,p9:0,p6:4,p3:22,dtr:30,gps:'J'},{prof:50,time:25,p15:0,p12:0,p9:1,p6:8,p3:32,dtr:46,gps:'L'},{prof:50,time:30,p15:0,p12:0,p9:2,p6:14,p3:39,dtr:60,gps:'M'},{prof:50,time:35,p15:0,p12:0,p9:5,p6:20,p3:45,dtr:75,gps:'N'},{prof:50,time:40,p15:0,p12:0,p9:9,p6:24,p3:50,dtr:88,gps:'O'},{prof:50,time:45,p15:0,p12:1,p9:12,p6:29,p3:55,dtr:102,gps:'*'},{prof:50,time:50,p15:0,p12:2,p9:17,p6:30,p3:62,dtr:116,gps:'*'},{prof:50,time:55,p15:0,p12:5,p9:19,p6:34,p3:67,dtr:130,gps:'*'},{prof:52,time:5,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:5,gps:'D'},{prof:52,time:10,p15:0,p12:0,p9:0,p6:1,p3:4,dtr:10,gps:'F'},{prof:52,time:15,p15:0,p12:0,p9:0,p6:3,p3:10,dtr:18,gps:'I'},{prof:52,time:20,p15:0,p12:0,p9:1,p6:5,p3:23,dtr:34,gps:'K'},{prof:52,time:25,p15:0,p12:0,p9:2,p6:9,p3:34,dtr:50,gps:'L'},{prof:52,time:30,p15:0,p12:0,p9:4,p6:15,p3:41,dtr:65,gps:'M'},{prof:52,time:35,p15:0,p12:0,p9:6,p6:22,p3:47,dtr:80,gps:'O'},{prof:52,time:40,p15:0,p12:1,p9:10,p6:26,p3:52,dtr:94,gps:'O'},{prof:52,time:45,p15:0,p12:2,p9:15,p6:29,p3:59,dtr:110,gps:'*'},{prof:52,time:50,p15:0,p12:5,p9:17,p6:32,p3:64,dtr:123,gps:'*'},{prof:52,time:55,p15:0,p12:8,p9:19,p6:36,p3:71,dtr:139,gps:'*'},{prof:55,time:5,p15:0,p12:0,p9:0,p6:0,p3:1,dtr:5,gps:'D'},{prof:55,time:10,p15:0,p12:0,p9:0,p6:1,p3:5,dtr:11,gps:'G'},{prof:55,time:15,p15:0,p12:0,p9:0,p6:4,p3:13,dtr:22,gps:'I'},{prof:55,time:20,p15:0,p12:0,p9:1,p6:6,p3:27,dtr:39,gps:'K'},{prof:55,time:25,p15:0,p12:0,p9:3,p6:11,p3:37,dtr:56,gps:'M'},{prof:55,time:30,p15:0,p12:0,p9:6,p6:18,p3:44,dtr:73,gps:'N'},{prof:55,time:35,p15:0,p12:1,p9:9,p6:23,p3:50,dtr:88,gps:'O'},{prof:55,time:40,p15:0,p12:3,p9:12,p6:29,p3:55,dtr:104,gps:'P'},{prof:55,time:45,p15:0,p12:5,p9:17,p6:31,p3:62,dtr:120,gps:'*'},{prof:55,time:50,p15:0,p12:8,p9:19,p6:35,p3:69,dtr:136,gps:'*'},{prof:55,time:55,p15:0,p12:12,p9:22,p6:37,p3:76,dtr:152,gps:'*'},{prof:58,time:5,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:7,gps:'D'},{prof:58,time:10,p15:0,p12:0,p9:0,p6:2,p3:5,dtr:12,gps:'G'},{prof:58,time:15,p15:0,p12:0,p9:1,p6:4,p3:16,dtr:26,gps:'J'},{prof:58,time:20,p15:0,p12:0,p9:2,p6:7,p3:30,dtr:44,gps:'K'},{prof:58,time:25,p15:0,p12:0,p9:4,p6:13,p3:40,dtr:62,gps:'M'},{prof:58,time:30,p15:0,p12:1,p9:7,p6:21,p3:46,dtr:81,gps:'N'},{prof:58,time:35,p15:0,p12:2,p9:11,p6:26,p3:52,dtr:97,gps:'O'},{prof:58,time:40,p15:0,p12:5,p9:15,p6:30,p3:59,dtr:115,gps:'P'},{prof:58,time:45,p15:0,p12:8,p9:18,p6:33,p3:66,dtr:131,gps:'*'},{prof:58,time:50,p15:1,p12:11,p9:21,p6:37,p3:74,dtr:150,gps:'*'},{prof:58,time:55,p15:3,p12:14,p9:23,p6:39,p3:83,dtr:168,gps:'*'},{prof:60,time:5,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:7,gps:'D'},{prof:60,time:10,p15:0,p12:0,p9:0,p6:2,p3:6,dtr:13,gps:'G'},{prof:60,time:15,p15:0,p12:0,p9:1,p6:4,p3:19,dtr:29,gps:'J'},{prof:60,time:20,p15:0,p12:0,p9:3,p6:8,p3:32,dtr:48,gps:'L'},{prof:60,time:25,p15:0,p12:0,p9:5,p6:15,p3:41,dtr:66,gps:'M'},{prof:60,time:30,p15:0,p12:1,p9:8,p6:22,p3:48,dtr:85,gps:'O'},{prof:60,time:35,p15:0,p12:4,p9:11,p6:28,p3:54,dtr:103,gps:'P'},{prof:60,time:40,p15:0,p12:6,p9:17,p6:30,p3:62,dtr:121,gps:'P'},{prof:60,time:45,p15:1,p12:9,p9:19,p6:35,p3:69,dtr:139,gps:'*'},{prof:60,time:50,p15:2,p12:13,p9:22,p6:37,p3:78,dtr:158,gps:'*'},{prof:60,time:55,p15:5,p12:15,p9:24,p6:40,p3:88,dtr:178,gps:'*'},{prof:62,time:5,p15:0,p12:0,p9:0,p6:0,p3:2,dtr:7,gps:'*'},{prof:62,time:10,p15:0,p12:0,p9:0,p6:2,p3:7,dtr:14,gps:'*'},{prof:62,time:15,p15:0,p12:0,p9:1,p6:5,p3:21,dtr:33,gps:'*'},{prof:65,time:5,p15:0,p12:0,p9:0,p6:0,p3:3,dtr:8,gps:'*'},{prof:65,time:10,p15:0,p12:0,p9:0,p6:3,p3:8,dtr:16,gps:'*'},{prof:65,time:15,p15:0,p12:0,p9:2,p6:5,p3:24,dtr:37,gps:'*'}];
 
-        function installApp() {
-            if (isIOS) {
-                // Instructions pour iOS
-                alert('📱 Pour ajouter MN90Mobile à votre écran d\'accueil :\n\n1. Appuyez sur le bouton Partage (↗️)\n2. Sélectionnez "Sur l\'écran d\'accueil"\n3. Appuyez sur "Ajouter"');
-            } else if (deferredPrompt) {
-                // Installation standard (Android)
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('App installée');
+        function searchTable(depth, time) {
+            let bestMatch = null, minDiff = Infinity;
+            for (let row of mn90Tables) {
+                if (row.prof === depth && row.time >= time) {
+                    if (row.time - time < minDiff) { bestMatch = row; minDiff = row.time - time; }
+                }
+            }
+            if (!bestMatch) {
+                let depthBelow = 0;
+                for (let row of mn90Tables) if (row.prof < depth && row.prof > depthBelow) depthBelow = row.prof;
+                for (let row of mn90Tables) {
+                    if (row.prof === depthBelow && row.time >= time) {
+                        if (!bestMatch || row.time - time < minDiff) { bestMatch = row; minDiff = row.time - time; }
                     }
-                    deferredPrompt = null;
-                });
+                }
             }
+            return bestMatch || {prof:6, time:15, p15:0, p12:0, p9:0, p6:0, p3:0, dtr:1, gps:'A'};
         }
-
-        // Afficher le bouton install pour iOS aussi
-        if (isIOS) {
-            document.getElementById('installBtn').style.display = 'inline';
-        }
-
-        // ===== TÉLÉCHARGEMENT LOCAL =====
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            const html = document.documentElement.outerHTML;
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'MN90Mobile.html';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        });
-
-        // ===== ANIMATIONS FOND MARIN =====
-        function createUnderwater() {
-            const underwater = document.getElementById('underwater');
+        
+        // Construire une courbe de plongée avec couleurs des paliers
+        function buildDiveProfileCurve(prof, time, row, color = '#00CCFF') {
+            const depths = [];
+            const borderColors = [];
+            let t = 0;
+            const descentRate = 16;
+            const descentTime = prof / descentRate;
             
-            // Créer les bulles
-            for (let i = 0; i < 15; i++) {
-                const bubble = document.createElement('div');
-                const size = Math.random() > 0.7 ? 'large' : Math.random() > 0.5 ? 'medium' : 'small';
-                bubble.className = `bubble ${size}`;
-                bubble.style.left = Math.random() * 100 + '%';
-                bubble.style.bottom = Math.random() * -50 + 'px';
-                bubble.style.animationDelay = Math.random() * 5 + 's';
-                underwater.appendChild(bubble);
+            // DESCENTE (couleur spécifiée, par défaut Cyan)
+            for (let i = 0; i <= descentTime; i += 0.5) {
+                const depth = (i / descentTime) * prof;
+                depths.push(depth);
+                borderColors.push(color);
+                t = i;
             }
-
-            // Créer les poissons
-            const fishes = ['🐠', '🐟', '🦈', '🐙'];
-            for (let i = 1; i <= 4; i++) {
-                const fish = document.createElement('div');
-                fish.className = `fish-emoji fish${i}`;
-                fish.textContent = fishes[Math.floor(Math.random() * fishes.length)];
-                fish.style.left = Math.random() * 100 + '%';
-                underwater.appendChild(fish);
-            }
-
-            // Créer les algues
-            const weeds = ['🌿', '🪷', '🌱'];
-            const weedCount = 3;
-            for (let i = 1; i <= weedCount; i++) {
-                const weed = document.createElement('div');
-                weed.className = `seaweed weed${i}`;
-                weed.textContent = weeds[Math.floor(Math.random() * weeds.length)];
-                underwater.appendChild(weed);
-            }
-        }
-
-        // Initialiser le fond marin
-        createUnderwater();
-
-        // ===== TABLES ET LOGIQUE PLONGÉE =====
-        const officialTables = {
-            6: [[6,1,1,'A'],[15,1,1,'B'],[30,1,1,'C'],[45,1,1,'D'],[75,1,1,'D'],[105,1,1,'E'],[135,1,1,'F'],[180,1,1,'G'],[240,1,1,'H'],[315,1,1,'I'],[360,1,1,'J']],
-            8: [[15,1,1,'B'],[30,1,1,'C'],[45,1,1,'D'],[60,1,1,'E'],[90,1,1,'F'],[105,1,1,'G'],[135,1,1,'H'],[165,1,1,'I'],[195,1,1,'J'],[255,1,1,'K'],[300,1,1,'L'],[360,1,1,'M']],
-            10: [[15,1,1,'B'],[30,1,1,'C'],[45,1,1,'D'],[60,1,1,'F'],[75,1,1,'G'],[105,1,1,'H'],[120,1,1,'I'],[135,1,1,'J'],[165,1,1,'K'],[180,1,1,'L'],[240,1,1,'M'],[255,1,1,'N'],[315,1,1,'O'],[330,1,1,'P'],[360,1,2,'P']],
-            12: [[5,1,1,'A'],[10,1,1,'B'],[15,1,1,'B'],[20,1,1,'C'],[25,1,1,'C'],[30,1,1,'D'],[35,1,1,'D'],[40,1,1,'E'],[45,1,1,'E'],[50,1,1,'F'],[55,1,1,'F'],[60,1,1,'G'],[65,1,1,'G'],[70,1,1,'H'],[75,1,1,'H']],
-            15: [[5,2,1,'B'],[10,2,1,'B'],[15,2,1,'C'],[20,2,1,'D'],[25,2,1,'E'],[30,2,1,'F'],[35,2,1,'G'],[40,2,4,'I'],[45,7,9,'I'],[50,12,14,'J'],[55,16,18,'K'],[60,20,22,'K'],[65,25,27,'L'],[70,29,31,'L'],[75,33,35,'M']],
-            18: [[5,2,1,'B'],[10,2,1,'B'],[15,2,1,'D'],[20,2,1,'D'],[25,2,1,'E'],[30,2,1,'F'],[35,2,1,'G'],[40,2,1,'H'],[45,1,3,'I'],[50,4,6,'I'],[55,9,11,'J'],[60,13,15,'K'],[65,16,18,'K'],[70,20,22,'L'],[75,24,26,'L']],
-            20: [[5,2,1,'B'],[10,2,1,'B'],[15,2,1,'D'],[20,2,1,'D'],[25,2,1,'E'],[30,2,1,'F'],[35,2,1,'G'],[40,2,1,'H'],[45,1,3,'I'],[50,4,6,'I'],[55,9,11,'J'],[60,13,15,'K'],[65,16,18,'K'],[70,20,22,'L'],[75,24,26,'L']],
-            25: [[5,2,1,'B'],[10,2,1,'D'],[15,2,1,'E'],[20,1,4,'F'],[25,2,5,'G'],[30,6,9,'H'],[35,12,15,'I'],[40,19,22,'J'],[45,25,28,'K'],[50,32,35,'L']],
-            30: [[5,2,1,'B'],[10,2,1,'D'],[15,1,4,'E'],[20,2,5,'F'],[25,4,7,'H'],[30,9,12,'I'],[35,17,20,'J'],[40,24,27,'K'],[45,1,31,35,'L'],[50,3,36,42,'M']],
-            40: [[5,3,1,'B'],[10,3,1,'D'],[15,2,5,'E'],[20,5,8,'H'],[25,11,14,'I'],[30,1,20,24,'J'],[35,2,27,32,'K'],[40,5,34,42,'L']],
-            50: [[5,1,5,'D'],[10,1,4,10,'F'],[15,3,10,18,'I'],[20,1,5,23,34,'K']],
-            60: [[5,2,7,9,'D'],[10,2,7,14,'G']]
-        };
-
-        let chart1 = null;
-        let currentTab = 0;
-        let isDraggingSplitter = false;
-
-        // Gestion du splitter redimensionnable (mobile ET desktop)
-        function startDrag(e) {
-            isDraggingSplitter = true;
-            document.body.style.userSelect = 'none';
-            if (e.preventDefault) e.preventDefault();
-        }
-
-        function moveDrag(e) {
-            if (!isDraggingSplitter) return;
-            e.preventDefault?.();
-
-            const contentWrapper = document.querySelector('.content-wrapper');
-            const leftPanel = document.querySelector('.left-panel');
-            const rightPanel = document.querySelector('.right-panel');
-            const wrapperRect = contentWrapper.getBoundingClientRect();
-            const isMobile = window.innerWidth < 1024;
-
-            // Récupérer les coordonnées (souris ou tactile)
-            let clientY = e.clientY;
-            let clientX = e.clientX;
             
-            if (e.touches && e.touches.length > 0) {
-                clientY = e.touches[0].clientY;
-                clientX = e.touches[0].clientX;
+            // FOND (Gris)
+            const bottomEnd = descentTime + time;
+            for (let i = Math.ceil(t + 1); i <= bottomEnd; i++) {
+                depths.push(prof);
+                borderColors.push('#888888');
             }
-
-            if (isMobile) {
-                // Mode MOBILE: redimensionnement vertical - utiliser FLEX au lieu de maxHeight
-                const newHeight = clientY - wrapperRect.top;
-                const totalHeight = wrapperRect.height;
+            t = bottomEnd;
+            
+            // REMONTÉE + PALIER 6M
+            if (row.p6 > 0) {
+                const ascent6m = (prof - 6) / descentRate;
+                for (let i = 0.5; i <= ascent6m; i += 0.5) {
+                    const d = prof - (i / ascent6m) * (prof - 6);
+                    depths.push(d);
+                    borderColors.push('#FFA500'); // ORANGE pour remontée
+                }
+                t += ascent6m;
                 
-                // Minimum 80px pour left, maximum 85% pour left
-                if (newHeight > 80 && newHeight < totalHeight * 0.85) {
-                    const rightHeight = totalHeight - newHeight - 12; // 12px = splitter + padding
-                    
-                    leftPanel.style.flex = `0 0 ${newHeight}px`;
-                    rightPanel.style.flex = `0 0 ${rightHeight}px`;
-                    
-                    // Redimensionner le chart EN TEMPS RÉEL
-                    if (chart1) {
-                        setTimeout(() => chart1.resize(), 5);
-                    }
+                // Palier 6m - JAUNE VIF
+                for (let i = 0; i < row.p6; i += 0.5) {
+                    depths.push(6);
+                    borderColors.push('#FFFF00');  // ← JAUNE
                 }
+                t += row.p6;
+            }
+            
+            // REMONTÉE + PALIER 3M
+            if (row.p3 > 0 || row.p6 === 0) {
+                const startDepth = row.p6 > 0 ? 6 : prof;
+                const ascent3m = Math.abs(startDepth - 3) / descentRate;
+                
+                for (let i = 0.5; i <= ascent3m; i += 0.5) {
+                    const d = startDepth - (i / ascent3m) * (startDepth - 3);
+                    depths.push(d);
+                    borderColors.push('#FFA500'); // ORANGE pour remontée
+                }
+                t += ascent3m;
+                
+                // Palier 3m - TURQUOISE/CYAN
+                if (row.p3 > 0) {
+                    for (let i = 0; i < row.p3; i += 0.5) {
+                        depths.push(3);
+                        borderColors.push('#00FFFF');  // ← CYAN
+                    }
+                    t += row.p3;
+                }
+            }
+            
+            // SURFACE
+            depths.push(0);
+            borderColors.push(color);
+            
+            return { depths, borderColors };
+        }
+        
+        // Mettre à jour l'affichage des sliders autonomie
+        function updateAutSlider(el) {
+            const id = el.id;
+            const val = el.value;
+            const valId = id + '-val';
+            
+            if (id.includes('conso')) document.getElementById(valId).textContent = val + ' L/min';
+            else if (id.includes('vol')) document.getElementById(valId).textContent = val + ' L';
+            else if (id.includes('press')) document.getElementById(valId).textContent = val + ' bar';
+            else if (id.includes('safety')) document.getElementById(valId).textContent = val + ' bar';
+        }
+        
+        function toggleCurveControls(curveNum) {
+            // Initialiser les paramètres de la courbe au premier clic
+            if (!window.autonomyParams) window.autonomyParams = {};
+            if (!window.autonomyParams['curve' + curveNum]) {
+                window.autonomyParams['curve' + curveNum] = {
+                    prof: parseInt(document.getElementById('aut1-prof').value),
+                    conso: parseInt(document.getElementById('aut1-conso').value),
+                    vol: parseInt(document.getElementById('aut1-vol').value),
+                    press: parseInt(document.getElementById('aut1-press').value),
+                    safety: parseInt(document.getElementById('aut1-safety').value)
+                };
+                
+                // Afficher les valeurs
+                document.getElementById('aut' + curveNum + '-prof-val').textContent = window.autonomyParams['curve' + curveNum].prof;
+                document.getElementById('aut' + curveNum + '-conso-val').textContent = window.autonomyParams['curve' + curveNum].conso;
+            }
+            
+            const controlsDiv = document.getElementById('aut' + curveNum + '-controls');
+            if (controlsDiv) {
+                controlsDiv.style.display = controlsDiv.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        function modifyParam(paramId, delta) {
+            const parts = paramId.split('-');
+            const curveNum = parts[0].replace('aut', '');
+            const paramType = parts[1]; // 'prof' ou 'conso'
+            
+            // Copier de la courbe précédente si première modification
+            if (!window.autonomyParams) window.autonomyParams = {};
+            if (!window.autonomyParams['curve' + curveNum]) {
+                if (curveNum === '2') {
+                    window.autonomyParams['curve2'] = {
+                        prof: parseInt(document.getElementById('aut1-prof').value),
+                        conso: parseInt(document.getElementById('aut1-conso').value),
+                        vol: parseInt(document.getElementById('aut1-vol').value),
+                        press: parseInt(document.getElementById('aut1-press').value),
+                        safety: parseInt(document.getElementById('aut1-safety').value)
+                    };
+                } else {
+                    window.autonomyParams['curve' + curveNum] = {
+                        prof: parseInt(document.getElementById('aut1-prof').value),
+                        conso: parseInt(document.getElementById('aut1-conso').value),
+                        vol: parseInt(document.getElementById('aut1-vol').value),
+                        press: parseInt(document.getElementById('aut1-press').value),
+                        safety: parseInt(document.getElementById('aut1-safety').value)
+                    };
+                }
+            }
+            
+            const step = paramType === 'prof' ? 1 : 1;
+            if (paramType === 'prof') {
+                window.autonomyParams['curve' + curveNum].prof = Math.max(6, window.autonomyParams['curve' + curveNum].prof + (delta * step));
             } else {
-                // Mode DESKTOP: redimensionnement horizontal
-                const newWidth = clientX - wrapperRect.left;
-                const percentage = (newWidth / wrapperRect.width) * 100;
-
-                if (percentage > 20 && percentage < 80) {
-                    leftPanel.style.flex = `0 0 ${percentage}%`;
+                window.autonomyParams['curve' + curveNum].conso = Math.max(5, window.autonomyParams['curve' + curveNum].conso + (delta * step));
+            }
+            
+            document.getElementById('aut' + curveNum + '-prof-val').textContent = window.autonomyParams['curve' + curveNum].prof;
+            document.getElementById('aut' + curveNum + '-conso-val').textContent = window.autonomyParams['curve' + curveNum].conso;
+            
+            drawAutonomyChart();
+        }
+        
+        // Calculer la pression résiduelle de la bouteille au fil du profil de plongée
+        function calculateBottleResidualPressure(depthProfile, consumption, initialPress, volume) {
+            const pressureData = [];
+            let currentPressure = initialPress;
+            
+            for (let i = 0; i < depthProfile.length; i++) {
+                const depth = depthProfile[i];
+                const atmosphericPressure = 1 + depth / 10;
+                const consumptionAtDepth = consumption * atmosphericPressure;
+                
+                // Consommer 1 minute d'air à cette profondeur
+                currentPressure -= consumptionAtDepth / volume;
+                
+                pressureData.push(Math.max(0, currentPressure));
+            }
+            
+            return pressureData;
+        }
+        
+        // Dessiner les profils optimisés pour autonomie
+        function drawAutonomyChart() {
+            try {
+                // Détruire le chart précédent (du Planificateur)
+                if (window.autonomyChart) window.autonomyChart.destroy();
+                if (chart1) chart1.destroy();
+                
+                // Vérifier que les éléments essentiels existent
+                const canvas = document.getElementById('profileCanvas');
+                if (!canvas) {
+                    console.warn('Canvas profileCanvas non trouvé');
+                    return;
+                }
+                
+                // Utiliser les vrais IDs : aut1-prof, aut1-conso, etc.
+                const el1 = document.getElementById('aut1-prof');
+                const el2 = document.getElementById('aut1-conso');
+                const el3 = document.getElementById('aut1-vol');
+                const el4 = document.getElementById('aut1-press');
+                const el5 = document.getElementById('aut1-safety');
+                
+                if (!el1 || !el2 || !el3 || !el4 || !el5) {
+                    console.warn('Autonomie : éléments non trouvés', {el1, el2, el3, el4, el5});
+                    return;
+                }
+                
+                const prof = parseInt(el1.value) || 20;
+                const conso = parseInt(el2.value) || 15;
+                const vol = parseInt(el3.value) || 12;
+                const press = parseInt(el4.value) || 200;
+                const safety = parseInt(el5.value) || 50;
+                
+                // Mettre à jour l'affichage de la profondeur
+                document.getElementById('aut1-prof-display').textContent = prof;
+                
+                console.log('Paramètres autonomie:', {prof, conso, vol, press, safety});
+                
+                const airAvailable = (press - safety) * vol;
+                if (airAvailable <= 0) {
+                    document.getElementById('aut1-maxtime').textContent = 'Pression invalide';
+                    return;
+                }
+                
+                // Calculer le temps max pour cette profondeur
+                let maxBottomTime = 0;
+                let bestRow = null;
+                
+                for (let time = 5; time <= 300; time += 1) {
+                    const row = searchTable(prof, time);
+                    if (!row) break;
                     
-                    // Redimensionner le chart EN TEMPS RÉEL
-                    if (chart1) {
-                        setTimeout(() => chart1.resize(), 5);
+                    const descentTime = prof / 16;
+                    const palierTime = (row.p6 || 0) + (row.p3 || 0);
+                    const bottomConso = conso * time;
+                    const descentConso = conso * descentTime;
+                    const ascentTime = (prof - 3) / 16;
+                    const ascentConso = conso * ascentTime;
+                    const palierConso = conso * 0.7 * (palierTime + 1);
+                    const totalConso = bottomConso + descentConso + ascentConso + palierConso;
+                    
+                    if (totalConso <= airAvailable) {
+                        maxBottomTime = time;
+                        bestRow = row;
+                    } else {
+                        break;
                     }
                 }
+                
+                if (!bestRow) {
+                    document.getElementById('aut1-maxtime').textContent = 'Impossible';
+                    return;
+                }
+                
+                // Afficher le temps max
+                const el1MaxTime = document.getElementById('aut1-maxtime');
+                if (el1MaxTime) el1MaxTime.textContent = minToHHMM(maxBottomTime);
+                
+                // Calculer et afficher le temps total (fond + paliers)
+                const totalDiveTime = maxBottomTime + (bestRow.p6 || 0) + (bestRow.p3 || 0);
+                const el1TotalTime = document.getElementById('aut1-totaltime');
+                if (el1TotalTime) el1TotalTime.textContent = minToHHMM(totalDiveTime);
+                
+                // Tracer la courbe 1
+                const ctx = canvas.getContext('2d');
+                
+                const curve1 = buildDiveProfileCurve(prof, maxBottomTime, bestRow);
+                const labels = Array.from({length: curve1.depths.length}, (_, i) => i);
+                
+                // Calculer la pression de la bouteille au fil du temps
+                const pressureData = calculateBottleResidualPressure(curve1.depths, conso, press, vol);
+                
+                console.log('Curve1 depths:', curve1.depths.length, 'Pressure data:', pressureData.length);
+                
+                const datasets = [{
+                    label: `Courbe 1 - ${prof}m / ${minToHHMM(maxBottomTime)}`,
+                    data: curve1.depths,
+                    borderColor: '#FFFF00',
+                    backgroundColor: 'rgba(255, 255, 0, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 2.5,
+                    yAxisID: 'y',
+                    segment: {
+                        borderColor: (context) => curve1.borderColors[context.p0DataIndex] || '#FFFF00'
+                    }
+                },
+                {
+                    label: `🫁 Pression Bouteille (${vol}L)`,
+                    data: pressureData,
+                    borderColor: '#FF6B6B',
+                    backgroundColor: 'rgba(255, 107, 107, 0.05)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    borderDash: [3, 3],
+                    yAxisID: 'y2'
+                }];
+                
+                // Ajouter courbes 2-4 si activées
+                const curveConfigs = [
+                    { id: 2, color: '#00FF00', label: 'Courbe 2' },
+                    { id: 3, color: '#FF99FF', label: 'Courbe 3' },
+                    { id: 4, color: '#00FFFF', label: 'Courbe 4' }
+                ];
+                
+                for (let cfg of curveConfigs) {
+                    const checkbox = document.getElementById('aut' + cfg.id + '-enable');
+                    if (!checkbox || !checkbox.checked) continue;
+                    
+                    // Récupérer les paramètres
+                    if (!window.autonomyParams) window.autonomyParams = {};
+                    const params = window.autonomyParams['curve' + cfg.id] || {
+                        prof: prof,
+                        conso: conso,
+                        vol: vol,
+                        press: press,
+                        safety: safety
+                    };
+                    
+                    const air = (params.press - params.safety) * params.vol;
+                    if (air <= 0) continue;
+                    
+                    let maxTime = 0, row2 = null;
+                    for (let time = 5; time <= 300; time += 1) {
+                        const r = searchTable(params.prof, time);
+                        if (!r) break;
+                        const dt = params.prof / 16, pt = (r.p6 || 0) + (r.p3 || 0);
+                        const bc = params.conso * time, dc = params.conso * dt;
+                        const at = (params.prof - 3) / 16, ac = params.conso * at;
+                        const pc = params.conso * 0.7 * (pt + 1);
+                        if (bc + dc + ac + pc <= air) { maxTime = time; row2 = r; } else break;
+                    }
+                    
+                    if (row2) {
+                        const curve2 = buildDiveProfileCurve(params.prof, maxTime, row2);
+                        datasets.push({
+                            label: cfg.label + ` - ${params.prof}m / ${minToHHMM(maxTime)}`,
+                            data: curve2.depths,
+                            borderColor: cfg.color,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2,
+                            yAxisID: 'y',
+                            borderDash: [5, 5],
+                            segment: {
+                                borderColor: (context) => curve2.borderColors[context.p0DataIndex] || cfg.color
+                            }
+                        });
+                        const maxTimeEl = document.getElementById('aut' + cfg.id + '-maxtime');
+                        if (maxTimeEl) maxTimeEl.textContent = minToHHMM(maxTime);
+                    }
+                }
+                
+                // Créer le chart avec AXE SECONDAIRE pour l'autonomie
+                window.autonomyChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'nearest', intersect: false },
+                        plugins: {
+                            legend: { labels: { color: '#00ffff', font: { size: 11 } } },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.9)',
+                                titleColor: '#ffff00',
+                                bodyColor: '#fff',
+                                borderColor: '#00ffff',
+                                borderWidth: 2
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                reverse: true,
+                                min: 0,
+                                max: prof + 10,
+                                title: { display: true, text: 'Profondeur (m)', color: '#FFFF00', font: { size: 12, weight: 'bold' } },
+                                ticks: { color: '#FFFF00' },
+                                grid: { color: 'rgba(255, 255, 0, 0.2)' }
+                            },
+                            y2: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                min: 0,
+                                max: press,
+                                title: { display: true, text: 'Pression (bar)', color: '#FF6B6B', font: { size: 12, weight: 'bold' } },
+                                ticks: { color: '#FF6B6B' },
+                                grid: { drawOnChartArea: false, color: 'rgba(255, 107, 107, 0.1)' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Temps (min)', color: '#00ffff', font: { size: 12, weight: 'bold' } },
+                                ticks: { color: '#00ffff' },
+                                grid: { color: 'rgba(0, 255, 255, 0.2)' }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('Chart créé avec succès');
+            } catch (error) {
+                console.error('Erreur dans drawAutonomyChart:', error);
             }
         }
 
-        function stopDrag() {
-            isDraggingSplitter = false;
-            document.body.style.userSelect = 'auto';
+        function scrollToElement(id) {
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({behavior: 'smooth'});
         }
-
-        // Events SOURIS
-        document.getElementById('splitter').addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', moveDrag);
-        document.addEventListener('mouseup', stopDrag);
-
-        // Events TACTILE - non-passive pour supporter preventDefault
-        document.getElementById('splitter').addEventListener('touchstart', startDrag, false);
-        document.addEventListener('touchmove', moveDrag, false);
-        document.addEventListener('touchend', stopDrag, false);
-
-        // Redimensionner le chart quand la fenêtre change de taille
-        window.addEventListener('resize', () => {
-            if (chart1) {
-                chart1.resize();
-            }
-        });
-
+        
         function switchTab(tabNum) {
             currentTab = tabNum;
-            const isMobile = window.innerWidth < 1024;
+            const leftPanel = document.querySelector('.left-panel');
+            document.getElementById('tab0-left').style.display = tabNum === 0 ? 'flex' : 'none';
+            document.getElementById('tab1-left').style.display = tabNum === 1 ? 'flex' : 'none';
+            document.getElementById('tab2-left').style.display = tabNum === 2 ? 'flex' : 'none';
+            document.getElementById('rightPanel').style.display = tabNum === 2 ? 'none' : 'flex';
+            document.getElementById('splitter').style.display = tabNum === 2 ? 'none' : 'block';
+            leftPanel.classList.toggle('tab2-active', tabNum === 2);
+            document.querySelectorAll('.tab-btn').forEach((el, i) => el.classList.toggle('active', i === tabNum));
+            if (tabNum === 0) { setTimeout(() => calculate(), 50); }
+            else if (tabNum === 1) { setTimeout(() => drawAutonomyChart(), 50); }
+            else if (tabNum === 2) { setTimeout(() => generateTables(), 50); }
+            if (chart1) setTimeout(() => chart1.resize(), 100);
+        }
 
-            document.getElementById('tab0-left').style.display = tabNum === 0 ? (isMobile ? 'flex' : 'flex') : 'none';
-            document.getElementById('tab1-left').style.display = tabNum === 1 ? (isMobile ? 'flex' : 'flex') : 'none';
-            document.getElementById('tab2-left').style.display = tabNum === 2 ? 'block' : 'none';
+        function switchDiveView() {
+            superposedView = document.getElementById('view-toggle').checked;
+            const toggleText = document.getElementById('toggle-text-menu');
+            toggleText.textContent = superposedView ? '📊 Combiné' : '📊 Superposé';
+            
+            // Redessiner le graphe avec la nouvelle vue
+            const depth = parseInt(document.getElementById('depth1').value);
+            const time = parseInt(document.getElementById('time1').value);
+            const row = searchTable(depth, time);
+            const dive2Checkbox = document.getElementById('dive2-checkbox');
+            drawDiveProfile(depth, time, row, dive2Checkbox.checked ? parseInt(document.getElementById('dive2-interval').value) : 0);
+        }
 
-            document.querySelectorAll('.tab-btn').forEach((el, i) => {
-                el.classList.toggle('active', i === tabNum);
-            });
-
-            if (tabNum === 0) {
-                document.getElementById('graph-title').textContent = 'Profil de Plongée';
-                calculate();
-            } else if (tabNum === 1) {
-                document.getElementById('graph-title').textContent = 'Profil Optimal + Courbe Autonomie';
-                calculateOptimalDive();
+        function calculate() {
+            const depth = parseInt(document.getElementById('depth1').value);
+            const time = parseInt(document.getElementById('time1').value);
+            const row = searchTable(depth, time);
+            
+            // Générer la ligne des paliers
+            let paliersLine = [];
+            if (row.p15 && row.p15 > 0) paliersLine.push(`15m: ${row.p15}min`);
+            if (row.p12 && row.p12 > 0) paliersLine.push(`12m: ${row.p12}min`);
+            if (row.p9 && row.p9 > 0) paliersLine.push(`9m: ${row.p9}min`);
+            if (row.p6 && row.p6 > 0) paliersLine.push(`6m: ${row.p6}min`);
+            if (row.p3 && row.p3 > 0) paliersLine.push(`3m: ${row.p3}min`);
+            
+            document.getElementById('paliers-line').textContent = paliersLine.length > 0 ? paliersLine.join(' / ') : 'Aucun';
+            document.getElementById('dtr1').textContent = row.dtr + ' min';
+            document.getElementById('gps1').textContent = row.gps;
+            
+            const warningMsg = row.gps === '*' ? '⚠️ PLONGÉES SUCCESSIVES INTERDITES' : '';
+            document.getElementById('warning1').innerHTML = warningMsg;
+            document.getElementById('warning1').style.display = warningMsg ? 'block' : 'none';
+            
+            const totalTime = time + row.p6 + row.p3 + 3;
+            document.getElementById('total1').textContent = minToHHMM(totalTime);
+            
+            // Gérer l'affichage de la 2e plongée
+            const dive2Checkbox = document.getElementById('dive2-checkbox');
+            const dive2Options = document.getElementById('dive2-options');
+            dive2Options.style.display = dive2Checkbox.checked ? 'block' : 'none';
+            
+            // Tracer le profil (avec 2e plongée si cochée)
+            drawDiveProfile(depth, time, row, dive2Checkbox.checked ? parseInt(document.getElementById('dive2-interval').value) : 0);
+        }
+        
+        function generateSuggestions(depth) {
+            const container = document.getElementById('suggestions-container');
+            container.innerHTML = '';
+            
+            // Trouver le profil OPTIMAL unique (le plus long temps possible)
+            let bestSuggestion = null;
+            const times = [15, 20, 25, 30, 35, 40, 45, 50];
+            
+            for (let t of times) {
+                const row = searchTable(depth, t);
+                if (row) {
+                    if (!bestSuggestion || t > bestSuggestion.time) {
+                        bestSuggestion = {
+                            time: t,
+                            p6: row.p6,
+                            p3: row.p3,
+                            dtr: row.dtr,
+                            gps: row.gps,
+                            row: row
+                        };
+                    }
+                }
             }
+            
+            // Stocker pour drawDiveProfile
+            window.storedSuggestions = [bestSuggestion];
+            
+            if (bestSuggestion) {
+                const totalTime = bestSuggestion.time + bestSuggestion.p6 + bestSuggestion.p3 + 3;
+                const warning = bestSuggestion.gps === '*' ? ' 🚫 Successives interdites' : '';
+                const html = `<div style="background: rgba(0,255,150,0.2); padding: 10px; border-radius: 4px; border: 2px solid #00FF99; font-size: 10px; text-align: center;">
+                    <strong style="color: #00FF99; font-size: 12px;">⭐ PROFIL OPTIMAL ⭐</strong><br/>
+                    <span style="color: #00FFFF; font-size: 14px; font-weight: bold;">${minToHHMM(bestSuggestion.time)}</span> au fond<br/>
+                    P6: ${bestSuggestion.p6}m | P3: ${bestSuggestion.p3}m | GPS: <strong style="font-size: 12px;">${bestSuggestion.gps}</strong>${warning}
+                </div>`;
+                container.innerHTML = html;
+            }
+        }
+        
+        // Calcul d'autonomie réelle avec consommation
+        function calculateAutonomy() {
+            const depth = parseInt(document.getElementById('auto-prof').value) || 20;
+            const consoAvg = parseFloat(document.getElementById('conso-avg').value) || 25;
+            const bottleVol = parseFloat(document.getElementById('bottle-vol').value) || 15;
+            const bottlePress = parseInt(document.getElementById('bottle-press').value) || 200;
+            const safetyBar = parseInt(document.getElementById('safety-bar').value) || 50;
+            
+            // Air disponible = volume * pression dispo
+            const availableBar = bottlePress - safetyBar;
+            const availableAir = availableBar * bottleVol;
+            
+            document.getElementById('auto-air-available').textContent = availableAir.toFixed(0);
+            
+            // Chercher le meilleur profil pour cette profondeur
+            let bestTime = 0;
+            let bestRow = null;
+            
+            // Tester différents temps jusqu'à trouver le max viable
+            for (let t = 5; t <= 300; t += 5) {
+                const row = searchTable(depth, t);
+                if (!row) continue;
+                
+                const descentTime = depth / 16;
+                const totalPalierTime = row.p6 + row.p3;
+                const bottomConsumption = consoAvg * t;
+                const descentConsumption = consoAvg * descentTime;
+                const ascentConsumption = (consoAvg * 0.7) * (totalPalierTime + 2);
+                const totalConsumption = bottomConsumption + descentConsumption + ascentConsumption;
+                
+                if (totalConsumption <= availableAir) {
+                    bestTime = t;
+                    bestRow = row;
+                } else {
+                    break;
+                }
+            }
+            
+            if (bestRow) {
+                const descentTime = depth / 16;
+                const totalPalierTime = bestRow.p6 + bestRow.p3;
+                document.getElementById('auto-deco-time').textContent = totalPalierTime;
+                document.getElementById('auto-conso-total').textContent = (consoAvg * bestTime).toFixed(0);
+                document.getElementById('auto-time-final').textContent = minToHHMM(bestTime);
+                
+                generateAutonomyProposals(consoAvg, bottleVol, bottlePress, safetyBar, availableAir);
+            }
+        }
+        
+        function generateAutonomyProposals(consoAvg, bottleVol, bottlePress, safetyBar, availableAir) {
+            const container = document.getElementById('autonomy-profiles-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const proposals = [];
+            
+            // Tester différentes profondeurs pour trouver des options optimales
+            for (let prof = 10; prof <= 50; prof += 5) {
+                for (let time = 10; time <= 250; time += 10) {
+                    const row = searchTable(prof, time);
+                    if (!row) continue;
+                    
+                    const descentTime = prof / 16;
+                    const totalPalierTime = row.p6 + row.p3;
+                    const bottomConsumption = consoAvg * time;
+                    const descentConsumption = consoAvg * descentTime;
+                    const ascentConsumption = (consoAvg * 0.7) * (totalPalierTime + 2);
+                    const totalConsumption = bottomConsumption + descentConsumption + ascentConsumption;
+                    
+                    // Garder les profils qui utilisent 90-100% de l'air dispo
+                    if (totalConsumption <= availableAir && totalConsumption > availableAir * 0.85) {
+                        proposals.push({ prof, time, consum: totalConsumption, deco: totalPalierTime });
+                    }
+                }
+            }
+            
+            // Afficher les 5 meilleurs
+            proposals.sort((a, b) => b.time - a.time).slice(0, 5).forEach((p) => {
+                const html = `<div style="background: rgba(0,255,150,0.15); padding: 6px; border-radius: 4px; border-left: 2px solid #00FF99; cursor: pointer; font-size: 8px;"
+                    onmouseover="this.style.background='rgba(0,255,150,0.3)'" 
+                    onmouseout="this.style.background='rgba(0,255,150,0.15)'">
+                    <strong style="color: #00FF99;">${p.prof}m/${p.time}min</strong> | Paliers: ${p.deco}min | Air: ${p.consum.toFixed(0)}L
+                </div>`;
+                container.innerHTML += html;
+            });
+        }
 
-            if (chart1) {
-                setTimeout(() => chart1.resize(), 100);
+        function drawDiveProfile(maxDepth, bottomTime, row, dive2Interval = 0) {
+            const canvas = document.getElementById('profileCanvas');
+            const ctx = canvas.getContext('2d');
+            if (chart1) chart1.destroy();
+            
+            // Afficher/masquer le toggle pour vue superposée si 2e plongée
+            const toggleLabel = document.getElementById('view-toggle-label-menu');
+            if (dive2Interval > 0) {
+                toggleLabel.style.display = 'flex';
+            } else {
+                toggleLabel.style.display = 'none';
+                superposedView = false;
+                document.getElementById('view-toggle').checked = false;
+            }
+            
+            // Titre avec résultats au format table MN90
+            const titleEl = document.getElementById('graph-title');
+            if (titleEl) {
+                let titleHTML = `📊 <strong>${maxDepth}m et ${minToHHMM(bottomTime)} au fond :</strong> `;
+                
+                // Construire la liste des paliers
+                let paliers = [];
+                if (row.p15 > 0) paliers.push(`<span style="color:#FF99FF; text-shadow:0 0 8px #FF99FF; font-weight:bold;">P15m: ${row.p15}min</span>`);
+                if (row.p12 > 0) paliers.push(`<span style="color:#00DDDD; text-shadow:0 0 8px #00DDDD; font-weight:bold;">P12m: ${row.p12}min</span>`);
+                if (row.p9 > 0) paliers.push(`<span style="color:#00FF88; text-shadow:0 0 8px #00FF88; font-weight:bold;">P9m: ${row.p9}min</span>`);
+                if (row.p6 > 0) paliers.push(`<span style="color:#FFD700; text-shadow:0 0 8px #FFD700; font-weight:bold;">P6m: ${row.p6}min</span>`);
+                if (row.p3 > 0) paliers.push(`<span style="color:#00FF99; text-shadow:0 0 8px #00FF99; font-weight:bold;">P3m: ${row.p3}min</span>`);
+                titleHTML += paliers.length > 0 ? paliers.join(' / ') : '<span style="color:#888;">Aucun</span>';
+                titleHTML += ` / <span style="color:#FFA500; text-shadow:0 0 8px #FFA500; font-weight:bold;">DTR ${row.dtr}min</span>`;
+                titleHTML += ` / <span style="color:#FF6347; text-shadow:0 0 8px #FF6347; font-weight:bold; font-size:1.1em;">GPS: ${row.gps}</span>`;
+                
+                titleEl.innerHTML = titleHTML;
+            }
+            
+            // Récupérer les paramètres de la 2e plongée
+            const dive2Depth = dive2Interval > 0 ? parseInt(document.getElementById('dive2-depth').value) : maxDepth;
+            const dive2Time = dive2Interval > 0 ? parseInt(document.getElementById('dive2-time').value) : bottomTime;
+            const dive2Row = dive2Interval > 0 ? searchTable(dive2Depth, dive2Time) : row;
+            
+            // Afficher les résultats de la 2e plongée
+            if (dive2Interval > 0 && dive2Row) {
+                // Générer la ligne des paliers pour la 2e plongée
+                let paliersLine2 = [];
+                if (dive2Row.p15 && dive2Row.p15 > 0) paliersLine2.push(`15m: ${dive2Row.p15}min`);
+                if (dive2Row.p12 && dive2Row.p12 > 0) paliersLine2.push(`12m: ${dive2Row.p12}min`);
+                if (dive2Row.p9 && dive2Row.p9 > 0) paliersLine2.push(`9m: ${dive2Row.p9}min`);
+                if (dive2Row.p6 && dive2Row.p6 > 0) paliersLine2.push(`6m: ${dive2Row.p6}min`);
+                if (dive2Row.p3 && dive2Row.p3 > 0) paliersLine2.push(`3m: ${dive2Row.p3}min`);
+                
+                document.getElementById('paliers-line2').textContent = paliersLine2.length > 0 ? paliersLine2.join(' / ') : 'Aucun';
+                document.getElementById('dtr2').textContent = dive2Row.dtr + ' min';
+                document.getElementById('gps2').textContent = dive2Row.gps;
+            }
+            
+            const curve1 = buildDiveProfileCurve(maxDepth, bottomTime, row);
+            const curve2 = dive2Interval > 0 ? buildDiveProfileCurve(dive2Depth, dive2Time, dive2Row) : null;
+            
+            if (!superposedView) {
+                // MODE COMBINÉ - Chronologique
+                const labels = [], depthData = [];
+                let time = 0;
+                
+                // PLONGÉE 1
+                const maxTime1 = curve1.depths.length;
+                for (let i = 0; i < curve1.depths.length; i++) {
+                    labels.push(i);
+                    depthData.push(curve1.depths[i]);
+                    time = i;
+                }
+                
+                // SURFACE ET PLONGÉE 2
+                if (dive2Interval > 0) {
+                    const surfaceStart = time + 1;
+                    const surfaceEnd = surfaceStart + dive2Interval;
+                    for (let t = surfaceStart; t <= surfaceEnd; t++) {
+                        labels.push(t);
+                        depthData.push(0);
+                    }
+                    time = surfaceEnd;
+                    
+                    for (let i = 0; i < curve2.depths.length; i++) {
+                        labels.push(time + i);
+                        depthData.push(curve2.depths[i]);
+                    }
+                    time += curve2.depths.length;
+                }
+                
+                // Créer le dataset
+                const datasets = [{
+                    label: '⭐ PROFIL DE PLONGÉE ⭐',
+                    data: depthData,
+                    borderColor: '#00ffff',
+                    backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 3,
+                    segment: {
+                        borderColor: (context) => {
+                            const idx = context.p0DataIndex;
+                            if (idx >= 0 && idx < curve1.borderColors.length) {
+                                return curve1.borderColors[idx];
+                            }
+                            if (dive2Interval > 0 && idx >= maxTime1 + dive2Interval) {
+                                const idx2 = idx - maxTime1 - dive2Interval;
+                                if (idx2 >= 0 && idx2 < curve2.borderColors.length) {
+                                    return curve2.borderColors[idx2];
+                                }
+                            }
+                            return '#00ffff';
+                        }
+                    }
+                }];
+                
+                chart1 = createDiveChart(ctx, labels, datasets, Math.max(maxDepth, dive2Depth) + 15);
+            } else {
+                // MODE SUPERPOSÉ - Les deux courbes côte à côte
+                const maxLen = Math.max(curve1.depths.length, curve2 ? curve2.depths.length : 0);
+                const labels = Array.from({length: maxLen}, (_, i) => i);
+                
+                const datasets = [
+                    {
+                        label: `🟦 Plongée 1 - ${maxDepth}m/${minToHHMM(bottomTime)}`,
+                        data: curve1.depths.concat(Array(maxLen - curve1.depths.length).fill(null)),
+                        borderColor: '#00FFFF',
+                        backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderWidth: 2.5,
+                        segment: {
+                            borderColor: (context) => {
+                                const idx = context.p0DataIndex;
+                                return idx < curve1.borderColors.length ? curve1.borderColors[idx] : '#00FFFF';
+                            }
+                        }
+                    }
+                ];
+                
+                if (curve2) {
+                    datasets.push({
+                        label: `🟧 Plongée 2 - ${dive2Depth}m/${minToHHMM(dive2Time)} (Intervalle: ${dive2Interval}min)`,
+                        data: curve2.depths.concat(Array(maxLen - curve2.depths.length).fill(null)),
+                        borderColor: '#FFA500',
+                        backgroundColor: 'rgba(255, 165, 0, 0.05)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        borderWidth: 2.5,
+                        borderDash: [4, 4],
+                        segment: {
+                            borderColor: (context) => {
+                                const idx = context.p0DataIndex;
+                                return idx < curve2.borderColors.length ? curve2.borderColors[idx] : '#FFA500';
+                            }
+                        }
+                    });
+                }
+                
+                chart1 = createDiveChart(ctx, labels, datasets, Math.max(maxDepth, dive2Depth) + 15);
+            }
+        }
+
+        function createDiveChart(ctx, labels, datasets, maxY) {
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#00ffff',
+                                font: { size: 12, weight: 'bold' },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            titleColor: '#ffff00',
+                            bodyColor: '#fff',
+                            borderColor: '#00ffff',
+                            borderWidth: 2,
+                            padding: 12,
+                            titleFont: { size: 13, weight: 'bold' },
+                            callbacks: {
+                                title: function(context) {
+                                    const depth = context[0].parsed.y;
+                                    if (depth === 0) return '🌊 SURFACE';
+                                    if (depth === 3) return '⭐ PALIER 3M (temps stable)';
+                                    if (depth === 6) return '⭐ PALIER 6M (temps stable)';
+                                    return 'PROFONDEUR';
+                                },
+                                label: function(context) {
+                                    return context.parsed.y.toFixed(1) + ' m';
+                                },
+                                afterLabel: function(context) {
+                                    return 'Temps: ' + Math.round(context.label * 10) / 10 + ' min';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            reverse: true,
+                            min: 0,
+                            max: maxY,
+                            title: { display: true, text: 'Profondeur (m)', color: '#00ffff', font: { size: 13, weight: 'bold' } },
+                            ticks: { color: '#00ffff', font: { size: 11 } },
+                            grid: { color: 'rgba(0, 255, 255, 0.2)', drawBorder: true, borderColor: '#00ffff' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Temps (minutes)', color: '#00ffff', font: { size: 13, weight: 'bold' } },
+                            ticks: { color: '#00ffff', font: { size: 11 } },
+                            grid: { color: 'rgba(0, 255, 255, 0.2)', drawBorder: true, borderColor: '#00ffff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calculateOptimalDive() {
+            const prof = parseInt(document.getElementById('prof-auto').value) || 20;
+            const row = searchTable(prof, 30);
+            document.getElementById('autonomy-optimal').textContent = minToHHMM(30);
+            document.getElementById('aut-p6').textContent = row.p6;
+            document.getElementById('aut-p3').textContent = row.p3;
+            document.getElementById('aut-dtr').textContent = row.dtr;
+            drawDiveProfile(prof, 30, row);
+        }
+
+        function generateTables() {
+            const container = document.getElementById('tab2-left');
+            
+            const depths = new Set();
+            for (let row of mn90Tables) depths.add(row.prof);
+            const depthArray = Array.from(depths).sort((a, b) => a - b);
+            
+            // Menu gauche avec tous les boutons
+            let menuHtml = '<div id="tab2-menu"><div id="tab2-menu-title">🎯 PROFONDEURS</div>';
+            for (let depth of depthArray) {
+                menuHtml += `<button onclick="const el = document.getElementById('depth-${depth}'); if(el) el.scrollIntoView({behavior: 'smooth'});">${depth}m</button>`;
+            }
+            menuHtml += '<div style="grid-column: 1 / -1; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(0,255,255,0.3); color: #00ffff; font-size: 9px; font-weight: bold; margin-bottom: 6px;">📊 TABLEAUX AUX</div>';
+            menuHtml += '<button onclick="scrollToElement(\'tableau-i\')" style="grid-column: 1 / -1;">Tableau I</button>';
+            menuHtml += '<button onclick="scrollToElement(\'tableau-ii\')" style="grid-column: 1 / -1;">Tableau II</button>';
+            menuHtml += '<button onclick="scrollToElement(\'tableau-iii\')" style="grid-column: 1 / -1;">Tableau III</button>';
+            menuHtml += '<button onclick="scrollToElement(\'tableau-iv\')" style="grid-column: 1 / -1;">Tableau IV</button>';
+            menuHtml += '</div>';
+            
+            // Contenu droit avec les tableaux
+            let html = '<div id="tab2-content"><div style="color: #00ffff; margin-bottom: 15px; font-size: 11px; text-align: center;"><strong>📊 Tables MN90-FFESSM - ' + mn90Tables.length + ' lignes</strong></div>';
+            let totalRows = 0;
+            
+            for (let depth of depthArray) {
+                const rows = mn90Tables.filter(r => r.prof === depth);
+                totalRows += rows.length;
+                html += `<div id="depth-${depth}" style="margin-bottom: 18px; background: rgba(0,255,255,0.1); padding: 10px; border-radius: 8px; border-left: 4px solid #00ffff;">
+                    <h3 style="color: #00ffff; margin-bottom: 10px; font-size: 12px;">Profondeur <strong>${depth}m</strong> (${rows.length})</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed;">
+                    <thead><tr style="background: #003366; color: #00ffff; position: sticky; top: 0;">
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; width: 26px;">Tps</th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P15</th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P12</th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P9</th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P6</th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; width: 10px;">P3</th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; background: rgba(0,200,255,0.3); width: 10px;"><strong>D</strong></th>
+                        <th style="padding: 1px 0; border: 1px solid #00ffff; width: 12px;">GPS</th>
+                    </tr></thead>
+                    <tbody>`;
+                    
+                for (let row of rows) {
+                    const isReduc = row.gps === '*' ? 'background: rgba(255,50,50,0.25);' : '';
+                    const color = row.gps === '*' ? 'color: #ff3333;' : 'color: #fff;';
+                    html += `<tr style="${color}${isReduc}">
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; font-weight: bold; word-break: break-word;">${minToHHMM(row.time)}</td>
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; word-break: break-word;">${row.p15}</td>
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; word-break: break-word;">${row.p12}</td>
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; word-break: break-word;">${row.p9}</td>
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; word-break: break-word;">${row.p6}</td>
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; word-break: break-word;">${row.p3}</td>
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; background: rgba(0,200,255,0.2); font-weight: bold; word-break: break-word;">${row.dtr}</td>
+                        <td style="padding: 1px 0; border: 1px solid rgba(0,255,255,0.15); text-align: center; font-weight: bold; word-break: break-word;">${row.gps}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table></div>';
+            }
+            // Tableau I - Azote Résiduel
+            html += '<div id="tableau-i" style="margin-bottom: 18px; background: rgba(255,153,0,0.1); padding: 10px; border-radius: 8px; border-left: 4px solid #FF9900;"><h3 style="color: #FF9900; margin-bottom: 10px; font-size: 12px;">📊 Tableau I - Azote Résiduel</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Évolution de l\'azote résiduel entre deux plongées</div><table style="width: 100%; border-collapse: collapse; font-size: 8px;"><thead><tr style="background: #4d3300;"><th style="border: 1px solid #FF9900; padding: 3px;">Groupe</th><th style="border: 1px solid #FF9900; padding: 3px;">00:15</th><th style="border: 1px solid #FF9900; padding: 3px;">00:30</th><th style="border: 1px solid #FF9900; padding: 3px;">00:45</th><th style="border: 1px solid #FF9900; padding: 3px;">01:00</th><th style="border: 1px solid #FF9900; padding: 3px;">02:00</th><th style="border: 1px solid #FF9900; padding: 3px;">03:00</th><th style="border: 1px solid #FF9900; padding: 3px;">04:00</th><th style="border: 1px solid #FF9900; padding: 3px;">05:00</th><th style="border: 1px solid #FF9900; padding: 3px;">06:00</th><th style="border: 1px solid #FF9900; padding: 3px;">08:00</th><th style="border: 1px solid #FF9900; padding: 3px;">12:00</th></tr></thead><tbody>';
+            const azote1Data = [['A','0.84','0.83','0.83','0.83','0.82','0.81','0.81','0.81','0.81','0.81','0.81'],['B','0.88','0.88','0.87','0.86','0.85','0.83','0.82','0.82','0.81','0.81','0.81'],['C','0.92','0.91','0.90','0.89','0.87','0.85','0.83','0.82','0.82','0.81','0.81'],['D','0.97','0.95','0.94','0.93','0.89','0.86','0.85','0.83','0.82','0.81','0.81'],['E','1.00','0.98','0.97','0.96','0.91','0.88','0.86','0.84','0.83','0.81','0.81'],['F','1.05','1.03','1.01','0.99','0.94','0.90','0.87','0.85','0.83','0.81','0.81'],['G','1.08','1.06','1.04','1.02','0.96','0.91','0.88','0.85','0.84','0.81','0.81'],['H','1.13','1.10','1.08','1.05','0.98','0.93','0.89','0.86','0.85','0.82','0.81'],['I','1.17','1.14','1.11','1.08','1.00','0.94','0.90','0.87','0.85','0.83','0.81'],['J','1.20','1.17','1.14','1.11','1.02','0.96','0.91','0.88','0.86','0.83','0.81'],['K','1.25','1.21','1.18','1.15','1.04','0.97','0.92','0.89','0.86','0.83','0.81'],['L','1.29','1.25','1.21','1.17','1.07','0.99','0.93','0.89','0.87','0.82','0.81'],['M','1.33','1.29','1.25','1.21','1.09','1.01','0.94','0.90','0.87','0.82','0.81'],['N','1.37','1.32','1.28','1.24','1.11','1.02','0.95','0.91','0.88','0.82','0.81'],['O','1.41','1.36','1.32','1.27','1.13','1.04','0.97','0.92','0.88','0.82','0.81'],['P','1.45','1.40','1.35','1.30','1.15','1.05','0.98','0.93','0.89','0.82','0.81']];
+            for (let row of azote1Data) { html += '<tr style="color: #FF9900;"><td style="border: 1px solid rgba(255,153,0,0.3); padding: 3px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(255,153,0,0.3); padding: 3px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
+            html += '</tbody></table></div>';
+            
+            // Tableau II - Majoration
+            html += '<div id="tableau-ii" style="margin-bottom: 18px; background: rgba(0,200,100,0.1); padding: 10px; border-radius: 8px; border-left: 4px solid #00FF99;"><h3 style="color: #00FF99; margin-bottom: 10px; font-size: 12px;">📊 Tableau II - Majoration</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Détermination de la majoration en minutes</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #003333;"><th style="border: 1px solid #00FF99; padding: 2px;">Azote</th><th style="border: 1px solid #00FF99; padding: 2px;">12</th><th style="border: 1px solid #00FF99; padding: 2px;">15</th><th style="border: 1px solid #00FF99; padding: 2px;">18</th><th style="border: 1px solid #00FF99; padding: 2px;">20</th><th style="border: 1px solid #00FF99; padding: 2px;">25</th><th style="border: 1px solid #00FF99; padding: 2px;">30</th><th style="border: 1px solid #00FF99; padding: 2px;">35</th><th style="border: 1px solid #00FF99; padding: 2px;">40</th><th style="border: 1px solid #00FF99; padding: 2px;">45</th><th style="border: 1px solid #00FF99; padding: 2px;">50</th><th style="border: 1px solid #00FF99; padding: 2px;">55</th><th style="border: 1px solid #00FF99; padding: 2px;">60</th></tr></thead><tbody>';
+            const majorData = [['0.82','4','3','2','2','2','1','1','1','1','1','1','1'],['0.89','17','13','11','10','8','7','6','5','4','4','4','3'],['0.99','38','30','24','22','17','14','12','11','9','8','8','7'],['1.11','68','52','42','37','29','24','20','18','16','14','13','12'],['1.24','106','79','63','56','43','35','30','26','23','20','18','17'],['1.38','160','114','89','78','59','48','40','35','30','27','24','22']];
+            for (let row of majorData) { html += '<tr style="color: #00FF99;"><td style="border: 1px solid rgba(0,255,153,0.3); padding: 2px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(0,255,153,0.3); padding: 2px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
+            html += '</tbody></table></div></div>';
+            
+            // Tableau III - Oxygène
+            html += '<div id="tableau-iii" style="margin-bottom: 18px; background: rgba(255,0,255,0.08); padding: 10px; border-radius: 8px; border-left: 4px solid #FF00FF;"><h3 style="color: #FF00FF; margin-bottom: 10px; font-size: 12px;">📊 Tableau III - Oxygène Pur</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Diminution azote par inhalation O₂ en surface</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #330033;"><th style="border: 1px solid #FF00FF; padding: 2px;">Groupe</th><th style="border: 1px solid #FF00FF; padding: 2px;">Eq.</th><th style="border: 1px solid #FF00FF; padding: 2px;">15min</th><th style="border: 1px solid #FF00FF; padding: 2px;">30min</th><th style="border: 1px solid #FF00FF; padding: 2px;">45min</th><th style="border: 1px solid #FF00FF; padding: 2px;">60min</th><th style="border: 1px solid #FF00FF; padding: 2px;">90min</th><th style="border: 1px solid #FF00FF; padding: 2px;">120min</th><th style="border: 1px solid #FF00FF; padding: 2px;">150min</th><th style="border: 1px solid #FF00FF; padding: 2px;">180min</th></tr></thead><tbody>';
+            const oxygenData = [['A','0.84','0.80','-','-','-','-','-','-','-'],['B','0.89','0.85','0.82','0.79','-','-','-','-','-'],['E','1.02','0.98','0.94','0.90','0.86','0.82','0.80','-','-'],['I','1.20','1.15','1.10','1.05','1.01','0.97','0.93','0.89','0.85'],['M','1.38','1.32','1.27','1.21','1.16','1.11','1.06','1.02','0.98'],['P','1.51','1.45','1.38','1.33','1.27','1.22','1.16','1.11','1.07']];
+            for (let row of oxygenData) { html += '<tr style="color: #FF00FF;"><td style="border: 1px solid rgba(255,0,255,0.3); padding: 2px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(255,0,255,0.3); padding: 2px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
+            html += '</tbody></table></div></div>';
+            
+            // Tableau IV - Remontée
+            html += '<div id="tableau-iv" style="margin-bottom: 18px; background: rgba(255,100,100,0.08); padding: 10px; border-radius: 8px; border-left: 4px solid #FF6464;"><h3 style="color: #FF6464; margin-bottom: 10px; font-size: 12px;">📊 Tableau IV - Durée Remontée</h3><div style="font-size: 8px; color: #aaa; margin-bottom: 8px;">Remontée jusqu\'au premier palier + temps interpaliers (minutes)</div><div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 7px;"><thead><tr style="background: #330000;"><th style="border: 1px solid #FF6464; padding: 2px;">Palier</th><th style="border: 1px solid #FF6464; padding: 2px;">6min</th><th style="border: 1px solid #FF6464; padding: 2px;">10min</th><th style="border: 1px solid #FF6464; padding: 2px;">15min</th><th style="border: 1px solid #FF6464; padding: 2px;">20min</th><th style="border: 1px solid #FF6464; padding: 2px;">30min</th><th style="border: 1px solid #FF6464; padding: 2px;">40min</th><th style="border: 1px solid #FF6464; padding: 2px;">50min</th><th style="border: 1px solid #FF6464; padding: 2px;">60min</th><th style="border: 1px solid #FF6464; padding: 2px;">90min</th></tr></thead><tbody>';
+            const remData = [['Sans','1','1','1','2','2','3','4','4','5'],['3m','1','1','2','2','3','4','4','5','5'],['6m','2','2','2','3','3','4','4','5','5'],['9m','2','2','2','3','3','4','5','5','6'],['12m','3','3','3','3','4','5','5','6','6'],['15m','3','3','3','4','4','5','5','6','6']];
+            for (let row of remData) { html += '<tr style="color: #FF6464;"><td style="border: 1px solid rgba(255,100,100,0.3); padding: 2px; font-weight: bold;">'+row[0]+'</td>'; for (let i=1; i<row.length; i++) html += '<td style="border: 1px solid rgba(255,100,100,0.3); padding: 2px; text-align: center;">'+row[i]+'</td>'; html += '</tr>'; }
+            html += '</tbody></table></div></div>';
+            
+            html += '<div style="color: #00ffff; text-align: center; padding: 15px; border-top: 2px solid #00ffff; margin-top: 15px; font-size: 11px;"><strong>✓ TOTAL: ' + totalRows + ' LIGNES | + 4 TABLEAUX AUXILIAIRES</strong></div></div>';
+            
+            // Wrapper qui contient menu + splitter + contenu
+            container.innerHTML = '<div id="tab2-wrapper">' + menuHtml + '<div id="tab2-splitter"></div>' + html + '</div>';
+            
+            // Initialiser le splitter pour PC
+            if (window.innerWidth >= 1024) {
+                const splitter = document.getElementById('tab2-splitter');
+                if (splitter) {
+                    splitter.addEventListener('mousedown', startTab2Drag);
+                    splitter.addEventListener('touchstart', startTab2Drag, false);
+                }
+            }
+        }
+        
+        let isTab2Dragging = false;
+        function startTab2Drag(e) { isTab2Dragging = true; if (e.preventDefault) e.preventDefault(); }
+        document.addEventListener('mousemove', moveTab2Drag);
+        document.addEventListener('touchmove', moveTab2Drag, false);
+        document.addEventListener('mouseup', () => { isTab2Dragging = false; });
+        document.addEventListener('touchend', () => { isTab2Dragging = false; }, false);
+        
+        function moveTab2Drag(e) {
+            if (!isTab2Dragging) return;
+            const wrapper = document.getElementById('tab2-wrapper');
+            const menu = document.getElementById('tab2-menu');
+            const content = document.getElementById('tab2-content');
+            if (!wrapper || !menu || !content) return;
+            
+            const rect = wrapper.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            const newWidth = clientX - rect.left;
+            
+            if (newWidth > 80 && newWidth < rect.width * 0.6) {
+                menu.style.width = newWidth + 'px';
+                if (chart1) chart1.resize();
             }
         }
 
@@ -1284,580 +993,362 @@
             const valSpan = document.getElementById(slider.id + '-val');
             if (valSpan) {
                 let unit = ' m';
-                if (slider.id.includes('time') || slider.id.includes('interval')) unit = ' min';
-                else if (slider.id.includes('pression') || slider.id.includes('secu')) unit = ' bar';
-                else if (slider.id.includes('conso')) unit = ' L/min';
-                else if (slider.id.includes('bouteille')) unit = ' L';
-                
-                valSpan.textContent = slider.value + unit;
+                if (slider.id.includes('time')) {
+                    valSpan.textContent = minToHHMM(parseInt(slider.value));
+                } else {
+                    valSpan.textContent = slider.value + unit;
+                }
             }
         }
 
-        function findClosestTable(depth) {
-            const available = Object.keys(officialTables).map(Number);
-            return available.reduce((p, c) => Math.abs(c - depth) < Math.abs(p - depth) ? c : p);
-        }
-
-        function getTableEntry(depth, time) {
-            const tableDepth = findClosestTable(depth);
-            let best = officialTables[tableDepth][0];
-            for (let entry of officialTables[tableDepth]) {
-                if (entry[0] <= time) best = entry;
-            }
-            return best;
-        }
-
-        function calculate() {
-            const depth1 = parseInt(document.getElementById('depth1').value);
-            const time1 = parseInt(document.getElementById('time1').value);
-            const hasPlongee2 = document.getElementById('plongee2').checked;
-
-            if (depth1 <= 0 || time1 <= 0) return;
-
-            const entry1 = getTableEntry(depth1, time1);
-            const palier3m1 = entry1[1];
-            const palier6m1 = entry1[2];
-            const gps1 = entry1[3];
-
-            document.getElementById('palier6m1').textContent = palier6m1 + ' min';
-            document.getElementById('palier3m1').textContent = palier3m1 + ' min';
-            document.getElementById('gps1').textContent = gps1;
-
-            const descente = depth1 / 15;
-            const remontee6 = (depth1 - 6) / 6;
-            const remontee3 = 3 / 6;
-            const total = time1 + descente + remontee6 + palier6m1 + remontee3 + palier3m1 + 0.5;
-
-            document.getElementById('total1').textContent = Math.ceil(total) + ' min';
-
-            if (hasPlongee2) {
-                const depth2 = parseInt(document.getElementById('depth2').value);
-                const time2 = parseInt(document.getElementById('time2').value);
-                const interval = parseInt(document.getElementById('interval').value);
-
-                const entry2 = getTableEntry(depth2, time2);
-                const palier3m2 = entry2[1];
-                const palier6m2 = entry2[2];
-                const gps2 = entry2[3];
-
-                // Majoration - simplifiée pour démo
-                const majoration = Math.max(0, 20 - Math.floor(interval / 10));
-
-                document.getElementById('majoration').textContent = majoration + ' min';
-                document.getElementById('palier6m2').textContent = palier6m2 + ' min';
-                document.getElementById('palier3m2').textContent = palier3m2 + ' min';
-                document.getElementById('gps2').textContent = gps2;
-
-                const descente2 = depth2 / 15;
-                const remontee6_2 = (depth2 - 6) / 6;
-                const remontee3_2 = 3 / 6;
-                const total2 = time2 + descente2 + remontee6_2 + palier6m2 + remontee3_2 + palier3m2 + 0.5;
-
-                document.getElementById('total2').textContent = Math.ceil(total2) + ' min';
-
-                updateChartDuoPlongees(depth1, time1, palier6m1, palier3m1, descente, remontee6, remontee3,
-                                     depth2, time2, palier6m2, palier3m2, descente2, remontee6_2, remontee3_2, interval);
+        function startDrag(e) { isDraggingSplitter = true; document.body.style.userSelect = 'none'; if (e.preventDefault) e.preventDefault(); }
+        function moveDrag(e) {
+            if (!isDraggingSplitter) return;
+            e.preventDefault?.();
+            const contentWrapper = document.querySelector('.content-wrapper');
+            const leftPanel = document.querySelector('.left-panel');
+            const rightPanel = document.getElementById('rightPanel');
+            const wrapperRect = contentWrapper.getBoundingClientRect();
+            const isMobile = window.innerWidth < 1024;
+            let clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            let clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            if (isMobile) {
+                const newTopHeight = clientY - wrapperRect.top;
+                const totalHeight = wrapperRect.height;
+                if (newTopHeight > 80 && newTopHeight < totalHeight * 0.7) {
+                    const graphHeight = totalHeight - newTopHeight - 8;
+                    leftPanel.style.flex = `0 0 ${newTopHeight}px`;
+                    rightPanel.style.flex = `0 0 ${graphHeight}px`;
+                    if (chart1) chart1.resize();
+                }
             } else {
-                updateChartPlongee1(depth1, time1, palier6m1, palier3m1, descente, remontee6, remontee3);
-            }
-        }
-
-        function updateChartPlongee1(depth1, time1, palier6m1, palier3m1, descente, remontee6, remontee3) {
-            const data = [
-                { x: 0, y: 0, phase: 'surface', label: 'SURFACE - Début' },
-                { x: descente, y: -depth1, phase: 'descente', label: `DESCENTE - Arrivée à ${depth1}m` },
-                { x: descente + time1, y: -depth1, phase: 'fond', label: `FOND - Fin du temps d'immersion` },
-                { x: descente + time1 + remontee6, y: -6, phase: 'palier6m', label: `PALIER 6M OBLIGATOIRE - Remontée` },
-                { x: descente + time1 + remontee6 + palier6m1, y: -6, phase: 'palier6m', label: `FIN PALIER 6M` },
-                { x: descente + time1 + remontee6 + palier6m1 + remontee3, y: -3, phase: 'palier3m', label: `PALIER 3M SÉCURITÉ` },
-                { x: descente + time1 + remontee6 + palier6m1 + remontee3 + palier3m1, y: -3, phase: 'palier3m', label: `FIN PALIER 3M` },
-                { x: descente + time1 + remontee6 + palier6m1 + remontee3 + palier3m1 + 0.5, y: 0, phase: 'surface', label: 'SURFACE - Fin' }
-            ];
-
-            const config = {
-                type: 'line',
-                data: {
-                    datasets: [{
-                        label: `${time1}min @ ${depth1}m`,
-                        data: data,
-                        borderWidth: 2.5,
-                        fill: true,
-                        tension: 0,
-                        pointRadius: 6,
-                        pointBorderWidth: 2,
-                        segment: {
-                            borderColor: (ctx) => {
-                                try {
-                                    const p0Index = ctx.p0DataIndex;
-                                    const p1Index = ctx.p1DataIndex;
-                                    if (p0Index === undefined || data[p0Index] === undefined) return '#ffffff';
-                                    const point = data[p0Index];
-                                    if (point.phase === 'palier6m') return '#FFA500';
-                                    if (point.phase === 'palier3m') return '#22FF00';
-                                    return '#ffffff';
-                                } catch (e) {
-                                    return '#ffffff';
-                                }
-                            }
-                        },
-                        borderColor: '#ffffff',
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#fff',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#fff', font: { size: 10 } } },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                            titleColor: '#00ffff',
-                            bodyColor: '#fff',
-                            borderColor: '#00ffff',
-                            borderWidth: 2,
-                            padding: 12,
-                            titleFont: { size: 12, weight: 'bold' },
-                            bodyFont: { size: 11 },
-                            callbacks: {
-                                title: function(context) {
-                                    return data[context[0].dataIndex].label;
-                                },
-                                label: function(context) {
-                                    const pt = data[context[0].dataIndex];
-                                    return `Temps: ${pt.x.toFixed(1)}min | Profondeur: ${pt.y}m`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            title: { display: true, text: 'Profondeur (m)', color: '#fff' },
-                            min: -depth1 - 2,
-                            max: 2,
-                            ticks: { color: '#aaa', font: { size: 9 } },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        },
-                        x: {
-                            type: 'linear',
-                            title: { display: true, text: 'Temps (min)', color: '#fff' },
-                            ticks: { color: '#aaa', font: { size: 9 } },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        }
-                    }
-                }
-            };
-
-            if (chart1) chart1.destroy();
-            const ctx = document.getElementById('profileCanvas');
-            chart1 = new Chart(ctx, config);
-
-            const explication = `
-                <strong>📖 Profil de Plongée:</strong><br>
-                Je plonge jusqu'à <strong>${depth1}m</strong> en <strong>${descente.toFixed(1)} min</strong>,
-                je tiens <strong>${time1} min</strong> au fond, je remonte au palier à <strong>6m</strong> en <strong>${remontee6.toFixed(1)} min</strong>.
-                Je fais un palier de <strong>${palier6m1} min à 6m</strong> (obligatoire MN90),
-                puis un palier de <strong>${palier3m1} min à 3m</strong> (sécurité).
-                Temps total: <strong>${(descente + time1 + remontee6 + palier6m1 + remontee3 + palier3m1 + 0.5).toFixed(1)} min</strong> 🎯
-            `;
-            document.getElementById('graph-explanation').innerHTML = explication;
-            document.getElementById('graph-explanation').classList.remove('duo');
-        }
-
-        function updateChartDuoPlongees(depth1, time1, palier6m1, palier3m1, descente, remontee6, remontee3,
-                                       depth2, time2, palier6m2, palier3m2, descente2, remontee6_2, remontee3_2, interval) {
-            // Plongée 1
-            const totalP1 = descente + time1 + remontee6 + palier6m1 + remontee3 + palier3m1;
-            const startP2 = totalP1 + interval;
-
-            const data1 = [
-                { x: 0, y: 0, phase: 'surface' },
-                { x: descente, y: -depth1, phase: 'descente' },
-                { x: descente + time1, y: -depth1, phase: 'fond' },
-                { x: descente + time1 + remontee6, y: -6, phase: 'palier6m' },
-                { x: descente + time1 + remontee6 + palier6m1, y: -6, phase: 'palier6m' },
-                { x: descente + time1 + remontee6 + palier6m1 + remontee3, y: -3, phase: 'palier3m' },
-                { x: totalP1, y: -3, phase: 'palier3m' },
-                { x: totalP1, y: 0, phase: 'surface' }
-            ];
-
-            const data2 = [
-                { x: startP2, y: 0, phase: 'surface' },
-                { x: startP2 + descente2, y: -depth2, phase: 'descente' },
-                { x: startP2 + descente2 + time2, y: -depth2, phase: 'fond' },
-                { x: startP2 + descente2 + time2 + remontee6_2, y: -6, phase: 'palier6m' },
-                { x: startP2 + descente2 + time2 + remontee6_2 + palier6m2, y: -6, phase: 'palier6m' },
-                { x: startP2 + descente2 + time2 + remontee6_2 + palier6m2 + remontee3_2, y: -3, phase: 'palier3m' },
-                { x: startP2 + descente2 + time2 + remontee6_2 + palier6m2 + remontee3_2 + palier3m2, y: -3, phase: 'palier3m' },
-                { x: startP2 + descente2 + time2 + remontee6_2 + palier6m2 + remontee3_2 + palier3m2 + 0.5, y: 0, phase: 'surface' }
-            ];
-
-            const config = {
-                type: 'line',
-                data: {
-                    datasets: [
-                        {
-                            label: `Plongée 1: ${time1}min @ ${depth1}m`,
-                            data: data1,
-                            borderWidth: 2.5,
-                            fill: true,
-                            tension: 0,
-                            pointRadius: 4,
-                            segment: {
-                                borderColor: (ctx) => {
-                                    const point = data1[ctx.p0DataIndex];
-                                    if (!point) return '#FF99FF';
-                                    if (point.phase === 'palier6m') return '#FFA500';
-                                    if (point.phase === 'palier3m') return '#22FF00';
-                                    return '#FF99FF';
-                                }
-                            },
-                            borderColor: '#FF99FF',
-                            pointBackgroundColor: '#FF99FF',
-                            pointBorderColor: '#fff',
-                            backgroundColor: 'rgba(255, 153, 255, 0.1)'
-                        },
-                        {
-                            label: `Intervalle surface: ${interval}min`,
-                            data: [
-                                { x: totalP1, y: 0 },
-                                { x: startP2, y: 0 }
-                            ],
-                            borderWidth: 3,
-                            borderColor: '#ffffff',
-                            pointRadius: 0,
-                            fill: false,
-                            tension: 0,
-                            borderDash: [5, 5],
-                            pointBackgroundColor: '#ffffff'
-                        },
-                        {
-                            label: `Plongée 2: ${time2}min @ ${depth2}m`,
-                            data: data2,
-                            borderWidth: 2.5,
-                            fill: true,
-                            tension: 0,
-                            pointRadius: 4,
-                            segment: {
-                                borderColor: (ctx) => {
-                                    const point = data2[ctx.p0DataIndex];
-                                    if (!point) return '#00CCFF';
-                                    if (point.phase === 'palier6m') return '#FFA500';
-                                    if (point.phase === 'palier3m') return '#22FF00';
-                                    return '#00CCFF';
-                                }
-                            },
-                            borderColor: '#00CCFF',
-                            pointBackgroundColor: '#00CCFF',
-                            pointBorderColor: '#fff',
-                            backgroundColor: 'rgba(0, 204, 255, 0.1)'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#fff', font: { size: 10 } } },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                            titleColor: '#00ffff',
-                            bodyColor: '#fff',
-                            borderColor: '#00ffff',
-                            borderWidth: 2,
-                            padding: 12
-                        }
-                    },
-                    scales: {
-                        y: {
-                            title: { display: true, text: 'Profondeur (m)', color: '#fff' },
-                            min: -Math.max(depth1, depth2) - 2,
-                            max: 2,
-                            ticks: { color: '#aaa', font: { size: 9 } },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        },
-                        x: {
-                            type: 'linear',
-                            title: { display: true, text: 'Temps (min)', color: '#fff' },
-                            ticks: { color: '#aaa', font: { size: 9 } },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        }
-                    }
-                }
-            };
-
-            if (chart1) chart1.destroy();
-            const ctx = document.getElementById('profileCanvas');
-            chart1 = new Chart(ctx, config);
-
-            const explication = `
-                <strong>📖 Duo de Plongées:</strong><br>
-                <strong style="color: #FF99FF;">🔷 Plongée 1:</strong> Profondeur <strong>${depth1}m</strong> pendant <strong>${time1} min</strong><br>
-                &nbsp;&nbsp;• Palier <strong style="color: #FFA500;">6m: ${palier6m1} min</strong> &nbsp; Palier <strong style="color: #22FF00;">3m: ${palier3m1} min</strong><br>
-                <strong style="color: #aaa;">⏱️ Intervalle surface:</strong> <strong style="color: #fff;">${interval} min</strong><br>
-                <strong style="color: #00CCFF;">🔷 Plongée 2:</strong> Profondeur <strong>${depth2}m</strong> pendant <strong>${time2} min</strong><br>
-                &nbsp;&nbsp;• Palier <strong style="color: #FFA500;">6m: ${palier6m2} min</strong> &nbsp; Palier <strong style="color: #22FF00;">3m: ${palier3m2} min</strong><br>
-                <strong>⏱️ Durée totale:</strong> ${(startP2 + descente2 + time2 + remontee6_2 + palier6m2 + remontee3_2 + palier3m2 + 0.5).toFixed(1)} min 🎯
-            `;
-            document.getElementById('graph-explanation').innerHTML = explication;
-            document.getElementById('graph-explanation').classList.add('duo');
-        }
-
-        function togglePlongee2() {
-            const section = document.getElementById('plongee2-section');
-            section.style.display = section.style.display === 'none' ? 'block' : 'none';
-            calculate();
-        }
-
-        function calculateOptimalDive() {
-            const prof = parseInt(document.getElementById('prof-auto').value);
-            const conso = parseInt(document.getElementById('conso-auto').value);
-            const bouteille = parseInt(document.getElementById('bouteille-auto').value);
-            const pression = parseInt(document.getElementById('pression-auto').value);
-            const secu = parseInt(document.getElementById('secu-auto').value);
-
-            const pressureUsable = pression - secu;
-            const airAvailable = bouteille * pressureUsable;
-
-            document.getElementById('pressure-usable').textContent = pressureUsable + ' bar';
-            document.getElementById('air-available').textContent = airAvailable.toFixed(1) + ' L';
-            document.getElementById('conso-depth').textContent = conso + ' L/min';
-
-            const tableDepth = findClosestTable(prof);
-            let optimalTime = 0, palier6m = 0, palier3m = 0;
-
-            for (let entry of officialTables[tableDepth]) {
-                const timeFond = entry[0];
-                const p6 = entry[2];
-                const p3 = entry[1];
-                const descente = prof / 15;
-                const remontee6 = (prof - 6) / 6;
-                const remontee3 = 3 / 6;
-                
-                const consoRemontee = conso * 0.4;
-                const consoPaliers = conso * 0.3;
-                
-                const totalConso = (timeFond * conso) + ((descente + remontee6 + remontee3) * consoRemontee) + ((p6 + p3) * consoPaliers);
-
-                if (totalConso <= airAvailable) {
-                    optimalTime = timeFond;
-                    palier6m = p6;
-                    palier3m = p3;
+                const newLeftWidth = clientX - wrapperRect.left;
+                const totalWidth = wrapperRect.width;
+                if (newLeftWidth > 200 && newLeftWidth < totalWidth * 0.6) {
+                    const graphWidth = totalWidth - newLeftWidth - 6;
+                    leftPanel.style.flex = `0 0 ${newLeftWidth}px`;
+                    rightPanel.style.flex = `0 0 ${graphWidth}px`;
+                    if (chart1) chart1.resize();
                 }
             }
-
-            document.getElementById('time-max-fond').textContent = optimalTime + ' min';
-            const totalTime = Math.ceil(optimalTime + (prof/15) + ((prof-6)/6) + palier6m + (3/6) + palier3m);
-            document.getElementById('autonomy-optimal').textContent = totalTime + ' min';
-
-            drawOptimalProfile(prof, optimalTime, palier6m, palier3m);
         }
-
-        function drawOptimalProfile(depth, timeFond, palier6m, palier3m) {
-            const timeDescent = depth / 15;
-            const timeRem6 = (depth - 6) / 6;
-            const timeRem3 = 3 / 6;
-
-            // Récupérer les paramètres pour calculer l'autonomie
-            const conso = parseInt(document.getElementById('conso-auto').value);
-            const bouteille = parseInt(document.getElementById('bouteille-auto').value);
-            const pression = parseInt(document.getElementById('pression-auto').value);
-            const secu = parseInt(document.getElementById('secu-auto').value);
-            const pressureUsable = pression - secu;
-            const airAvailable = bouteille * pressureUsable;
-
-            // Profil de plongée principal
-            const data = [
-                { x: 0, y: 0, phase: 'surface' },
-                { x: timeDescent, y: -depth, phase: 'fond' },
-                { x: timeDescent + timeFond, y: -depth, phase: 'fond' },
-                { x: timeDescent + timeFond + timeRem6, y: -6, phase: 'palier6m' },
-                { x: timeDescent + timeFond + timeRem6 + palier6m, y: -6, phase: 'palier6m' },
-                { x: timeDescent + timeFond + timeRem6 + palier6m + timeRem3, y: -3, phase: 'palier3m' },
-                { x: timeDescent + timeFond + timeRem6 + palier6m + timeRem3 + palier3m, y: -3, phase: 'palier3m' },
-                { x: timeDescent + timeFond + timeRem6 + palier6m + timeRem3 + palier3m + 0.5, y: 0, phase: 'surface' }
-            ];
-
-            // === COURBE D'AUTONOMIE ===
-            // Calcul de l'autonomie en fonction de la profondeur (Loi de Dalton)
-            const autonomyData = [];
-            
-            // Traverser les profondeurs de 0 à depth max
-            for (let prof = 0; prof <= depth; prof += 1) {
-                // Rapport de pression (1 + prof/10) pour eau douce
-                const pressureRatio = 1 + prof / 10;
-                
-                // Conso réelle à cette profondeur (Loi de Dalton)
-                const consoAtDepth = conso * pressureRatio;
-                
-                // Autonomie: air disponible / conso
-                const autonomyMinutes = consoAtDepth > 0 ? airAvailable / consoAtDepth : 0;
-                
-                autonomyData.push({
-                    x: prof * 0.3,
-                    y: -prof,
-                    autonomy: autonomyMinutes,
-                    depth: prof,
-                    conso: consoAtDepth.toFixed(1)
-                });
-            }
-
-            // Calcul des seuils
-            const maxAutonomy = Math.max(...autonomyData.map(d => d.autonomy));
-            const midAutonomy = maxAutonomy / 2;
-            const reserveAutonomy = maxAutonomy * 0.2;
-
-            const config = {
-                type: 'line',
-                data: {
-                    datasets: [
-                        // Dataset 1: Profil de plongée
-                        {
-                            label: `Profil: ${timeFond}min @ ${depth}m`,
-                            data: data,
-                            borderColor: '#FF99FF',
-                            backgroundColor: 'rgba(255, 153, 255, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0,
-                            pointRadius: 0,
-                            segment: {
-                                borderColor: (ctx) => {
-                                    const point = data[ctx.p0DataIndex];
-                                    if (!point) return '#FF99FF';
-                                    if (point.phase === 'palier6m') return '#FFA500';
-                                    if (point.phase === 'palier3m') return '#22FF00';
-                                    return '#FF99FF';
-                                }
-                            }
-                        },
-                        // Dataset 2: Courbe d'autonomie avec zone colorée
-                        {
-                            label: 'Autonomie réelle (Loi Dalton)',
-                            data: autonomyData,
-                            borderColor: '#00FFFF',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2.5,
-                            fill: false,
-                            tension: 0.3,
-                            pointRadius: 1,
-                            pointBackgroundColor: '#00FFFF',
-                            segment: {
-                                borderColor: (ctx) => {
-                                    const point = autonomyData[ctx.p0DataIndex];
-                                    if (!point) return '#00FFFF';
-                                    
-                                    // Vert: 100% à 50%
-                                    if (point.autonomy >= midAutonomy) return '#22FF00';
-                                    // Orange: 50% à 20%
-                                    if (point.autonomy >= reserveAutonomy) return '#FFA500';
-                                    // Rouge: sous 20%
-                                    return '#FF0000';
-                                }
-                            }
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { 
-                            labels: { color: '#fff', font: { size: 9 } },
-                            position: 'top'
-                        },
-                        tooltip: { 
-                            backgroundColor: 'rgba(0, 0, 0, 0.95)', 
-                            bodyColor: '#fff', 
-                            borderWidth: 2,
-                            borderColor: '#00FFFF',
-                            padding: 10,
-                            callbacks: {
-                                label: function(context) {
-                                    if (context.datasetIndex === 1) {
-                                        const point = autonomyData[context.dataIndex];
-                                        return `📊 À ${point.depth}m: ${point.autonomy.toFixed(1)}min (conso: ${point.conso}L/min)`;
-                                    }
-                                    return context.raw.label || '';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            position: 'left',
-                            title: { display: true, text: 'Profondeur (m)', color: '#FF99FF', font: { weight: 'bold', size: 11 } },
-                            min: -depth - 2,
-                            max: 2,
-                            ticks: { color: '#FF99FF', font: { size: 9 } },
-                            grid: { color: 'rgba(255, 153, 255, 0.1)' }
-                        },
-                        x: {
-                            type: 'linear',
-                            title: { display: true, text: 'Position de plongée', color: '#fff' },
-                            ticks: { color: '#aaa', font: { size: 9 } },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        }
-                    }
-                }
-            };
-
-            if (chart1) chart1.destroy();
-            const ctx = document.getElementById('profileCanvas');
-            chart1 = new Chart(ctx, config);
-
-            // Mise à jour de l'explication
-            const consoAtMaxDepth = conso * (1 + depth/10);
-            const explication = `
-                <strong>🫁 Courbe d'Autonomie (Loi de Dalton):</strong><br>
-                À <strong>${depth}m</strong>: conso réelle = <strong>${consoAtMaxDepth.toFixed(1)} L/min</strong> (vs ${conso} en surface)<br>
-                <strong style="color: #22FF00;">🟢 Vert</strong> (100→50%): autonomie max | 
-                <strong style="color: #FFA500;">🟠 Orange</strong> (50→20%): prudence | 
-                <strong style="color: #FF0000;">🔴 Rouge</strong> (&lt;20%): réserve critique<br>
-                ✅ Air dispo: ${airAvailable.toFixed(1)}L | 🕐 Max autonomie: ${maxAutonomy.toFixed(1)} min
-            `;
-            document.getElementById('autonomy-explanation').innerHTML = explication;
-        }
-
-        function openTablesModal() {
-            let html = '';
-            html += '<table><caption>📊 TABLEAU PRINCIPAL - Détermination des Paliers (6-75m)</caption><thead><tr><th>Prof</th><th>Durée</th><th>P3m</th><th>P6m</th><th>GPS</th></tr></thead><tbody>';
-            for (const [depth, entries] of Object.entries(officialTables)) {
-                for (const entry of entries) {
-                    html += `<tr><td><b>${depth}m</b></td><td>${entry[0]}'</td><td>${entry[1]}</td><td>${entry[2]}</td><td><b>${entry[3]}</b></td></tr>`;
-                }
-            }
-            html += '</tbody></table>';
-            html += `<table><caption>📋 TABLEAU I - Azote Résiduel</caption>
-            <thead><tr><th>GPS</th><th>15m</th><th>30m</th><th>45m</th><th>1h</th><th>1h30</th><th>2h</th><th>2h30</th><th>3h</th><th>3h30</th><th>4h</th></tr></thead>
-            <tbody>
-            <tr><td>A</td><td>0.84</td><td>0.83</td><td>0.83</td><td>0.83</td><td>0.82</td><td>0.82</td><td>0.82</td><td>0.81</td><td>0.81</td><td>0.81</td></tr>
-            </tbody></table>`;
-            document.getElementById('tables-container').innerHTML = html;
-            document.getElementById('tablesModal').style.display = 'block';
-        }
-
-        function closeTablesModal() {
-            document.getElementById('tablesModal').style.display = 'none';
-        }
-
-        window.onclick = function(e) {
-            const modal = document.getElementById('tablesModal');
-            if (e.target === modal) modal.style.display = 'none';
-        }
-
-        updateSlider(document.getElementById('depth1'));
-        updateSlider(document.getElementById('time1'));
-        updateSlider(document.getElementById('prof-auto'));
-        updateSlider(document.getElementById('conso-auto'));
-        updateSlider(document.getElementById('bouteille-auto'));
-        updateSlider(document.getElementById('pression-auto'));
-        updateSlider(document.getElementById('secu-auto'));
+        function stopDrag() { isDraggingSplitter = false; document.body.style.userSelect = 'auto'; }
+        window.addEventListener('resize', () => { if (chart1) chart1.resize(); });
         
-        calculate();
-        calculateOptimalDive();
+        document.addEventListener('DOMContentLoaded', () => { 
+            // Initialiser les event listeners
+            const splitter = document.getElementById('splitter');
+            if (splitter) {
+                splitter.addEventListener('mousedown', startDrag);
+                splitter.addEventListener('touchstart', startDrag, false);
+            }
+            document.addEventListener('mousemove', moveDrag);
+            document.addEventListener('touchmove', moveDrag, false);
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag, false);
+            
+            // Initialiser les onglets
+            switchTab(0);
+            document.getElementById('time1-val').textContent = minToHHMM(20);
+            calculate();
+        });
     </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(180deg, #001a33 0%, #003366 100%); color: #fff; height: 100vh; overflow: hidden; }
+        .main-wrapper { height: 100vh; display: flex; flex-direction: column; }
+        .header { background: rgba(0,102,204,0.95); padding: 10px; text-align: center; flex-shrink: 0; }
+        .tabs { display: flex; gap: 6px; background: rgba(0,51,102,0.8); padding: 6px; flex-shrink: 0; overflow-x: auto; }
+        .tab-btn { padding: 6px 12px; cursor: pointer; border: 2px solid transparent; font-weight: 600; border-radius: 8px; background: rgba(0,153,255,0.2); color: #fff; font-size: 11px; white-space: nowrap; }
+        .tab-btn.active { background: rgba(0,153,255,0.5); border-color: #00ffff; }
+        .content-wrapper { display: flex; flex: 1; gap: 0; position: relative; min-height: 0; overflow: hidden; }
+        @media (max-width: 1023px) { .content-wrapper { flex-direction: column; } }
+        .left-panel { flex: 0 0 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+        .left-panel.tab2-active { flex: 1; }
+        @media (max-width: 1023px) { .left-panel { flex: 1; min-width: 100%; } }
+        #tab2-left { overflow-y: auto !important; }
+        .splitter { width: 100%; height: 8px; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.6), rgba(0,255,255,0.3)); cursor: row-resize; flex-shrink: 0; user-select: none; }
+        @media (min-width: 1024px) { .splitter { width: 6px; height: auto; background: linear-gradient(90deg, rgba(0,255,255,0.3), rgba(0,255,255,0.6), rgba(0,255,255,0.3)); cursor: col-resize; } }
+        #rightPanel { flex: 1; display: flex; flex-direction: column; padding: 8px; min-height: 150px; overflow: hidden; }
+        .section { background: rgba(255,255,255,0.1); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); padding: 10px; }
+        .section-title { font-size: 12px; color: #00ffff; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+        .explanation { font-size: 11px; color: #aaa; margin-bottom: 12px; line-height: 1.4; }
+        .slider-group { margin-bottom: 10px; }
+        .slider-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; }
+        .slider-label span { color: #00ffff; font-weight: bold; }
+        input[type="range"] { width: 100%; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.2); outline: none; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #00ffff; cursor: pointer; box-shadow: 0 0 10px rgba(0,255,255,0.5); }
+        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #00ffff; cursor: pointer; border: none; box-shadow: 0 0 10px rgba(0,255,255,0.5); }
+        .result-box { background: rgba(0,200,255,0.15); padding: 8px; border-radius: 8px; border-left: 4px solid #00ffff; margin: 4px 0; font-size: 11px; }
+        .result-value { color: #00ffff; font-size: 16px; font-weight: bold; margin-top: 3px; }
+        .graph-container { background: rgba(0,0,0,0.5); border: 2px solid #00ffff; border-radius: 12px; padding: 10px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #profileCanvas { flex: 1; width: 100%; }
+        button { padding: 8px 12px; background: rgba(0,200,255,0.3); border: 2px solid #00ccff; border-radius: 6px; color: #00ffff; cursor: pointer; font-size: 11px; font-weight: 600; width: 100%; }
+        button:hover { background: rgba(0,200,255,0.5); }
+        .warning-box { background: rgba(255,50,50,0.15); border-left: 4px solid #ff3333; padding: 8px; border-radius: 4px; margin: 8px 0; font-weight: bold; color: #ff6666; display: none; }
+        @media (min-width: 1024px) {
+            #tab2-wrapper { display: flex; height: 100%; gap: 0; }
+            #tab2-menu { width: 150px; overflow-y: auto; flex-shrink: 0; background: rgba(0,50,100,0.3); padding: 10px; border: 1px solid #00ffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; align-content: start; }
+            #tab2-splitter { width: 6px; background: linear-gradient(90deg, rgba(0,255,255,0.3), rgba(0,255,255,0.6), rgba(0,255,255,0.3)); cursor: col-resize; flex-shrink: 0; user-select: none; }
+            #tab2-content { flex: 1; overflow-y: auto; padding: 10px; }
+        }
+        @media (max-width: 1023px) {
+            #tab2-wrapper { display: flex; flex-direction: column; height: 100%; gap: 0; }
+            #tab2-menu { width: 100%; height: auto; max-height: 200px; overflow-y: auto; background: rgba(0,50,100,0.3); padding: 10px; border: 1px solid #00ffff; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; align-content: start; }
+            #tab2-splitter { display: none; }
+            #tab2-content { flex: 1; overflow-y: auto; padding: 10px; }
+        }
+        #tab2-menu-title { grid-column: 1 / -1; color: #00ffff; font-size: 10px; font-weight: bold; margin-bottom: 4px; }
+        #tab2-menu button { padding: 6px; background: rgba(0,200,255,0.2); border: 1px solid #00ffff; border-radius: 4px; color: #00ffff; cursor: pointer; font-size: 8px; font-weight: bold; transition: all 0.2s; font-family: inherit; }
+        #tab2-menu button:hover { background: rgba(0,255,255,0.3); }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="header">
+            <h1>🤿 MN90Mobile</h1>
+            <div style="font-size: 10px; margin-top: 5px;">
+                <strong>364 LIGNES COMPLÈTES</strong> | Remontée 16 m/min | Tous Paliers (15m, 12m, 9m, 6m, 3m)
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(0)" style="background: rgba(255,221,136,0.3); border-color: #FFDD88; color: #FFDD88;">📊 Planificateur de Plongée</button>
+            <button class="tab-btn" onclick="switchTab(1)">🫁 Autonomie</button>
+            <button class="tab-btn" onclick="switchTab(2)">📋 Tables</button>
+        </div>
+        <div class="content-wrapper">
+            <div class="left-panel">
+                <div id="tab0-left" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                    <div class="section">
+                        <div class="section-title" style="color: #FFDD88;">🤿 1E PLONGÉE</div>
+                        <div class="explanation">Entrez votre profondeur max et temps au fond. Les paliers s'ajustent automatiquement.</div>
+                        <div class="slider-group">
+                            <div class="slider-label" style="color: #FFDD88;"><span>Profondeur max</span><span id="depth1-val" style="color: #FFDD88;">20 m</span></div>
+                            <input type="range" id="depth1" min="6" max="65" value="20" oninput="updateSlider(this); calculate()">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-label" style="color: #FFDD88;"><span>Temps au fond</span><span id="time1-val" style="color: #FFDD88;">00:20</span></div>
+                            <input type="range" id="time1" min="1" max="400" value="20" oninput="updateSlider(this); calculate()">
+                        </div>
+                        
+                        <!-- RÉSULTATS 1E PLONGÉE - SECTION VISIBLE -->
+                        <div style="background: rgba(20,20,20,0.8); padding: 10px; border-radius: 6px; margin: 10px 0; border: 2px solid #FFDD88; box-shadow: 0 0 15px rgba(255,221,136,0.2);">
+                            <div style="font-size: 10px; color: #FFDD88; font-weight: bold; margin-bottom: 8px; text-align: center; text-transform: uppercase; letter-spacing: 1px;">📊 Résultats 1e Plongée</div>
+                            
+                            <!-- PALIERS SUR UNE SEULE LIGNE -->
+                            <div style="background: rgba(180,150,50,0.3); padding: 6px; border-radius: 4px; margin-bottom: 6px; font-size: 9px; border-left: 2px solid #FFDD88;">
+                                <span style="color: #FFDD88; font-weight: bold;">Paliers:</span> <span id="paliers-line" style="color: #FFFF00; font-weight: bold;">--</span>
+                            </div>
+                            
+                            <!-- TEMPS TOTAL -->
+                            <div style="background: rgba(180,150,50,0.25); padding: 6px; border-radius: 4px; margin-bottom: 6px; text-align: center; border-left: 2px solid #FFDD88;">
+                                <div style="color: #aaa; font-size: 8px;">⏱️ TOTAL</div>
+                                <div style="color: #FFDD88; font-size: 16px; font-weight: bold;" id="total1">-- min</div>
+                            </div>
+                            
+                            <!-- DTR ET GPS EN 2 BLOCS - SUPER VISIBLE -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div style="background: #003366; padding: 12px; border-radius: 6px; text-align: center; border: 2px solid #00FFFF; box-shadow: 0 0 15px rgba(0,255,255,0.6), inset 0 0 10px rgba(0,255,255,0.2);">
+                                    <div style="color: #00FFFF; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">⏱️ DTR</div>
+                                    <div style="color: #00FFFF; font-size: 20px; font-weight: bold; text-shadow: 0 0 12px #00FFFF, 0 0 25px #0088FF;" id="dtr1">--</div>
+                                </div>
+                                <div style="background: #003300; padding: 12px; border-radius: 6px; text-align: center; border: 2px solid #00FF00; box-shadow: 0 0 15px rgba(0,255,0,0.6), inset 0 0 10px rgba(0,255,0,0.2);">
+                                    <div style="color: #00FF00; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">🎯 GPS</div>
+                                    <div style="color: #00FF00; font-size: 20px; font-weight: bold; text-shadow: 0 0 12px #00FF00, 0 0 25px #00FF88;" id="gps1">--</div>
+                                </div>
+                            </div>
+                            <div id="warning1" class="warning-box" style="margin-top: 6px;"></div>
+                        </div>
+                        
+                        <!-- 2E PLONGÉE -->
+                        <div style="background: rgba(180,120,220,0.07); padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #BB88EE;">
+                            <div style="font-size: 11px; color: #BB88EE; font-weight: bold; margin-bottom: 8px; text-transform: uppercase;">🔄 2E PLONGÉE</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 10px; flex: 1;">
+                                    <input type="checkbox" id="dive2-checkbox" onchange="calculate()" style="width: 18px; height: 18px; cursor: pointer;">
+                                    <span style="color: #BB88EE; font-weight: bold;">Effectuer une 2e plongée</span>
+                                </label>
+                                <label id="view-toggle-label-menu" style="display: none; font-size: 10px; color: #00FFFF; cursor: pointer; user-select: none; gap: 4px; align-items: center; background: rgba(0,200,255,0.15); padding: 4px 8px; border-radius: 4px;">
+                                    <input type="checkbox" id="view-toggle" onchange="switchDiveView()" style="cursor: pointer;">
+                                    <span id="toggle-text-menu">📊 Superposé</span>
+                                </label>
+                            </div>
+                            <div id="dive2-options" style="display: none;">
+                                <div class="slider-group">
+                                    <div class="slider-label"><span>Intervalle surface (min)</span><span id="dive2-interval-val">60 min</span></div>
+                                    <input type="range" id="dive2-interval" min="10" max="480" value="60" oninput="updateSlider(this); calculate()" style="width: 100%;">
+                                </div>
+                                <div class="slider-group">
+                                    <div class="slider-label"><span>Profondeur 2e plongée</span><span id="dive2-depth-val">20 m</span></div>
+                                    <input type="range" id="dive2-depth" min="6" max="65" value="20" oninput="updateSlider(this); calculate()" style="width: 100%;">
+                                </div>
+                                <div class="slider-group">
+                                    <div class="slider-label"><span>Durée au fond (2e plongée)</span><span id="dive2-time-val">00:20</span></div>
+                                    <input type="range" id="dive2-time" min="1" max="400" value="20" oninput="updateSlider(this); calculate()" style="width: 100%;">
+                                </div>
+                                
+                                <!-- RÉSULTATS 2E PLONGÉE - SECTION VISIBLE -->
+                                <div style="background: rgba(20,20,20,0.8); padding: 10px; border-radius: 6px; margin-top: 10px; border: 2px solid #BB88EE; box-shadow: 0 0 15px rgba(187,136,238,0.15);">
+                                    <div style="font-size: 10px; color: #BB88EE; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; text-align: center; letter-spacing: 1px;">📊 Résultats 2e Plongée</div>
+                                    
+                                    <!-- PALIERS 2E PLONGÉE -->
+                                    <div style="background: rgba(0,50,80,0.6); padding: 6px; border-radius: 4px; margin-bottom: 8px; font-size: 9px; border-left: 2px solid #00FFFF;">
+                                        <span style="color: #00FFFF; font-weight: bold;">Paliers:</span> <span id="paliers-line2" style="color: #FFFF00; font-weight: bold;">--</span>
+                                    </div>
+                                    
+                                    <!-- DTR ET GPS 2E PLONGÉE -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        <div style="background: #003366; padding: 8px; border-radius: 6px; text-align: center; border: 2px solid #00FFFF; box-shadow: 0 0 12px rgba(0,255,255,0.5), inset 0 0 8px rgba(0,255,255,0.15);">
+                                            <div style="color: #00FFFF; font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">⏱️ DTR</div>
+                                            <div style="color: #00FFFF; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #00FFFF, 0 0 20px #0088FF;" id="dtr2">--</div>
+                                        </div>
+                                        <div style="background: #003300; padding: 8px; border-radius: 6px; text-align: center; border: 2px solid #00FF00; box-shadow: 0 0 12px rgba(0,255,0,0.5), inset 0 0 8px rgba(0,255,0,0.15);">
+                                            <div style="color: #00FF00; font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">🎯 GPS</div>
+                                            <div style="color: #00FF00; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF88;" id="gps2">--</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div id="tab1-left" style="display: none; flex-direction: column; gap: 6px; width: 100%;">
+                    <div class="section">
+                        <div class="section-title">🫁 AUTONOMIE - CALCUL DE PLONGÉE</div>
+                        <div class="explanation">Ajustez les sliders pour la 1ère courbe, puis utilisez +/- pour les autres.</div>
+                        
+                        <!-- COURBE 1 (SLIDERS) -->
+                        <div style="background: rgba(255,255,0,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #FFFF00; margin-bottom: 10px;">
+                            <div style="color: #FFFF00; font-weight: bold; margin-bottom: 8px; font-size: 11px;">◆ COURBE 1 (Jaune)</div>
+                            
+                            <div class="slider-group">
+                                <div class="slider-label"><span>Profondeur Visée</span><span id="aut1-prof-val">20 m</span></div>
+                                <input type="range" id="aut1-prof" min="6" max="60" value="20" oninput="updateSlider(this); drawAutonomyChart()">
+                            </div>
+                            
+                            <div class="slider-group">
+                                <div class="slider-label"><span>Consommation</span><span id="aut1-conso-val">15 L/min</span></div>
+                                <input type="range" id="aut1-conso" min="5" max="40" value="15" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
+                            </div>
+                            
+                            <div class="slider-group">
+                                <div class="slider-label"><span>Volume Bouteille</span><span id="aut1-vol-val">12 L</span></div>
+                                <input type="range" id="aut1-vol" min="3" max="20" value="12" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
+                            </div>
+                            
+                            <div class="slider-group">
+                                <div class="slider-label"><span>Pression Initiale</span><span id="aut1-press-val">200 bar</span></div>
+                                <input type="range" id="aut1-press" min="100" max="300" value="200" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
+                            </div>
+                            
+                            <div class="slider-group">
+                                <div class="slider-label"><span>Pression de Securité</span><span id="aut1-safety-val">50 bar</span></div>
+                                <input type="range" id="aut1-safety" min="20" max="100" value="50" oninput="updateAutSlider(this); drawAutonomyChart()" style="width: 100%;">
+                            </div>
+                            
+                            <div style="background: rgba(255,255,0,0.2); padding: 8px; border-radius: 6px; margin-top: 8px; font-size: 10px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div>
+                                        <div style="color: #FFFF00; font-weight: bold;">⏱️ Temps Max</div>
+                                        <div style="color: #FFFF00; font-size: 14px; font-weight: bold;">à <span id="aut1-prof-display">20</span>m</div>
+                                        <div style="color: #FFFF00; font-size: 16px; font-weight: bold;" id="aut1-maxtime">--:--</div>
+                                    </div>
+                                    <div>
+                                        <div style="color: #FFFF00; font-weight: bold;">🕐 Temps Total</div>
+                                        <div style="color: #FFFF00; font-size: 12px;">Plongée + Paliers</div>
+                                        <div style="color: #FFFF00; font-size: 16px; font-weight: bold;" id="aut1-totaltime">--:--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- COURBES 2, 3, 4 (BOUTONS +/-) -->
+                        <div id="aut-other-curves" style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                            <!-- Courbe 2 -->
+                            <div style="background: rgba(0,255,0,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #00FF00;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+                                    <input type="checkbox" id="aut2-enable" onchange="toggleCurveControls(2); drawAutonomyChart()" style="width: 16px; height: 16px;">
+                                    <span style="color: #00FF00; font-weight: bold; font-size: 11px;">◆ COURBE 2 (Vert)</span>
+                                </label>
+                                <div id="aut2-controls" style="display: none; font-size: 9px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 8px;">
+                                        <button onclick="modifyParam('aut2-prof', -1)">Prof −</button>
+                                        <div style="text-align: center; color: #00FF00;"><span id="aut2-prof-val">20</span>m</div>
+                                        <button onclick="modifyParam('aut2-prof', 1)">Prof +</button>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                                        <button onclick="modifyParam('aut2-conso', -1)">Conso −</button>
+                                        <div style="text-align: center; color: #00FF00;"><span id="aut2-conso-val">15</span>L</div>
+                                        <button onclick="modifyParam('aut2-conso', 1)">Conso +</button>
+                                    </div>
+                                    <div style="background: rgba(0,255,0,0.2); padding: 6px; border-radius: 4px; margin-top: 6px; text-align: center; color: #00FF00; font-weight: bold;">
+                                        Temps: <span id="aut2-maxtime">--:--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Courbe 3 -->
+                            <div style="background: rgba(255,153,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #FF99FF;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+                                    <input type="checkbox" id="aut3-enable" onchange="toggleCurveControls(3); drawAutonomyChart()" style="width: 16px; height: 16px;">
+                                    <span style="color: #FF99FF; font-weight: bold; font-size: 11px;">◆ COURBE 3 (Magenta)</span>
+                                </label>
+                                <div id="aut3-controls" style="display: none; font-size: 9px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 8px;">
+                                        <button onclick="modifyParam('aut3-prof', -1)">Prof −</button>
+                                        <div style="text-align: center; color: #FF99FF;"><span id="aut3-prof-val">20</span>m</div>
+                                        <button onclick="modifyParam('aut3-prof', 1)">Prof +</button>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                                        <button onclick="modifyParam('aut3-conso', -1)">Conso −</button>
+                                        <div style="text-align: center; color: #FF99FF;"><span id="aut3-conso-val">15</span>L</div>
+                                        <button onclick="modifyParam('aut3-conso', 1)">Conso +</button>
+                                    </div>
+                                    <div style="background: rgba(255,153,255,0.2); padding: 6px; border-radius: 4px; margin-top: 6px; text-align: center; color: #FF99FF; font-weight: bold;">
+                                        Temps: <span id="aut3-maxtime">--:--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Courbe 4 -->
+                            <div style="background: rgba(0,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid #00FFFF;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+                                    <input type="checkbox" id="aut4-enable" onchange="toggleCurveControls(4); drawAutonomyChart()" style="width: 16px; height: 16px;">
+                                    <span style="color: #00FFFF; font-weight: bold; font-size: 11px;">◆ COURBE 4 (Cyan)</span>
+                                </label>
+                                <div id="aut4-controls" style="display: none; font-size: 9px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 8px;">
+                                        <button onclick="modifyParam('aut4-prof', -1)">Prof −</button>
+                                        <div style="text-align: center; color: #00FFFF;"><span id="aut4-prof-val">20</span>m</div>
+                                        <button onclick="modifyParam('aut4-prof', 1)">Prof +</button>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                                        <button onclick="modifyParam('aut4-conso', -1)">Conso −</button>
+                                        <div style="text-align: center; color: #00FFFF;"><span id="aut4-conso-val">15</span>L</div>
+                                        <button onclick="modifyParam('aut4-conso', 1)">Conso +</button>
+                                    </div>
+                                    <div style="background: rgba(0,255,255,0.2); padding: 6px; border-radius: 4px; margin-top: 6px; text-align: center; color: #00FFFF; font-weight: bold;">
+                                        Temps: <span id="aut4-maxtime">--:--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab2-left" style="display: none; flex-direction: column; gap: 6px; width: 100%;">
+                </div>
+            </div>
+            <div class="splitter" id="splitter"></div>
+            <div class="right-panel" id="rightPanel">
+                <div class="graph-container">
+                    <div style="margin-bottom: 8px;">
+                        <div style="color: #00ffff; font-weight: bold; font-size: 12px;" id="graph-title">Profil de Plongée</div>
+                    </div>
+                    <canvas id="profileCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
