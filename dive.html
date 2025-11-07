@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Épave Dive 🚢</title>
+    <title>Diver Flap 🤿</title>
     <style>
         * {
             margin: 0;
@@ -31,6 +31,7 @@
             border: 3px solid #00ffff;
             box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), inset 0 0 40px rgba(0, 255, 255, 0.1);
             overflow: hidden;
+            cursor: pointer;
         }
         
         canvas {
@@ -39,23 +40,143 @@
             height: 100%;
         }
         
-        #ui {
+        #uiLeft {
+            position: absolute;
+            top: 65px;
+            left: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .uiBox {
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            background: rgba(0, 10, 30, 0.6);
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(0, 255, 255, 0.4);
+        }
+
+        #scoreDisplay {
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #scoreDisplay:active {
+            transform: scale(1.05);
+        }
+
+        #timer {
             position: absolute;
             top: 15px;
             left: 15px;
-            right: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
-            z-index: 100;
             background: rgba(0, 10, 30, 0.6);
-            padding: 12px 15px;
-            border-radius: 10px;
+            padding: 10px 15px;
+            border-radius: 8px;
             border: 2px solid rgba(0, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
+            z-index: 50;
+        }
+
+        #disclaimer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 10, 30, 0.98) 0%, rgba(5, 26, 46, 0.98) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            color: #00ffff;
+            text-align: center;
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        #disclaimer h1 {
+            font-size: 52px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 50px rgba(0, 255, 255, 1), 0 0 100px rgba(0, 200, 255, 0.8);
+            color: #00FFFF;
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { text-shadow: 0 0 50px rgba(0, 255, 255, 1), 0 0 100px rgba(0, 200, 255, 0.8); }
+            50% { text-shadow: 0 0 80px rgba(0, 255, 255, 1), 0 0 150px rgba(0, 100, 255, 1); }
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .diver-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        #disclaimer .main-text {
+            font-size: 24px;
+            margin: 15px 0;
+            max-width: 500px;
+            line-height: 1.8;
+            font-weight: bold;
+            color: #FFD700;
+            animation: float-up 1s ease-out 0.3s backwards;
+        }
+
+        #disclaimer .sub-text {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #00FFFF;
+            animation: float-up 1s ease-out 0.6s backwards;
+        }
+
+        #disclaimer .controls {
+            font-size: 13px;
+            margin-top: 30px;
+            color: #888888;
+            line-height: 1.5;
+            animation: float-up 1s ease-out 0.9s backwards;
+        }
+
+        #disclaimer button {
+            margin-top: 40px;
+            padding: 18px 60px;
+            background: linear-gradient(135deg, #FF6B00 0%, #FFD700 100%);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 22px;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(255, 107, 0, 0.8);
+            animation: float-up 1s ease-out 1.2s backwards;
+        }
+
+        #disclaimer button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(255, 107, 0, 1);
+        }
+
+        #disclaimer button:active {
+            transform: scale(0.95);
         }
         
         #gameOver {
@@ -70,14 +191,24 @@
             display: none;
             z-index: 200;
             border: 3px solid #00ffff;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            max-width: 500px;
         }
         
         #gameOver h1 {
             color: #FF6B6B;
             margin-bottom: 20px;
             font-size: 36px;
-            text-shadow: 0 0 10px rgba(255, 100, 100, 0.8);
+        }
+
+        #gameOver.victory h1 {
+            color: #FFD700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 1);
+            animation: victory-pulse 0.5s ease-out;
+        }
+
+        @keyframes victory-pulse {
+            0% { transform: scale(0.5); }
+            100% { transform: scale(1); }
         }
         
         #gameOver p {
@@ -85,11 +216,17 @@
             font-size: 18px;
             color: #00ffff;
         }
+
+        #gameOver.victory p {
+            color: #FFD700;
+            font-size: 20px;
+            font-weight: bold;
+        }
         
         #gameOver button {
             margin-top: 25px;
             padding: 12px 30px;
-            background: linear-gradient(135deg, #00ccff 0%, #00ffff 100%);
+            background: #00ccff;
             color: #000;
             border: none;
             border-radius: 8px;
@@ -97,34 +234,135 @@
             font-weight: bold;
             font-size: 16px;
             transition: all 0.3s;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
         }
-        
+
         #gameOver button:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.8);
+        }
+
+        #trivia {
+            font-size: 14px;
+            color: #00FFFF;
+            margin-top: 20px;
+            font-style: italic;
+            max-width: 400px;
+            line-height: 1.6;
+            padding: 15px;
+            background: rgba(0, 255, 255, 0.1);
+            border-left: 3px solid #FFD700;
+            border-radius: 5px;
+        }
+
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 400;
+        }
+
+        .firework {
+            position: fixed;
+            pointer-events: none;
+            z-index: 400;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        #oxygenBar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 25px;
+            background: rgba(0, 100, 0, 0.7);
+            z-index: 50;
+            border-top: 2px solid #00FF00;
+        }
+
+        .oxygen-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00FF00, #00FF00 80%, #FFD700 90%, #FF0000 100%);
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .oxygen-label {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            font-size: 12px;
+            z-index: 51;
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <div id="ui">
-            <div>❤️ <span id="health">3</span>/3</div>
-            <div>⭐ <span id="score">0</span></div>
-            <div>💨 <span id="oxygen">100</span>%</div>
+        <div id="disclaimer">
+            <div class="diver-icon">🤿</div>
+            <h1>🌊 DIVER FLAP 🌊</h1>
+            
+            <div class="main-text">Survis 02:00 et affronte l'Hippocampe Maléfique !</div>
+            
+            <div class="sub-text">N'oublie pas ton air ! 🫧</div>
+            <div class="sub-text">Évite les méchantes bestioles sous-marines ! 👹</div>
+            
+            <div class="controls">
+                <p>🎮 CONTRÔLES</p>
+                <p>Clic / Appui = Remonter</p>
+                <p>Flèches ← / → ou A / D = Se déplacer latéralement</p>
+            </div>
+
+            <button onclick="startGame()">⚔️ COMMENCER L'AVENTURE ⚔️</button>
         </div>
+        
+        <div id="uiLeft">
+            <div class="uiBox" id="scoreDisplay">⭐ <span id="score">0</span></div>
+            <div class="uiBox">❤️ <span id="health">3</span>/3</div>
+        </div>
+        
+        <div id="timer">⏱️ 2:00</div>
         <canvas id="gameCanvas"></canvas>
+        <div id="oxygenBar">
+            <div class="oxygen-fill" id="oxygenFill"></div>
+            <div class="oxygen-label">💨 <span id="oxygenPercent">100</span>%</div>
+        </div>
         <div id="gameOver">
-            <h1>💀 ÉPAVE! 💀</h1>
+            <h1>💀 GAME OVER 💀</h1>
+            <p id="gameOverText">Merci d'avoir joué !</p>
             <p>Score: <span id="finalScore">0</span></p>
-            <p>Oxygène: <span id="finalOxygen">0</span>%</p>
-            <button onclick="location.reload()">🔄 Rejouer</button>
+            <div id="trivia"></div>
+            <button onclick="returnToMenu()">🔄 Retour au Menu</button>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
+        let scoreClickCount = 0;
+        let scoreClickTimer = null;
+
+        document.getElementById('scoreDisplay').addEventListener('click', () => {
+            if (!gameRunning) return;
+            scoreClickCount++;
+            clearTimeout(scoreClickTimer);
+            if (scoreClickCount === 3) {
+                gameStartTime = Date.now() - 110000;
+                scoreClickCount = 0;
+            }
+            scoreClickTimer = setTimeout(() => {
+                scoreClickCount = 0;
+            }, 800);
+        });
         
         function resizeCanvas() {
             canvas.width = canvas.offsetWidth;
@@ -133,37 +371,166 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        let gameRunning = true;
+        let gameRunning = false;
+        let gameFinal = false;
         let score = 0;
         const keys = { left: false, right: false };
+        let gameStartTime = 0;
+        let gameTime = 0;
+        let isHolding = false;
+        let animFrame = 0;
+        let oxygenLevel = 100;
 
         const player = {
             x: 80,
             y: canvas.height / 2,
-            width: 40,
-            height: 50,
+            width: 60,
+            height: 30,
             velocityY: 0,
             velocityX: 0,
-            gravity: 0.08,
-            jumpPower: -2.5,
+            gravity: 0.3,
+            jumpPower: -6,
             speed: 4,
-            oxygen: 100,
-            maxOxygen: 100,
             health: 3,
-            maxHealth: 3,
-            isMovingUp: false
+            maxHealth: 3
         };
 
         let obstacles = [];
         let collectibles = [];
-        let particles = [];
         let bubbleParticles = [];
         let fishes = [];
-        let bubbleTimer = 0;
         let lastObstacleTime = 0;
-        const minObstacleDelay = 350; // Délai min entre obstacles (frames)
 
-        // Classe Fish
+        let boss = null;
+        let laserCharge = 0;
+        let laserFiring = false;
+        let laserFireTime = 0;
+        let fireballs = [];
+        let bossHitTime = 0;
+
+        const trivias = [
+            "🤿 Le saviez-vous ? La plus profonde plongée en apnée record est à plus de 200 mètres !",
+            "🫧 Le saviez-vous ? Les bulles d'air deviennent plus grandes en remontant !",
+            "🐠 Le saviez-vous ? Les hippocampes nagent debout, contrairement aux autres poissons !",
+            "🌊 Le saviez-vous ? La pression augmente de 1 bar tous les 10 mètres !",
+            "💨 Le saviez-vous ? L'azote peut causer des hallucinations en dessous de 40m (narcose) !",
+            "🐙 Le saviez-vous ? Les pieuvres ont 9 cerveaux, un par bras !",
+            "🦈 Le saviez-vous ? Les requins détectent les champs électriques des poissons !",
+            "🌙 Le saviez-vous ? Les plongées de nuit offrent des spectacles bioluminescents magiques !",
+            "🏊 Le saviez-vous ? Un plongeur certifié CMAS 2 étoiles peut plonger jusqu'à 20 mètres !",
+            "⏱️ Le saviez-vous ? La limite de temps d'une plongée dépend de la profondeur et du gaz respirable !"
+        ];
+
+        function getRandomTrivia() {
+            return trivias[Math.floor(Math.random() * trivias.length)];
+        }
+
+        function createConfetti() {
+            const confettiCount = 150;
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = confetti.style.width;
+                
+                const colors = ['#FFD700', '#00FFFF', '#FF6B00', '#00FF00', '#FF0000', '#FFFFFF'];
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0%';
+                
+                document.body.appendChild(confetti);
+                
+                const duration = Math.random() * 2 + 2;
+                const delay = Math.random() * 0.5;
+                confetti.style.animation = `fall ${duration}s linear ${delay}s forwards`;
+                
+                setTimeout(() => confetti.remove(), (duration + delay) * 1000);
+            }
+        }
+
+        function createFireworks() {
+            const fireworkCount = 20;
+            for (let i = 0; i < fireworkCount; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight * 0.6;
+                    
+                    const particleCount = 50;
+                    for (let j = 0; j < particleCount; j++) {
+                        const particle = document.createElement('div');
+                        particle.className = 'firework';
+                        particle.style.left = x + 'px';
+                        particle.style.top = y + 'px';
+                        particle.style.width = '3px';
+                        particle.style.height = '3px';
+                        
+                        const colors = ['#FFD700', '#FF6B00', '#00FFFF', '#FF0000', '#FFFFFF'];
+                        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        particle.style.borderRadius = '50%';
+                        particle.style.boxShadow = '0 0 10px ' + particle.style.backgroundColor;
+                        
+                        document.body.appendChild(particle);
+                        
+                        const angle = (j / particleCount) * Math.PI * 2;
+                        const velocity = Math.random() * 5 + 3;
+                        const vx = Math.cos(angle) * velocity;
+                        const vy = Math.sin(angle) * velocity;
+                        
+                        let px = x, py = y;
+                        let vxCurrent = vx, vyCurrent = vy;
+                        const gravity = 0.15;
+                        const startTime = Date.now();
+                        
+                        const animate = () => {
+                            px += vxCurrent;
+                            py += vyCurrent;
+                            vyCurrent += gravity;
+                            
+                            particle.style.left = px + 'px';
+                            particle.style.top = py + 'px';
+                            particle.style.opacity = Math.max(0, 1 - (Date.now() - startTime) / 800);
+                            
+                            if ((Date.now() - startTime) < 800) {
+                                requestAnimationFrame(animate);
+                            } else {
+                                particle.remove();
+                            }
+                        };
+                        
+                        animate();
+                    }
+                }, i * 100);
+            }
+        }
+
+        function returnToMenu() {
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('disclaimer').style.display = 'flex';
+            gameRunning = false;
+            gameFinal = false;
+            score = 0;
+            oxygenLevel = 100;
+            player.health = 3;
+            obstacles = [];
+            fireballs = [];
+            boss = null;
+            laserCharge = 0;
+        }
+
+        function startGame() {
+            document.getElementById('disclaimer').style.display = 'none';
+            gameRunning = true;
+            gameFinal = false;
+            gameStartTime = Date.now();
+            oxygenLevel = 100;
+            player.health = 3;
+            score = 0;
+            for (let i = 0; i < 5; i++) fishes.push(new Fish());
+            for (let i = 0; i < 15; i++) bubbleParticles.push(new BackgroundBubble());
+            gameLoop();
+        }
+
         class Fish {
             constructor() {
                 this.x = Math.random() * canvas.width;
@@ -200,19 +567,6 @@
                 ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#00acc1';
-                ctx.beginPath();
-                ctx.moveTo(-this.size / 2, 0);
-                ctx.lineTo(-this.size / 2 - 5, -this.size / 2);
-                ctx.lineTo(-this.size / 2 - 5, this.size / 2);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.fillStyle = '#ffeb3b';
-                ctx.beginPath();
-                ctx.arc(this.size / 3, -this.size / 5, 2, 0, Math.PI * 2);
-                ctx.fill();
-
                 ctx.restore();
             }
         }
@@ -238,17 +592,9 @@
             }
 
             draw() {
-                ctx.fillStyle = `rgba(100, 200, 255, ${0.3 - this.speed * 0.1})`;
-                ctx.strokeStyle = `rgba(0, 200, 255, ${0.5 - this.speed * 0.2})`;
-                ctx.lineWidth = 1;
+                ctx.fillStyle = `rgba(100, 200, 255, 0.3)`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = `rgba(255, 255, 255, ${0.4 - this.speed * 0.15})`;
-                ctx.beginPath();
-                ctx.arc(this.x - this.radius / 3, this.y - this.radius / 3, this.radius / 3, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -257,235 +603,210 @@
             constructor(x) {
                 this.x = x;
                 this.width = 80;
-                this.gapSize = 200;
-                this.gapY = Math.random() * (canvas.height - this.gapSize - 120) + 60;
+                this.gapSize = 180;
+                this.gapY = Math.random() * (canvas.height - this.gapSize - 100) + 50;
                 this.speed = 1.8;
                 this.scored = false;
-                
-                this.isAnimal = Math.random() < 0.5;
-                
-                if (this.isAnimal) {
-                    const animals = ['Murene', 'Pieuvre', 'Crabe'];
-                    this.animal = animals[Math.floor(Math.random() * animals.length)];
-                    this.animationTimer = 0;
-                } else {
-                    this.animal = null;
-                }
+                this.type = Math.random() > 0.5 ? 'wall' : 'net';
             }
 
             update() {
                 this.x -= this.speed;
-                if (this.isAnimal) {
-                    this.animationTimer++;
-                }
             }
 
             draw() {
-                if (this.isAnimal) {
-                    this.drawAnimal();
+                if (this.type === 'wall') {
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(this.x, 0, this.width, this.gapY);
+                    ctx.fillRect(this.x, this.gapY + this.gapSize, this.width, canvas.height);
                 } else {
-                    this.drawDebris();
-                }
-            }
-
-            drawAnimal() {
-                const centerY = this.gapY + this.gapSize / 2;
-
-                if (this.animal === 'Murene') {
-                    // Corps sinueux GROS
-                    ctx.strokeStyle = '#1a4d00';
-                    ctx.lineWidth = 14;
-                    ctx.beginPath();
-                    ctx.moveTo(this.x - 20, centerY);
-                    ctx.quadraticCurveTo(this.x + 10, centerY - 25, this.x + 35, centerY - 15);
-                    ctx.stroke();
-
-                    // Gueule énorme ouverte
-                    ctx.fillStyle = '#8B0000';
-                    ctx.beginPath();
-                    ctx.ellipse(this.x + 45, centerY - 10, 15, 12, 0, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Dents menaçantes
-                    ctx.fillStyle = '#FFFACD';
-                    for (let i = 0; i < 6; i++) {
-                        ctx.fillRect(this.x + 35 + i * 3, centerY - 8, 2, 8);
-                    }
-
-                    // Oeil méchant
-                    ctx.fillStyle = '#FFFF00';
-                    ctx.beginPath();
-                    ctx.arc(this.x + 38, centerY - 18, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#000000';
-                    ctx.beginPath();
-                    ctx.arc(this.x + 38, centerY - 18, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                else if (this.animal === 'Pieuvre') {
-                    // Corps gros
-                    ctx.fillStyle = '#6B0099';
-                    ctx.beginPath();
-                    ctx.arc(this.x + 20, centerY - 5, 18, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Tentacules longs animés
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (i / 8) * Math.PI * 2;
-                        const wave = Math.sin(this.animationTimer * 0.08 + i) * 5;
-                        ctx.strokeStyle = '#5500AA';
-                        ctx.lineWidth = 5;
+                    ctx.strokeStyle = '#DAA520';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i <= this.gapY; i += 10) {
                         ctx.beginPath();
-                        ctx.moveTo(this.x + 20, centerY - 5);
-                        ctx.quadraticCurveTo(
-                            this.x + 20 + Math.cos(angle) * 20 + wave,
-                            centerY - 5 + Math.sin(angle) * 15,
-                            this.x + 20 + Math.cos(angle) * 35,
-                            centerY - 5 + Math.sin(angle) * 35
-                        );
+                        ctx.moveTo(this.x, i);
+                        ctx.lineTo(this.x + this.width, i);
                         ctx.stroke();
                     }
-
-                    // Oeil
-                    ctx.fillStyle = '#FFFF00';
-                    ctx.beginPath();
-                    ctx.arc(this.x + 12, centerY - 10, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#000000';
-                    ctx.beginPath();
-                    ctx.arc(this.x + 12, centerY - 10, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                else if (this.animal === 'Crabe') {
-                    // Corps
-                    ctx.fillStyle = '#FF8C00';
-                    ctx.beginPath();
-                    ctx.ellipse(this.x + 20, centerY, 16, 12, 0, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // Pinces énormes animées
-                    const pinceAngle = Math.sin(this.animationTimer * 0.12) * 0.5;
-                    
-                    ctx.strokeStyle = '#CC6600';
-                    ctx.lineWidth = 6;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + 8, centerY - 5);
-                    ctx.lineTo(this.x - 5 + Math.cos(pinceAngle) * 12, centerY - 15 + Math.sin(pinceAngle) * 8);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + 8, centerY + 5);
-                    ctx.lineTo(this.x - 5 + Math.cos(-pinceAngle) * 12, centerY + 15 + Math.sin(-pinceAngle) * 8);
-                    ctx.stroke();
-
-                    // Pattes
-                    ctx.strokeStyle = '#FF8C00';
-                    ctx.lineWidth = 3;
-                    for (let i = 0; i < 5; i++) {
+                    for (let i = this.x; i <= this.x + this.width; i += 10) {
                         ctx.beginPath();
-                        ctx.moveTo(this.x + 16 - i * 4, centerY + 12);
-                        ctx.lineTo(this.x + 16 - i * 4, centerY + 22);
+                        ctx.moveTo(i, 0);
+                        ctx.lineTo(i, this.gapY);
                         ctx.stroke();
                     }
-
-                    // Yeux
-                    ctx.fillStyle = '#000000';
-                    ctx.beginPath();
-                    ctx.arc(this.x + 28, centerY - 8, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.arc(this.x + 28, centerY + 8, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            drawDebris() {
-                ctx.fillStyle = '#8B7355';
-                ctx.fillRect(this.x, 0, this.width, this.gapY);
-                ctx.strokeStyle = '#654321';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(this.x, 0, this.width, this.gapY);
-
-                ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
-                for (let i = 0; i < 5; i++) {
-                    ctx.fillRect(this.x + 5 + i * 12, this.gapY - 15, 8, 15);
-                }
-
-                const bottomY = this.gapY + this.gapSize;
-                ctx.fillStyle = '#8B7355';
-                ctx.fillRect(this.x, bottomY, this.width, canvas.height - bottomY);
-                ctx.strokeStyle = '#654321';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(this.x, bottomY, this.width, canvas.height - bottomY);
-
-                ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
-                for (let i = 0; i < 5; i++) {
-                    ctx.fillRect(this.x + 5 + i * 12, bottomY, 8, 15);
                 }
             }
 
             isCollidingWith(rect) {
-                if (rect.y < this.gapY && rect.x + rect.width > this.x && rect.x < this.x + this.width) {
-                    return true;
-                }
-                const bottomY = this.gapY + this.gapSize;
-                if (rect.y + rect.height > bottomY && rect.x + rect.width > this.x && rect.x < this.x + this.width) {
-                    return true;
-                }
-                return false;
+                const leftCollide = rect.x < this.x + this.width && rect.x + rect.width > this.x;
+                if (!leftCollide) return false;
+                const topCollide = rect.y < this.gapY;
+                const bottomCollide = rect.y + rect.height > this.gapY + this.gapSize;
+                return topCollide || bottomCollide;
             }
         }
 
-        class Collectible {
-            constructor(x, y) {
+        class Fireball {
+            constructor(x, y, targetX, targetY) {
                 this.x = x;
                 this.y = y;
-                this.width = 25;
-                this.height = 25;
-                this.speed = 1.8;
-                this.bobOffset = Math.random() * 100;
+                const dx = targetX - x;
+                const dy = targetY - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                this.vx = (dx / dist) * 5;
+                this.vy = (dy / dist) * 5;
+                this.radius = 12;
+                this.life = 1;
             }
 
             update() {
-                this.x -= this.speed;
-                this.bobOffset++;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.007;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = '#FF6600';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFFF00';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+
+            isCollidingWith(rect) {
+                return !(this.x > rect.x + rect.width + this.radius + 5 || 
+                        this.x < rect.x - this.radius - 5 || 
+                        this.y > rect.y + rect.height + this.radius + 5 || 
+                        this.y < rect.y - this.radius - 5);
+            }
+
+            isExpired() {
+                return this.life <= 0;
+            }
+        }
+
+        class Boss {
+            constructor() {
+                this.x = canvas.width - 100;
+                this.y = canvas.height / 2;
+                this.width = 80;
+                this.height = 120;
+                this.health = 5;
+                this.maxHealth = 5;
+                this.moveTimer = 0;
+                this.targetY = this.y;
+                this.shootTimer = 0;
+                this.animOffset = 0;
+            }
+
+            update() {
+                this.moveTimer++;
+                if (this.moveTimer > 60) {
+                    this.targetY = Math.random() * (canvas.height - 250) + 150;
+                    this.moveTimer = 0;
+                }
+
+                if (Math.abs(this.y - this.targetY) > 2) {
+                    this.y += (this.targetY - this.y) * 0.05;
+                }
+
+                this.shootTimer++;
+                if (this.shootTimer > 120) {
+                    fireballs.push(new Fireball(this.x - 30, this.y, player.x, player.y));
+                    this.shootTimer = 0;
+                }
+
+                this.animOffset += 0.08;
             }
 
             draw() {
                 ctx.save();
-                const bobY = this.y + Math.sin(this.bobOffset * 0.05) * 3;
                 
-                ctx.globalAlpha = 0.7;
-                ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+                // Queue enroulée (bas)
+                ctx.strokeStyle = '#CC2200';
+                ctx.lineWidth = 16;
                 ctx.beginPath();
-                ctx.arc(this.x, bobY, 22, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.globalAlpha = 0.5;
-                ctx.fillStyle = 'rgba(0, 200, 255, 0.6)';
+                ctx.arc(this.x - 5, this.y + 60, 35, 0, Math.PI * 1.5);
+                ctx.stroke();
+
+                // Corps (orange - rond et vertical)
+                ctx.fillStyle = '#FF9944';
                 ctx.beginPath();
-                ctx.arc(this.x, bobY, 18, 0, Math.PI * 2);
+                ctx.ellipse(this.x, this.y + 5, 28, 38, 0, 0, Math.PI * 2);
                 ctx.fill();
-                
-                ctx.globalAlpha = 1;
-                ctx.font = 'bold 32px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🫧', this.x, bobY);
-                
-                ctx.globalAlpha = 0.8;
-                ctx.fillStyle = '#FFFFFF';
-                ctx.font = 'bold 14px Arial';
-                ctx.fillText('✨', this.x + 8, bobY - 6);
-                
-                ctx.globalAlpha = 0.3 + Math.sin(this.bobOffset * 0.08) * 0.2;
-                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+
+                // Ventre clair
+                ctx.fillStyle = '#FFCC88';
+                ctx.beginPath();
+                ctx.ellipse(this.x, this.y + 10, 20, 28, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Nageoire dorsale (rouge - haut du corps)
+                for (let i = -1; i <= 1; i++) {
+                    ctx.fillStyle = '#CC0000';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - 15 + i * 20, this.y - 30);
+                    ctx.lineTo(this.x - 10 + i * 20, this.y - 50 + Math.sin(this.animOffset + i) * 5);
+                    ctx.lineTo(this.x - 5 + i * 20, this.y - 30);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // Cou (long et fin - partie charnière)
+                ctx.fillStyle = '#FF9944';
+                ctx.beginPath();
+                ctx.ellipse(this.x + 2, this.y - 42, 14, 20, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Tête (petite et arrondie)
+                ctx.fillStyle = '#FF9944';
+                ctx.beginPath();
+                ctx.ellipse(this.x + 3, this.y - 65, 16, 14, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // MUSEAU LONG caractéristique de l'hippocampe!
+                ctx.fillStyle = '#FF9944';
+                ctx.beginPath();
+                ctx.ellipse(this.x + 18, this.y - 68, 14, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Bout du museau
+                ctx.fillStyle = '#FF7722';
+                ctx.beginPath();
+                ctx.arc(this.x + 30, this.y - 68, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Yeux ROUGES maléfiques
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(this.x - 2, this.y - 68, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pupille noire
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(this.x - 2, this.y - 68, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Narine du museau
+                ctx.fillStyle = '#330000';
+                ctx.beginPath();
+                ctx.arc(this.x + 28, this.y - 72, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Contour noir
+                ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(this.x, bobY, 20, 0, Math.PI * 2);
+                ctx.ellipse(this.x, this.y + 5, 28, 38, 0, 0, Math.PI * 2);
                 ctx.stroke();
-                
+
                 ctx.restore();
             }
 
@@ -497,201 +818,116 @@
             }
         }
 
-        class BubbleParticle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 0.5;
-                this.vy = -Math.random() * 0.4 - 0.2;
-                this.life = 1;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.life -= 0.015;
-            }
-
-            draw() {
-                ctx.globalAlpha = this.life * 0.6;
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('🫧', this.x, this.y);
-                ctx.globalAlpha = 1;
-            }
-        }
-
         function drawPlayer() {
-            bubbleTimer++;
-            const respirationCycle = bubbleTimer % 420;
-            
-            if (gameRunning && respirationCycle < 30) {
-                for (let i = 0; i < 4; i++) {
-                    bubbleParticles.push(new BubbleParticle(
-                        player.x + 18 + Math.random() * 3,
-                        player.y + 2 + Math.random() * 3
-                    ));
-                }
-            }
+            animFrame++;
 
             ctx.save();
 
-            // Tête
-            ctx.fillStyle = '#FFCC99';
+            // Tête rouge (À DROITE!)
+            ctx.fillStyle = '#FF4444';
             ctx.beginPath();
-            ctx.arc(player.x + 5, player.y - 5, 12, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#FFB366';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Masque
-            ctx.fillStyle = '#1a1a1a';
-            ctx.strokeStyle = '#333333';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.ellipse(player.x + 5, player.y - 6, 9, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = 'rgba(100, 255, 255, 0.8)';
-            ctx.beginPath();
-            ctx.ellipse(player.x + 5, player.y - 8, 4, 4, 0, 0, Math.PI * 2);
+            ctx.arc(player.x + 18, player.y, 11, 0, Math.PI * 2);
             ctx.fill();
 
-            // Détendeur
-            ctx.fillStyle = '#111111';
-            ctx.strokeStyle = '#444444';
+            // Masque jaune
+            ctx.fillStyle = '#FFDD00';
+            ctx.strokeStyle = '#FFB800';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.ellipse(player.x + 10, player.y + 2, 5, 4, 0, 0, Math.PI * 2);
+            ctx.ellipse(player.x + 18, player.y, 7, 6, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
 
-            ctx.strokeStyle = '#333333';
-            ctx.lineWidth = 2;
+            // Oeil du masque
+            ctx.fillStyle = 'rgba(100, 255, 255, 0.9)';
             ctx.beginPath();
-            ctx.moveTo(player.x + 14, player.y + 3);
-            ctx.quadraticCurveTo(player.x + 22, player.y + 8, player.x + 25, player.y + 15);
-            ctx.stroke();
-
-            if (respirationCycle < 30) {
-                ctx.fillStyle = 'rgba(100, 200, 255, 0.8)';
-                ctx.beginPath();
-                ctx.arc(player.x + 25, player.y + 15, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            ctx.ellipse(player.x + 18, player.y, 3.5, 3.5, 0, 0, Math.PI * 2);
+            ctx.fill();
 
             // Tuba
             ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.moveTo(player.x + 3, player.y - 15);
-            ctx.lineTo(player.x + 3, player.y - 28);
+            ctx.moveTo(player.x + 20, player.y - 12);
+            ctx.lineTo(player.x + 20, player.y - 26);
             ctx.stroke();
 
             ctx.fillStyle = '#FF6B00';
             ctx.beginPath();
-            ctx.arc(player.x + 3, player.y - 28, 2.5, 0, Math.PI * 2);
+            ctx.arc(player.x + 20, player.y - 26, 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Corps
-            ctx.fillStyle = '#0a0a0a';
+            // Corps bleu (combinaison)
+            ctx.fillStyle = '#1166FF';
             ctx.beginPath();
-            ctx.ellipse(player.x - 5, player.y + 8, 18, 13, 0, 0, Math.PI * 2);
+            ctx.ellipse(player.x - 2, player.y, 23, 14, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = '#1a1a1a';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#0044BB';
+            ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            ctx.fillStyle = '#222222';
-            ctx.fillRect(player.x - 15, player.y + 3, 20, 2);
-            ctx.fillRect(player.x - 15, player.y + 11, 20, 2);
-
-            // PALMES RÉALISTES - rotation à la hanche, amplitude des pieds entre 10h50 et 8h40
-            const palmBeat = Math.sin(bubbleTimer * 0.15);
-            // Angle des pieds: oscillation entre 10h50 (-0.61 rad) et 8h40 (-1.74 rad)
-            // Centre: -1.175 rad, Amplitude: 0.565 rad
-            
-            // Longueur de la jambe
-            const legLength = 25;
-            
-            // Palme GAUCHE (monte et descend)
-            const leftHipX = player.x - 20;
-            const leftHipY = player.y + 10;
-            const leftFootAngle = -1.175 + palmBeat * 0.565;
-            const leftFootX = leftHipX + Math.cos(leftFootAngle) * legLength;
-            const leftFootY = leftHipY + Math.sin(leftFootAngle) * legLength;
-            
-            // Jambe gauche
-            ctx.strokeStyle = '#0a3d91';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(leftHipX, leftHipY);
-            ctx.lineTo(leftFootX, leftFootY);
-            ctx.stroke();
-            
-            // Palme gauche
-            ctx.save();
-            ctx.translate(leftFootX, leftFootY);
-            ctx.rotate(leftFootAngle);
-            ctx.fillStyle = '#0d47a1';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 12, 30, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#0a3d91';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.restore();
-            
-            // Palme DROITE (descend et monte - INVERSE)
-            const rightHipX = player.x - 20;
-            const rightHipY = player.y + 20;
-            const rightFootAngle = -1.175 - palmBeat * 0.565;  // INVERSE !
-            const rightFootX = rightHipX + Math.cos(rightFootAngle) * legLength;
-            const rightFootY = rightHipY + Math.sin(rightFootAngle) * legLength;
-            
-            // Jambe droite
-            ctx.strokeStyle = '#0a3d91';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(rightHipX, rightHipY);
-            ctx.lineTo(rightFootX, rightFootY);
-            ctx.stroke();
-            
-            // Palme droite
-            ctx.save();
-            ctx.translate(rightFootX, rightFootY);
-            ctx.rotate(rightFootAngle);
-            ctx.fillStyle = '#0d47a1';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 12, 30, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#0a3d91';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.restore();
-
-            // Bouteille
+            // Bouteille d'air (À GAUCHE derrière)
+            ctx.fillStyle = '#2D5016';
+            ctx.fillRect(player.x - 28, player.y - 5, 6, 16);
             ctx.fillStyle = '#4CAF50';
-            ctx.fillRect(player.x - 20, player.y - 2, 8, 20);
-            ctx.fillStyle = '#81C784';
-            ctx.fillRect(player.x - 21, player.y - 2, 10, 3);
+            ctx.fillRect(player.x - 29, player.y - 6, 8, 2);
 
-            // Ceinture
-            ctx.fillStyle = '#444444';
-            ctx.fillRect(player.x - 18, player.y + 18, 26, 3);
+            ctx.restore();
 
+            // PALMES - Mouvement HORIZONTAL vers la GAUCHE (réaliste!)
+            const palmBeat = Math.sin(animFrame * 0.15);
+            
+            // Palme HAUT (oscille vers haut-gauche/bas-gauche)
+            const palmUpAngle = Math.PI + (Math.PI / 4) * palmBeat;
+            const palmUpX = player.x - 20 + Math.cos(palmUpAngle) * 18;
+            const palmUpY = player.y - 10 + Math.sin(palmUpAngle) * 18;
+
+            ctx.strokeStyle = '#0055CC';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(player.x - 20, player.y - 10);
+            ctx.lineTo(palmUpX, palmUpY);
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(palmUpX, palmUpY);
+            ctx.rotate(palmUpAngle);
+            ctx.fillStyle = '#0055CC';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 22, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Palme BAS (ASYNCHRONE - inverse)
+            const palmDownAngle = Math.PI - (Math.PI / 4) * palmBeat;
+            const palmDownX = player.x - 20 + Math.cos(palmDownAngle) * 18;
+            const palmDownY = player.y + 10 + Math.sin(palmDownAngle) * 18;
+
+            ctx.strokeStyle = '#0055CC';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(player.x - 20, player.y + 10);
+            ctx.lineTo(palmDownX, palmDownY);
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(palmDownX, palmDownY);
+            ctx.rotate(palmDownAngle);
+            ctx.fillStyle = '#0055CC';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 22, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
             ctx.restore();
         }
 
         function updatePlayer() {
-            if (player.isMovingUp) {
+            if (isHolding) {
                 player.velocityY = player.jumpPower;
             } else {
                 player.velocityY += player.gravity;
             }
 
+            player.velocityY = Math.min(player.velocityY, 5);
             player.y += player.velocityY;
 
             if (keys.left) {
@@ -704,8 +940,8 @@
 
             player.x += player.velocityX;
 
-            if (player.y + player.height/2 > canvas.height - 20) {
-                player.y = canvas.height - player.height/2 - 20;
+            if (player.y + player.height/2 > canvas.height - 25) {
+                player.y = canvas.height - player.height/2 - 25;
                 player.velocityY = 0;
             }
             if (player.y - player.height/2 < 0) {
@@ -713,77 +949,69 @@
                 player.velocityY = 0;
             }
             if (player.x < 50) player.x = 50;
-            if (player.x > 120) player.x = 120;
-
-            player.oxygen -= 0.06;
-            if (player.oxygen <= 0) {
-                endGame();
-            }
+            if (player.x > canvas.width - 50) player.x = canvas.width - 50;
         }
 
         function spawnObstacles() {
-            // UN SEUL OBSTACLE À LA FOIS
             if (obstacles.length === 0) {
                 lastObstacleTime++;
-                if (lastObstacleTime > minObstacleDelay) {
+                if (lastObstacleTime > 400) {
                     obstacles.push(new Obstacle(canvas.width + 30));
                     lastObstacleTime = 0;
                 }
             }
         }
 
-        function spawnCollectibles() {
-            if (Math.random() < 0.025) {
-                const x = canvas.width + 30;
-                const y = Math.random() * (canvas.height - 100) + 50;
-                collectibles.push(new Collectible(x, y));
-            }
-        }
-
         function endGame() {
             gameRunning = false;
-            const overlay = document.getElementById('gameOver');
-            overlay.style.display = 'block';
+            document.getElementById('gameOverText').textContent = 'Défaite... 💔';
+            document.getElementById('gameOver').classList.remove('victory');
+            document.getElementById('gameOver').style.display = 'block';
             document.getElementById('finalScore').textContent = Math.floor(score);
-            document.getElementById('finalOxygen').textContent = Math.ceil(player.oxygen);
+            document.getElementById('trivia').textContent = getRandomTrivia();
+        }
+
+        function winGame() {
+            gameRunning = false;
+            createConfetti();
+            createFireworks();
+            setTimeout(() => {
+                document.getElementById('gameOverText').innerHTML = '🎉 VOUS AVEZ VAINCU L\'HIPPOCAMPE MALÉFIQUE ! 🎉<br><br>BRAVO ! 🏆';
+                document.getElementById('gameOver').classList.add('victory');
+                document.getElementById('gameOver').style.display = 'block';
+                document.getElementById('finalScore').textContent = Math.floor(score);
+                document.getElementById('trivia').textContent = getRandomTrivia();
+            }, 300);
         }
 
         document.addEventListener('keydown', (e) => {
-            if ((e.code === 'Space' || e.code === 'ArrowUp') && gameRunning) {
-                e.preventDefault();
-                player.isMovingUp = true;
-            }
             if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = true;
             if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = true;
         });
 
         document.addEventListener('keyup', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowUp') {
-                player.isMovingUp = false;
-            }
             if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = false;
             if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = false;
         });
 
         document.addEventListener('mousedown', () => {
-            if (gameRunning) player.isMovingUp = true;
+            if (gameRunning) isHolding = true;
         });
+
         document.addEventListener('mouseup', () => {
-            player.isMovingUp = false;
+            isHolding = false;
         });
 
         document.addEventListener('touchstart', (e) => {
             if (gameRunning) {
+                isHolding = true;
                 e.preventDefault();
-                player.isMovingUp = true;
             }
         });
-        document.addEventListener('touchend', () => {
-            player.isMovingUp = false;
-        });
 
-        for (let i = 0; i < 5; i++) fishes.push(new Fish());
-        for (let i = 0; i < 15; i++) bubbleParticles.push(new BackgroundBubble());
+        document.addEventListener('touchend', () => {
+            isHolding = false;
+        });
 
         function gameLoop() {
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -792,33 +1020,6 @@
             gradient.addColorStop(1, '#051a2e');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 3; i++) {
-                ctx.beginPath();
-                for (let x = 0; x < canvas.width; x += 20) {
-                    const y = i * 20 + Math.sin(x * 0.02 + bubbleTimer * 0.03) * 3;
-                    if (x === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-            }
-
-            ctx.strokeStyle = 'rgba(100, 150, 200, 0.08)';
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += 50) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += 50) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
 
             fishes.forEach(fish => {
                 fish.update();
@@ -835,105 +1036,346 @@
             bubbleParticles = bubbleParticles.filter(b => b.y > -20);
 
             if (gameRunning) {
-                updatePlayer();
-                spawnObstacles();
-                spawnCollectibles();
+                gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
+                const remainingTime = Math.max(0, 120 - gameTime);
+                const minutes = Math.floor(remainingTime / 60);
+                const seconds = remainingTime % 60;
+                document.getElementById('timer').textContent = `⏱️ ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
-                obstacles = obstacles.filter(o => o.x > -100);
-                obstacles.forEach(obs => {
-                    obs.update();
-                    obs.draw();
+                // Gestion de l'oxygène
+                if (!gameFinal) {
+                    oxygenLevel = Math.max(0, 100 - (gameTime * 0.5));
+                } else {
+                    oxygenLevel = Math.max(0, 100 - (gameTime * 0.7));
+                }
 
-                    if (obs.isCollidingWith({
-                        x: player.x - player.width/2,
-                        y: player.y - player.height/2,
-                        width: player.width,
-                        height: player.height
-                    })) {
-                        player.health -= 1;
-                        for (let i = 0; i < 10; i++) {
-                            particles.push(new BubbleParticle(
-                                player.x + (Math.random() - 0.5) * 30,
-                                player.y + (Math.random() - 0.5) * 30
-                            ));
+                if (oxygenLevel <= 0) {
+                    endGame();
+                }
+
+                document.getElementById('oxygenFill').style.width = oxygenLevel + '%';
+                document.getElementById('oxygenPercent').textContent = Math.round(oxygenLevel);
+
+                if (remainingTime <= 0 && !gameFinal) {
+                    gameFinal = true;
+                    boss = new Boss();
+                    player.health = 3;
+                    laserCharge = 0;
+                }
+
+                if (!gameFinal) {
+                    updatePlayer();
+                    spawnObstacles();
+
+                    obstacles = obstacles.filter(o => o.x > -100);
+                    obstacles.forEach(obs => {
+                        obs.update();
+                        obs.draw();
+
+                        if (obs.isCollidingWith({
+                            x: player.x - player.width/2,
+                            y: player.y - player.height/2,
+                            width: player.width,
+                            height: player.height
+                        })) {
+                            player.health -= 1;
+                            if (player.health <= 0) endGame();
+                            obstacles = obstacles.filter(o => o !== obs);
+                        } else if (obs.x + obs.width < player.x && !obs.scored) {
+                            obs.scored = true;
+                            score += 100;
                         }
-                        if (player.health <= 0) endGame();
-                        obstacles = obstacles.filter(o => o !== obs);
-                    } else if (obs.x + obs.width < player.x && !obs.scored) {
-                        obs.scored = true;
-                        score += 100;
-                        for (let i = 0; i < 5; i++) {
-                            particles.push(new BubbleParticle(
-                                player.x + (Math.random() - 0.5) * 30,
-                                player.y + (Math.random() - 0.5) * 30
-                            ));
+                    });
+
+                } else {
+                    // PHASE BOSS
+                    
+                    const shouldUpdateBoss = laserFireTime === 0 || animFrame % 3 === 0;
+                    
+                    if (shouldUpdateBoss) {
+                        updatePlayer();
+                        boss.update();
+                    }
+                    
+                    boss.draw();
+
+                    if (isHolding && laserCharge < 300) {
+                        laserCharge++;
+                    }
+
+                    const laserPercent = Math.min(1, laserCharge / 300);
+
+                    if (laserPercent > 0) {
+                        for (let i = 0; i < 3; i++) {
+                            const wave = (animFrame + i * 10) % 30;
+                            const waveSize = 20 + (laserPercent * 25) + (wave * 2);
+                            ctx.globalAlpha = 0.3 * (1 - wave / 30);
+                            ctx.strokeStyle = '#00FFFF';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.arc(player.x + 30, player.y, waveSize, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                        ctx.globalAlpha = 1;
+                    }
+
+                    if (laserPercent > 0) {
+                        const ballX = player.x + 15;
+                        const ballY = player.y;
+                        const sphereSize = 1 + (laserPercent * 2);
+
+                        ctx.globalAlpha = 0.8 * laserPercent;
+                        ctx.strokeStyle = '#00FFFF';
+                        ctx.lineWidth = 1.5;
+                        for (let i = 0; i < 12; i++) {
+                            const angle = (i / 12) * Math.PI * 2;
+                            const distance = sphereSize + 12 + Math.sin(animFrame * 0.15 + i) * 6;
+                            const endX = ballX + Math.cos(angle) * distance;
+                            const endY = ballY + Math.sin(angle) * distance;
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(ballX, ballY);
+                            const midX = ballX + Math.cos(angle) * (distance * 0.5) + Math.sin(animFrame * 0.2 + i) * 8;
+                            const midY = ballY + Math.sin(angle) * (distance * 0.5) + Math.cos(animFrame * 0.2 + i) * 8;
+                            ctx.lineTo(midX, midY);
+                            ctx.lineTo(endX, endY);
+                            ctx.stroke();
+                        }
+
+                        ctx.globalAlpha = 0.95;
+                        ctx.fillStyle = '#00FFFF';
+                        ctx.beginPath();
+                        ctx.arc(ballX, ballY, sphereSize, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.globalAlpha = 1;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.beginPath();
+                        ctx.arc(ballX, ballY, sphereSize * 0.6, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.globalAlpha = 1;
+                        ctx.strokeStyle = '#0088FF';
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.arc(ballX, ballY, sphereSize + 0.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    if (laserPercent > 0.1) {
+                        const textStartX = player.x + 50;
+                        const textStartY = player.y - 25;
+                        
+                        let textDisplay = '';
+                        
+                        if (laserPercent > 0.15) textDisplay += 'K';
+                        if (laserPercent > 0.25) textDisplay += 'A';
+                        if (laserPercent > 0.35) textDisplay += 'M';
+                        if (laserPercent > 0.45) textDisplay += 'E';
+                        if (laserPercent > 0.55) textDisplay += 'H';
+                        if (laserPercent > 0.65) textDisplay += 'A';
+                        if (laserPercent > 0.75) textDisplay += 'M';
+                        if (laserPercent > 0.85) textDisplay += 'E';
+                        if (laserPercent > 0.95) textDisplay += 'HA!';
+
+                        if (textDisplay) {
+                            ctx.font = 'bold 32px Arial';
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'middle';
+
+                            for (let i = 0; i < 5; i++) {
+                                ctx.globalAlpha = (0.4 * (1 - i / 5)) * laserPercent;
+                                ctx.strokeStyle = `rgba(0, ${255 - i * 30}, 255, 1)`;
+                                ctx.lineWidth = 4 + i * 2;
+                                ctx.strokeText(textDisplay, textStartX, textStartY);
+                            }
+
+                            ctx.globalAlpha = 0.9 * laserPercent;
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fillText(textDisplay, textStartX, textStartY);
+
+                            ctx.globalAlpha = 0.7 * laserPercent;
+                            ctx.strokeStyle = '#00FFFF';
+                            ctx.lineWidth = 1.5;
+                            ctx.strokeText(textDisplay, textStartX, textStartY);
+
+                            ctx.globalAlpha = 0.6 * laserPercent;
+                            ctx.strokeStyle = '#00FFFF';
+                            ctx.lineWidth = 1;
+                            for (let i = 0; i < 8; i++) {
+                                const offsetX = Math.sin(animFrame * 0.1 + i) * 15;
+                                const offsetY = Math.cos(animFrame * 0.1 + i) * 8;
+                                ctx.beginPath();
+                                ctx.moveTo(textStartX + offsetX, textStartY + offsetY - 25);
+                                ctx.lineTo(textStartX + offsetX + Math.random() * 20 - 10, textStartY + offsetY - 40 + Math.random() * 20);
+                                ctx.stroke();
+                            }
+
+                            ctx.globalAlpha = Math.random() * 0.8 * laserPercent;
+                            ctx.fillStyle = '#FFFFFF';
+                            for (let i = 0; i < 12; i++) {
+                                const px = textStartX + Math.random() * (textDisplay.length * 15);
+                                const py = textStartY + Math.random() * 30 - 15;
+                                ctx.beginPath();
+                                ctx.arc(px, py, Math.random() * 1.5, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
                         }
                     }
-                });
 
-                collectibles = collectibles.filter(c => c.x > -50);
-                collectibles.forEach(c => {
-                    c.update();
-                    c.draw();
+                    ctx.globalAlpha = 1;
 
-                    if (c.isCollidingWith({
-                        x: player.x - player.width/2,
-                        y: player.y - player.height/2,
-                        width: player.width,
-                        height: player.height
-                    })) {
-                        player.oxygen = Math.min(player.maxOxygen, player.oxygen + 20);
-                        score += 50;
+                    const chargeBarY = player.y - 40;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(player.x - 50, chargeBarY, 100, 15);
+                    ctx.fillStyle = laserPercent < 1 ? '#FFD700' : '#00FF00';
+                    ctx.fillRect(player.x - 50, chargeBarY, 100 * laserPercent, 15);
+                    ctx.strokeStyle = '#00FFFF';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(player.x - 50, chargeBarY, 100, 15);
+
+                    if (laserPercent === 1 && !laserFiring) {
+                        laserFiring = true;
+                        laserFireTime = 40;
+                        laserCharge = 0;
+                    }
+
+                    if (laserFiring) {
+                        if (laserFireTime % 3 !== 0) {
+                            laserFireTime--;
+                        } else {
+                            laserFireTime--;
+                        }
+
+                        const laserX = player.x + 35;
+                        const laserWidth = 400;
+
+                        ctx.globalAlpha = 0.3;
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(laserX, player.y - 15, laserWidth, 30);
+
+                        ctx.globalAlpha = 0.9;
+                        ctx.fillStyle = '#00FFFF';
+                        ctx.fillRect(laserX, player.y - 12, laserWidth, 24);
+
+                        ctx.globalAlpha = 0.7;
+                        ctx.fillStyle = '#00CCFF';
+                        ctx.fillRect(laserX, player.y - 8, laserWidth, 16);
+
+                        ctx.globalAlpha = 0.5;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(laserX, player.y - 5, laserWidth, 10);
+
+                        ctx.globalAlpha = 0.6;
+                        ctx.strokeStyle = '#00FFFF';
+                        ctx.lineWidth = 2;
                         for (let i = 0; i < 8; i++) {
-                            particles.push(new BubbleParticle(
-                                c.x + (Math.random() - 0.5) * 20,
-                                c.y + (Math.random() - 0.5) * 20
-                            ));
+                            const wave = (animFrame * 3 + i * 20) % 40;
+                            ctx.beginPath();
+                            ctx.moveTo(laserX + wave, player.y - 15);
+                            ctx.lineTo(laserX + wave, player.y + 15);
+                            ctx.stroke();
                         }
-                        collectibles = collectibles.filter(col => col !== c);
-                    }
-                });
 
-                particles = particles.filter(p => p.life > 0);
-                particles.forEach(p => {
-                    p.update();
-                    p.draw();
-                });
+                        ctx.globalAlpha = 1;
+
+                        if (laserX < boss.x + boss.width/2) {
+                            boss.health--;
+                            bossHitTime = 30;
+                            score += 500;
+                            laserFiring = false;
+                        }
+
+                        if (laserFireTime <= 0) {
+                            laserFiring = false;
+                        }
+                    }
+
+                    if (!isHolding) {
+                        laserFiring = false;
+                        laserFireTime = 0;
+                    }
+
+                    if (bossHitTime > 0) {
+                        ctx.save();
+                        ctx.globalAlpha = Math.min(1, bossHitTime / 60);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = 'bold 32px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.strokeStyle = '#FF0000';
+                        ctx.lineWidth = 3;
+                        ctx.strokeText('OUCH!', boss.x, boss.y - 80);
+                        ctx.fillText('OUCH!', boss.x, boss.y - 80);
+                        ctx.restore();
+                        bossHitTime--;
+                    }
+
+                    fireballs = fireballs.filter(f => !f.isExpired() && f.x > -50);
+                    fireballs.forEach((fb, idx) => {
+                        if (shouldUpdateBoss) {
+                            fb.update();
+                        }
+                        fb.draw();
+
+                        if (fb.isCollidingWith({
+                            x: player.x - player.width/2,
+                            y: player.y - player.height/2,
+                            width: player.width,
+                            height: player.height
+                        })) {
+                            player.health--;
+                            fireballs.splice(idx, 1);
+                            if (player.health <= 0) endGame();
+                        }
+                    });
+
+                    const barBottomY = canvas.height - 45;
+                    
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.fillRect(10, barBottomY, 150, 35);
+                    ctx.strokeStyle = '#00FFFF';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(10, barBottomY, 150, 35);
+
+                    const playerHPPercent = player.health / player.maxHealth;
+                    ctx.fillStyle = playerHPPercent > 0.5 ? '#00FF00' : playerHPPercent > 0.25 ? '#FFD700' : '#FF0000';
+                    ctx.fillRect(10, barBottomY, 150 * playerHPPercent, 35);
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`❤️ ${player.health}/3`, 85, barBottomY + 22);
+
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.fillRect(canvas.width - 160, barBottomY, 150, 35);
+                    ctx.strokeStyle = '#FF0000';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(canvas.width - 160, barBottomY, 150, 35);
+
+                    const bossHPPercent = boss.health / boss.maxHealth;
+                    ctx.fillStyle = bossHPPercent > 0.5 ? '#FF0000' : bossHPPercent > 0.25 ? '#FFD700' : '#FFFF00';
+                    ctx.fillRect(canvas.width - 160, barBottomY, 150 * bossHPPercent, 35);
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`👹 ${boss.health}/5`, canvas.width - 85, barBottomY + 22);
+
+                    player.y = Math.max(player.y, 60);
+
+                    if (boss.health <= 0) {
+                        winGame();
+                    }
+                }
             }
 
             drawPlayer();
 
-            const barHeight = 25;
-            const barY = canvas.height - barHeight;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(0, barY, canvas.width, barHeight);
-            ctx.strokeStyle = '#00CCFF';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(0, barY, canvas.width, barHeight);
-
-            const oxygenWidth = (player.oxygen / player.maxOxygen) * canvas.width;
-            if (player.oxygen > 30) {
-                ctx.fillStyle = '#00FF00';
-            } else if (player.oxygen > 10) {
-                ctx.fillStyle = '#FFD700';
-            } else {
-                ctx.fillStyle = '#FF3333';
-            }
-            ctx.fillRect(0, barY, oxygenWidth, barHeight);
-
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('💨 O₂: ' + Math.ceil(player.oxygen) + '%', canvas.width/2, barY + 16);
-
-            document.getElementById('health').textContent = player.health + '/3';
+            document.getElementById('health').textContent = player.health;
             document.getElementById('score').textContent = Math.floor(score);
-            document.getElementById('oxygen').textContent = Math.ceil(player.oxygen);
 
             requestAnimationFrame(gameLoop);
         }
-
-        gameLoop();
     </script>
 </body>
 </html>
