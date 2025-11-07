@@ -2,9 +2,15 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <title>Diver Flap 🤿</title>
     <style>
+        html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -15,10 +21,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
+            width: 100vw;
             background: linear-gradient(135deg, #001a4d 0%, #003d99 100%);
             font-family: 'Arial', sans-serif;
             color: white;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
         }
         
         #gameContainer {
@@ -314,6 +324,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        let gameLoopActive = false;
         let scoreClickCount = 0;
         let scoreClickTimer = null;
 
@@ -349,8 +360,8 @@
         const player = {
             x: 80,
             y: canvas.height / 2,
-            width: 60,
-            height: 30,
+            width: 35,
+            height: 25,
             velocityY: 0,
             velocityX: 0,
             gravity: 0.3,
@@ -470,6 +481,7 @@
         }
 
         function returnToMenu() {
+            gameLoopActive = false;
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('disclaimer').style.display = 'flex';
             gameRunning = false;
@@ -483,6 +495,9 @@
         }
 
         function startGame() {
+            if (gameLoopActive) return;
+            gameLoopActive = true;
+            
             document.getElementById('disclaimer').style.display = 'none';
             gameRunning = true;
             gameFinal = false;
@@ -566,8 +581,8 @@
             constructor(x) {
                 this.x = x;
                 this.width = 80;
-                this.gapSize = 180;
-                this.gapY = Math.random() * (canvas.height - this.gapSize - 100) + 50;
+                this.gapSize = 220; // Augmenté pour laisser plus d'espace
+                this.gapY = Math.random() * (canvas.height - this.gapSize - 120) + 70;
                 this.speed = 1.8;
                 this.scored = false;
                 this.type = Math.random() > 0.5 ? 'wall' : 'net';
@@ -601,10 +616,14 @@
             }
 
             isCollidingWith(rect) {
+                // Vérifier le chevauchement horizontal
                 const leftCollide = rect.x < this.x + this.width && rect.x + rect.width > this.x;
                 if (!leftCollide) return false;
-                const topCollide = rect.y < this.gapY;
-                const bottomCollide = rect.y + rect.height > this.gapY + this.gapSize;
+                
+                // Vérifier si le joueur sort du gap (avec marge de tolérance)
+                const margin = 3;
+                const topCollide = rect.y < this.gapY - margin;
+                const bottomCollide = rect.y + rect.height > this.gapY + this.gapSize + margin;
                 return topCollide || bottomCollide;
             }
         }
@@ -838,48 +857,77 @@
             ctx.restore();
 
             // PALMES - Mouvement HORIZONTAL vers la GAUCHE (réaliste!)
-            const palmBeat = Math.sin(animFrame * 0.15);
+            // Point d'ancrage commun pour les deux palmes
+            const palmAnchorX = player.x - 20;
+            const palmAnchorY = player.y;
+            const palmBeat = Math.sin(animFrame * 0.034); // Cycle de ~3 secondes
             
-            // Palme HAUT (oscille vers haut-gauche/bas-gauche)
-            const palmUpAngle = Math.PI + (Math.PI / 4) * palmBeat;
-            const palmUpX = player.x - 20 + Math.cos(palmUpAngle) * 18;
-            const palmUpY = player.y - 10 + Math.sin(palmUpAngle) * 18;
+            // Palme HAUT (oscille vers haut quand palmBeat > 0)
+            const palmUpAngle = Math.PI + (Math.PI / 3) * palmBeat;
+            const palmUpX = palmAnchorX + Math.cos(palmUpAngle) * 18;
+            const palmUpY = palmAnchorY + Math.sin(palmUpAngle) * 18;
 
             ctx.strokeStyle = '#0055CC';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(player.x - 20, player.y - 10);
+            ctx.moveTo(palmAnchorX, palmAnchorY);
             ctx.lineTo(palmUpX, palmUpY);
             ctx.stroke();
 
             ctx.save();
             ctx.translate(palmUpX, palmUpY);
             ctx.rotate(palmUpAngle);
-            ctx.fillStyle = '#0055CC';
+            
+            // Palme avec dégradé simple pour relief
+            const gradUp = ctx.createLinearGradient(-22, -8, 22, 8);
+            gradUp.addColorStop(0, '#003366');
+            gradUp.addColorStop(0.5, '#0077FF');
+            gradUp.addColorStop(1, '#003366');
+            ctx.fillStyle = gradUp;
+            
             ctx.beginPath();
             ctx.ellipse(0, 0, 22, 8, 0, 0, Math.PI * 2);
             ctx.fill();
+            
+            // Contour pour plus de définition
+            ctx.strokeStyle = '#001144';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
             ctx.restore();
 
-            // Palme BAS (ASYNCHRONE - inverse)
-            const palmDownAngle = Math.PI - (Math.PI / 4) * palmBeat;
-            const palmDownX = player.x - 20 + Math.cos(palmDownAngle) * 18;
-            const palmDownY = player.y + 10 + Math.sin(palmDownAngle) * 18;
+            // Palme BAS (ASYNCHRONE - inverse, oscille vers bas quand palmBeat < 0)
+            const palmDownAngle = Math.PI - (Math.PI / 3) * palmBeat;
+            const palmDownX = palmAnchorX + Math.cos(palmDownAngle) * 18;
+            const palmDownY = palmAnchorY + Math.sin(palmDownAngle) * 18;
 
             ctx.strokeStyle = '#0055CC';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(player.x - 20, player.y + 10);
+            ctx.moveTo(palmAnchorX, palmAnchorY);
             ctx.lineTo(palmDownX, palmDownY);
             ctx.stroke();
 
             ctx.save();
             ctx.translate(palmDownX, palmDownY);
             ctx.rotate(palmDownAngle);
-            ctx.fillStyle = '#0055CC';
+            
+            // Palme avec dégradé simple pour relief
+            const gradDown = ctx.createLinearGradient(-22, -8, 22, 8);
+            gradDown.addColorStop(0, '#003366');
+            gradDown.addColorStop(0.5, '#0077FF');
+            gradDown.addColorStop(1, '#003366');
+            ctx.fillStyle = gradDown;
+            
             ctx.beginPath();
             ctx.ellipse(0, 0, 22, 8, 0, 0, Math.PI * 2);
             ctx.fill();
+            
+            // Contour pour plus de définition
+            ctx.strokeStyle = '#001144';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
             ctx.restore();
         }
 
@@ -1022,10 +1070,10 @@
                         obs.draw();
 
                         if (obs.isCollidingWith({
-                            x: player.x - player.width/2,
-                            y: player.y - player.height/2,
-                            width: player.width,
-                            height: player.height
+                            x: player.x - player.width/2 + 3,
+                            y: player.y - player.height/2 + 2,
+                            width: player.width - 6,
+                            height: player.height - 4
                         })) {
                             player.health -= 1;
                             if (player.health <= 0) endGame();
@@ -1268,10 +1316,10 @@
                         fb.draw();
 
                         if (fb.isCollidingWith({
-                            x: player.x - player.width/2,
-                            y: player.y - player.height/2,
-                            width: player.width,
-                            height: player.height
+                            x: player.x - player.width/2 + 2,
+                            y: player.y - player.height/2 + 2,
+                            width: player.width - 4,
+                            height: player.height - 4
                         })) {
                             player.health--;
                             fireballs.splice(idx, 1);
@@ -1323,7 +1371,9 @@
             document.getElementById('health').textContent = player.health;
             document.getElementById('score').textContent = Math.floor(score);
 
-            requestAnimationFrame(gameLoop);
+            if (gameLoopActive) {
+                requestAnimationFrame(gameLoop);
+            }
         }
     </script>
 </body>
