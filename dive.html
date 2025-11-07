@@ -608,35 +608,69 @@
             ctx.fillRect(player.x - 15, player.y + 3, 20, 2);
             ctx.fillRect(player.x - 15, player.y + 11, 20, 2);
 
-            // PALMES RÉALISTES - oscillation entre 10h50 et 8h40
+            // PALMES RÉALISTES - rotation à la hanche, amplitude des pieds entre 10h50 et 8h40
             const palmBeat = Math.sin(bubbleTimer * 0.15);
-            // Conversion: 10h50 ≈ -0.61 rad, 8h40 ≈ -1.74 rad
+            // Angle des pieds: oscillation entre 10h50 (-0.61 rad) et 8h40 (-1.74 rad)
             // Centre: -1.175 rad, Amplitude: 0.565 rad
-            const palmAngle = -1.175 + palmBeat * 0.565;
-
-            // Palme GAUCHE
+            
+            // Longueur de la jambe
+            const legLength = 25;
+            
+            // Palme GAUCHE (monte et descend)
+            const leftHipX = player.x - 20;
+            const leftHipY = player.y + 10;
+            const leftFootAngle = -1.175 + palmBeat * 0.565;
+            const leftFootX = leftHipX + Math.cos(leftFootAngle) * legLength;
+            const leftFootY = leftHipY + Math.sin(leftFootAngle) * legLength;
+            
+            // Jambe gauche
+            ctx.strokeStyle = '#0a3d91';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(leftHipX, leftHipY);
+            ctx.lineTo(leftFootX, leftFootY);
+            ctx.stroke();
+            
+            // Palme gauche
+            ctx.save();
+            ctx.translate(leftFootX, leftFootY);
+            ctx.rotate(leftFootAngle);
             ctx.fillStyle = '#0d47a1';
-            ctx.translate(player.x - 20, player.y + 10);
-            ctx.rotate(palmAngle);
             ctx.beginPath();
             ctx.ellipse(0, 0, 12, 30, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#0a3d91';
             ctx.lineWidth = 2;
             ctx.stroke();
-            ctx.translate(-player.x + 20, -player.y - 10);
-
-            // Palme DROITE
+            ctx.restore();
+            
+            // Palme DROITE (descend et monte - INVERSE)
+            const rightHipX = player.x - 20;
+            const rightHipY = player.y + 20;
+            const rightFootAngle = -1.175 - palmBeat * 0.565;  // INVERSE !
+            const rightFootX = rightHipX + Math.cos(rightFootAngle) * legLength;
+            const rightFootY = rightHipY + Math.sin(rightFootAngle) * legLength;
+            
+            // Jambe droite
+            ctx.strokeStyle = '#0a3d91';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(rightHipX, rightHipY);
+            ctx.lineTo(rightFootX, rightFootY);
+            ctx.stroke();
+            
+            // Palme droite
+            ctx.save();
+            ctx.translate(rightFootX, rightFootY);
+            ctx.rotate(rightFootAngle);
             ctx.fillStyle = '#0d47a1';
-            ctx.translate(player.x - 20, player.y + 20);
-            ctx.rotate(palmAngle);
             ctx.beginPath();
             ctx.ellipse(0, 0, 12, 30, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#0a3d91';
             ctx.lineWidth = 2;
             ctx.stroke();
-            ctx.translate(-player.x + 20, -player.y - 20);
+            ctx.restore();
 
             // Bouteille
             ctx.fillStyle = '#4CAF50';
