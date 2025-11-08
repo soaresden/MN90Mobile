@@ -36,7 +36,7 @@
             width: 100%;
             max-width: 600px;
             height: 100vh;
-            max-height: 900px;
+            width: 100vw;
             background: linear-gradient(180deg, #1a4d7a 0%, #0d2a47 50%, #051a2e 100%);
             border: 3px solid #00ffff;
             box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), inset 0 0 40px rgba(0, 255, 255, 0.1);
@@ -292,15 +292,16 @@
             
             <div class="main-text">Survis 02:00 et affronte l'Hippocampe Maléfique !</div>
             
-            <div class="sub-text">🫧🤿 !</div>
-            <div class="sub-text">Évite les obstacles et les méchantes bestioles sous-marines ! 👹</div>
+            <div class="sub-text">N'oublie pas ton air ! 🫧</div>
+            <div class="sub-text">Évite les méchantes bestioles sous-marines ! 👹</div>
             
             <div class="controls">
                 <p>🎮 CONTRÔLES</p>
                 <p>Clic / Appui = Remonter</p>
+                <p>Flèches ← / → ou A / D = Se déplacer latéralement</p>
             </div>
 
-            <button onclick="startGame()">🫧 LET'S PLOUF !  🤿</button>
+            <button onclick="startGame()">⚔️ COMMENCER L'AVENTURE ⚔️</button>
         </div>
         
         <div id="uiLeft">
@@ -308,10 +309,10 @@
             <div class="uiBox">❤️ <span id="health">3</span>/3</div>
         </div>
         
-        <div id="timer">⏱️ 02:00</div>
+        <div id="timer">⏱️ 2:00</div>
         <canvas id="gameCanvas"></canvas>
         <div id="gameOver">
-            <h1>💀GAME OVER💀</h1>
+            <h1>💀 GAME OVER 💀</h1>
             <p id="gameOverText">Merci d'avoir joué !</p>
             <p>Score: <span id="finalScore">0</span></p>
             <div id="trivia"></div>
@@ -392,8 +393,8 @@
             "🐙 Le saviez-vous ? Les pieuvres ont 9 cerveaux, un par bras !",
             "🦈 Le saviez-vous ? Les requins détectent les champs électriques des poissons !",
             "🌙 Le saviez-vous ? Les plongées de nuit offrent des spectacles bioluminescents magiques !",
-            "🏊 Le saviez-vous ? Un plongeur N2 peut plonger jusqu'à 20 mètres en autonomie !",
-            "⏱️ Le saviez-vous ? La limite de temps d'une plongée dépend de la profondeur et du gaz !"
+            "🏊 Le saviez-vous ? Un plongeur certifié CMAS 2 étoiles peut plonger jusqu'à 20 mètres !",
+            "⏱️ Le saviez-vous ? La limite de temps d'une plongée dépend de la profondeur et du gaz respirable !"
         ];
 
         function getRandomTrivia() {
@@ -599,6 +600,7 @@
                 } else {
                     ctx.strokeStyle = '#DAA520';
                     ctx.lineWidth = 2;
+                    // Filets du HAUT (avant le gap)
                     for (let i = 0; i <= this.gapY; i += 10) {
                         ctx.beginPath();
                         ctx.moveTo(this.x, i);
@@ -609,6 +611,19 @@
                         ctx.beginPath();
                         ctx.moveTo(i, 0);
                         ctx.lineTo(i, this.gapY);
+                        ctx.stroke();
+                    }
+                    // Filets du BAS (après le gap)
+                    for (let i = this.gapY + this.gapSize; i <= canvas.height; i += 10) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, i);
+                        ctx.lineTo(this.x + this.width, i);
+                        ctx.stroke();
+                    }
+                    for (let i = this.x; i <= this.x + this.width; i += 10) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, this.gapY + this.gapSize);
+                        ctx.lineTo(i, canvas.height);
                         ctx.stroke();
                     }
                 }
