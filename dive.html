@@ -367,8 +367,8 @@
         const player = {
             x: 80,
             y: canvas.height / 2,
-            width: 35,
-            height: 25,
+            width: 28,
+            height: 20,
             velocityY: 0,
             velocityX: 0,
             gravity: 0.3,
@@ -696,10 +696,10 @@
 
         class Boss {
             constructor() {
-                this.x = canvas.width - 100;
+                this.x = canvas.width - 45;
                 this.y = canvas.height / 2;
-                this.width = 80;
-                this.height = 120;
+                this.width = 60;
+                this.height = 90;
                 this.health = 5;
                 this.maxHealth = 5;
                 this.moveTimer = 0;
@@ -730,6 +730,11 @@
 
             draw() {
                 ctx.save();
+                
+                // Retourner le boss pour qu'il regarde vers la gauche (vers le plongeur)
+                ctx.translate(this.x, this.y);
+                ctx.scale(-0.75, 0.75); // Retourner et réduire de 25%
+                ctx.translate(-this.x, -this.y);
                 
                 // Queue enroulée (bas)
                 ctx.strokeStyle = '#CC2200';
@@ -825,6 +830,9 @@
             animFrame++;
 
             ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.scale(0.75, 0.75);
+            ctx.translate(-player.x, -player.y);
 
             // Tête rouge (À DROITE!)
             ctx.fillStyle = '#FF4444';
