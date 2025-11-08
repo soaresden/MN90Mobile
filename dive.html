@@ -45,12 +45,13 @@
             overflow: hidden;
             cursor: pointer;
             z-index: 1;
+            padding-bottom: 60px;
         }
         
         canvas {
             display: block;
             width: 100vw !important;
-            height: 100vh !important;
+            height: calc(100vh - 60px) !important;
             position: absolute;
             top: 0;
             left: 0;
@@ -113,13 +114,13 @@
             z-index: 500;
             color: #00ffff;
             text-align: center;
-            padding: 30px;
+            padding: 20px;
             overflow: hidden;
         }
 
         #disclaimer h1 {
-            font-size: 52px;
-            margin-bottom: 30px;
+            font-size: 40px;
+            margin-bottom: 20px;
             text-shadow: 0 0 50px rgba(0, 255, 255, 1), 0 0 100px rgba(0, 200, 255, 0.8);
             color: #00FFFF;
             animation: glow-pulse 2s ease-in-out infinite;
@@ -141,46 +142,46 @@
         }
 
         .diver-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
+            font-size: 45px;
+            margin-bottom: 15px;
             animation: bounce 1s ease-in-out infinite;
         }
 
         #disclaimer .main-text {
-            font-size: 24px;
-            margin: 15px 0;
+            font-size: 18px;
+            margin: 10px 0;
             max-width: 500px;
-            line-height: 1.8;
+            line-height: 1.6;
             font-weight: bold;
             color: #FFD700;
             animation: float-up 1s ease-out 0.3s backwards;
         }
 
         #disclaimer .sub-text {
-            font-size: 18px;
-            margin: 10px 0;
+            font-size: 14px;
+            margin: 5px 0;
             color: #00FFFF;
             animation: float-up 1s ease-out 0.6s backwards;
         }
 
         #disclaimer .controls {
-            font-size: 13px;
-            margin-top: 30px;
+            font-size: 11px;
+            margin-top: 15px;
             color: #888888;
-            line-height: 1.5;
+            line-height: 1.4;
             animation: float-up 1s ease-out 0.9s backwards;
         }
 
         #disclaimer button {
-            margin-top: 40px;
-            padding: 18px 60px;
+            margin-top: 20px;
+            padding: 14px 40px;
             background: linear-gradient(135deg, #FF6B00 0%, #FFD700 100%);
             color: #000;
             border: none;
             border-radius: 12px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 22px;
+            font-size: 18px;
             transition: all 0.3s;
             box-shadow: 0 0 30px rgba(255, 107, 0, 0.8);
             animation: float-up 1s ease-out 1.2s backwards;
@@ -307,7 +308,7 @@
                 <p>Flèches ← / → ou A / D = Se déplacer latéralement</p>
             </div>
 
-            <button onclick="startGame()">⚔️ COMMENCER L'AVENTURE ⚔️</button>
+            <button onclick="startGame()">Let's Plouf ! 🫧</button>
         </div>
         
         <div id="uiLeft">
@@ -1347,7 +1348,7 @@
                         }
                     });
 
-                    const barBottomY = canvas.height - 45;
+                    const barBottomY = canvas.height - 80;
                     
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
                     ctx.fillRect(10, barBottomY, 150, 35);
