@@ -235,6 +235,27 @@
             background: rgba(100, 255, 100, 0.2);
             border-left: 4px solid #64ff64;
         }
+
+        .danger-zone {
+            background: rgba(255, 50, 50, 0.3);
+            border: 2px solid #ff3232;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .danger-zone-text {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ff6464;
+        }
     </style>
 </head>
 <body>
@@ -284,7 +305,12 @@
 
                 <div class="result" id="result-mode1">
                     <p style="font-size: 0.85em; opacity: 0.8;">PPO₂ = <span id="ppo2-mode1">1.4</span> bar</p>
+                    <p style="font-size: 0.75em; opacity: 0.7; margin-top: 8px; font-family: monospace;" id="calc-details1">
+                        (1.4 / 0.32) × 10 - 10 = 33.7m
+                    </p>
                 </div>
+
+                <div id="toxicity-warning1"></div>
             </div>
         </div>
 
@@ -310,9 +336,14 @@
 
                 <div class="result" id="result-mode2">
                     <p style="font-size: 0.85em; opacity: 0.8;">PPO₂ = <span id="ppo2-mode2">1.4</span> bar</p>
+                    <p style="font-size: 0.75em; opacity: 0.7; margin-top: 8px; font-family: monospace;" id="calc-details2">
+                        1.4 / ((35 + 10) / 10) × 100 = 30.0%
+                    </p>
                 </div>
 
                 <div id="nitrox-recommendation"></div>
+                
+                <div id="toxicity-warning2"></div>
             </div>
         </div>
 
@@ -370,6 +401,11 @@
             summary1Depth.textContent = maxDepth.toFixed(1);
             ppo2Mode1Display.textContent = ppo2Mode1;
 
+            // Calcul détaillé
+            const o2Decimal = (nitrox / 100).toFixed(2);
+            document.getElementById('calc-details1').textContent = 
+                `(${ppo2Mode1} / ${o2Decimal}) × 10 - 10 = ${maxDepth.toFixed(1)}m`;
+
             summary1Text.textContent = `Avec Nitrox ${nitrox}%, tu peux plonger jusqu'à ${maxDepth.toFixed(1)} mètres (PPO₂ ${ppo2Mode1} bar)`;
 
             const resultDiv = document.getElementById('result-mode1');
@@ -377,6 +413,14 @@
                 resultDiv.className = 'result warning';
             } else {
                 resultDiv.className = 'result safe';
+            }
+
+            // Zone de toxicité
+            const toxicityDiv = document.getElementById('toxicity-warning1');
+            if (maxDepth < 15) {
+                toxicityDiv.innerHTML = '<div class="danger-zone"><div class="danger-zone-text">💀 ZONE TOXIQUE 💀</div><div style="font-size: 0.85em; margin-top: 5px;">Profondeur max trop faible ! Ce mélange est DANGEREUX</div></div>';
+            } else {
+                toxicityDiv.innerHTML = '';
             }
 
             drawChart();
@@ -390,6 +434,11 @@
             summary2Nitrox.textContent = maxNitrox.toFixed(1);
             ppo2Mode2Display.textContent = ppo2Mode2;
 
+            // Calcul détaillé
+            const absolutePressure = ((depth + 10) / 10).toFixed(1);
+            document.getElementById('calc-details2').textContent = 
+                `${ppo2Mode2} / (${depth} + 10) / 10 × 100 = ${maxNitrox.toFixed(1)}%`;
+
             summary2Text.textContent = `Pour plonger à ${depth}m, utilise maximum Nitrox ${maxNitrox.toFixed(1)}% (PPO₂ ${ppo2Mode2} bar)`;
 
             let recommendation = '';
@@ -402,6 +451,20 @@
                 recommendation = `<div class="result safe" style="margin-top: 10px; font-size: 0.85em;"><strong>✅ Nitrox ${recommended}% recommandé</strong></div>`;
             }
             nitroxRecommendation.innerHTML = recommendation;
+
+            // Zone de toxicité - calculer PPO2 réelle si on utilise plus que le max
+            const toxicityDiv = document.getElementById('toxicity-warning2');
+            
+            // Simuler ce qui se passe si on utilise Nitrox 40% à cette profondeur
+            const ppo2At40 = (40 / 100) * ((depth + 10) / 10);
+            
+            if (depth > 50 && maxNitrox < 25) {
+                toxicityDiv.innerHTML = '<div class="danger-zone"><div class="danger-zone-text">💀 PROFONDEUR DANGEREUSE 💀</div><div style="font-size: 0.85em; margin-top: 5px;">À cette profondeur, utilise de l\'air (21%) !</div></div>';
+            } else if (ppo2At40 > 1.8) {
+                toxicityDiv.innerHTML = `<div class="danger-zone"><div class="danger-zone-text">💀 DANGER NITROX RICHE 💀</div><div style="font-size: 0.85em; margin-top: 5px;">Nitrox 40% à ${depth}m = PPO₂ ${ppo2At40.toFixed(1)} → TOXIQUE !</div></div>`;
+            } else {
+                toxicityDiv.innerHTML = '';
+            }
 
             drawChart();
         }
