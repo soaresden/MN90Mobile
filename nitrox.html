@@ -15,8 +15,9 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(to bottom, #001a33 0%, #003d5c 50%, #005580 100%);
             min-height: 100vh;
+            height: 100vh;
             color: white;
-            overflow-x: hidden;
+            overflow: hidden;
             position: relative;
             width: 100vw;
             max-width: 100%;
@@ -42,7 +43,7 @@
         .container {
             max-width: 100%;
             margin: 0;
-            padding: 10px;
+            padding: 5px;
             position: relative;
             z-index: 10;
             overflow-x: hidden;
@@ -51,28 +52,28 @@
 
         h1 {
             text-align: center;
-            font-size: 1.4em;
-            margin: 10px 0;
+            font-size: 1.2em;
+            margin: 5px 0;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         /* Tabs */
         .tabs {
             display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
+            gap: 4px;
+            margin-bottom: 5px;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px 8px;
+            padding: 8px 4px;
             border: none;
             background: rgba(0, 50, 80, 0.5);
             color: rgba(255, 255, 255, 0.6);
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 0.9em;
+            font-size: 0.8em;
             font-weight: bold;
         }
 
@@ -92,29 +93,29 @@
         .card {
             background: rgba(0, 50, 80, 0.7);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 10px;
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 5px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
         .ppo2-selector {
             display: flex;
-            gap: 5px;
-            margin-bottom: 12px;
+            gap: 4px;
+            margin-bottom: 8px;
         }
 
         .ppo2-btn {
             flex: 1;
-            padding: 8px 4px;
+            padding: 6px 3px;
             border: 2px solid rgba(255, 255, 255, 0.3);
             background: rgba(0, 50, 80, 0.5);
             color: white;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 0.75em;
+            font-size: 0.7em;
         }
 
         .ppo2-btn.active {
@@ -125,13 +126,13 @@
         }
 
         .input-group {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 0.85em;
+            margin-bottom: 3px;
+            font-size: 0.8em;
             color: #b3e6ff;
         }
 
@@ -165,69 +166,69 @@
         }
 
         .value-display {
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: bold;
             color: #66d9ff;
             text-align: center;
-            margin: 8px 0;
+            margin: 5px 0;
             text-shadow: 0 0 10px rgba(102, 217, 255, 0.5);
         }
 
         .result {
             background: rgba(102, 217, 255, 0.2);
             border-left: 4px solid #66d9ff;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 8px;
         }
 
         .result h3 {
             color: #66d9ff;
-            margin-bottom: 6px;
-            font-size: 1em;
+            margin-bottom: 4px;
+            font-size: 0.95em;
         }
 
         .result p {
-            font-size: 0.9em;
-            margin: 4px 0;
+            font-size: 0.85em;
+            margin: 3px 0;
         }
 
         .summary {
             background: linear-gradient(135deg, rgba(102, 217, 255, 0.3), rgba(100, 255, 100, 0.3));
             border: 2px solid #66d9ff;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 6px;
             text-align: center;
         }
 
         .summary-big {
-            font-size: 1.4em;
+            font-size: 1.2em;
             font-weight: bold;
             color: #66d9ff;
-            margin: 8px 0;
+            margin: 5px 0;
             text-shadow: 0 0 10px rgba(102, 217, 255, 0.8);
         }
 
         .summary-text {
-            font-size: 0.95em;
-            line-height: 1.4;
+            font-size: 0.8em;
+            line-height: 1.3;
             opacity: 0.9;
         }
 
         canvas {
             width: 100%;
-            height: 250px;
+            height: 200px;
             background: rgba(0, 30, 50, 0.5);
-            border-radius: 12px;
+            border-radius: 10px;
         }
 
         .chart-legend {
-            margin-top: 8px;
+            margin-top: 3px;
             text-align: center;
             opacity: 0.7;
-            font-size: 0.75em;
-            line-height: 1.5;
+            font-size: 0.7em;
+            line-height: 1.3;
         }
 
         .warning {
@@ -243,9 +244,9 @@
         .danger-zone {
             background: rgba(255, 50, 50, 0.3);
             border: 2px solid #ff3232;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 10px;
+            padding: 6px;
+            border-radius: 6px;
+            margin-top: 6px;
             text-align: center;
             animation: pulse 2s infinite;
         }
@@ -256,7 +257,7 @@
         }
 
         .danger-zone-text {
-            font-size: 1.1em;
+            font-size: 0.95em;
             font-weight: bold;
             color: #ff6464;
         }
@@ -503,16 +504,75 @@
             ctx.fillStyle = 'rgba(0, 30, 50, 0.8)';
             ctx.fillRect(0, 0, width, height);
 
-            const margin = { top: 25, right: 25, bottom: 40, left: 45 };
+            const margin = { top: 20, right: 20, bottom: 35, left: 40 };
             const chartWidth = width - margin.left - margin.right;
             const chartHeight = height - margin.top - margin.bottom;
 
-            // ZONE DE MORT - PPO2 > 1.6 (au-dessus de la courbe 1.6)
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
+            // ZONE VERTE SAFE (en dessous de PPO2 1.3)
+            ctx.fillStyle = 'rgba(100, 255, 100, 0.15)';
+            ctx.beginPath();
+            ctx.moveTo(margin.left, height - margin.bottom);
+            
+            for (let nitrox = 21; nitrox <= 40; nitrox += 0.5) {
+                const depth = calculateMaxDepth(nitrox, 1.3);
+                const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                const y = height - margin.bottom - Math.min(depth, 60) / 60 * chartHeight;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.lineTo(width - margin.right, height - margin.bottom);
+            ctx.closePath();
+            ctx.fill();
+
+            // ZONE ORANGE WARNING (entre PPO2 1.3 et 1.4)
+            ctx.fillStyle = 'rgba(255, 200, 100, 0.15)';
+            ctx.beginPath();
+            
+            for (let nitrox = 21; nitrox <= 40; nitrox += 0.5) {
+                const depth = calculateMaxDepth(nitrox, 1.3);
+                const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                const y = height - margin.bottom - Math.min(depth, 60) / 60 * chartHeight;
+                if (nitrox === 21) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            
+            for (let nitrox = 40; nitrox >= 21; nitrox -= 0.5) {
+                const depth = calculateMaxDepth(nitrox, 1.4);
+                const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                const y = height - margin.bottom - Math.min(depth, 60) / 60 * chartHeight;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+
+            // ZONE JAUNE/ORANGE (entre PPO2 1.4 et 1.6)
+            ctx.fillStyle = 'rgba(255, 150, 0, 0.15)';
+            ctx.beginPath();
+            
+            for (let nitrox = 21; nitrox <= 40; nitrox += 0.5) {
+                const depth = calculateMaxDepth(nitrox, 1.4);
+                const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                const y = height - margin.bottom - Math.min(depth, 60) / 60 * chartHeight;
+                if (nitrox === 21) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            
+            for (let nitrox = 40; nitrox >= 21; nitrox -= 0.5) {
+                const depth = calculateMaxDepth(nitrox, 1.6);
+                const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                const y = height - margin.bottom - Math.min(depth, 60) / 60 * chartHeight;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+
+            // ZONE ROUGE DANGER (au-dessus de PPO2 1.6)
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
             ctx.beginPath();
             ctx.moveTo(margin.left, margin.top);
             
-            // Tracer le long de la courbe PPO2 1.6
             for (let nitrox = 21; nitrox <= 40; nitrox += 0.5) {
                 const depth = calculateMaxDepth(nitrox, 1.6);
                 const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
@@ -520,18 +580,19 @@
                 ctx.lineTo(x, y);
             }
             
-            // Fermer la zone vers le haut
             ctx.lineTo(width - margin.right, margin.top);
             ctx.closePath();
             ctx.fill();
 
-            // Texte "ZONE DE MORT" avec crânes
-            ctx.save();
-            ctx.fillStyle = 'rgba(255, 50, 50, 0.6)';
-            ctx.font = 'bold 14px Arial';
+            // Texte zones
+            ctx.fillStyle = 'rgba(100, 255, 100, 0.8)';
+            ctx.font = 'bold 9px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('✓ SAFE', margin.left + 5, height - margin.bottom - 10);
+
+            ctx.fillStyle = 'rgba(255, 50, 50, 0.8)';
             ctx.textAlign = 'center';
-            ctx.fillText('💀 ZONE TOXIQUE 💀', width / 2, margin.top + 15);
-            ctx.restore();
+            ctx.fillText('💀 TOXIQUE', width / 2, margin.top + 10);
 
             // Axes
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -544,40 +605,40 @@
 
             // Labels
             ctx.fillStyle = '#b3e6ff';
-            ctx.font = '11px Arial';
+            ctx.font = '9px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('% O₂', width / 2, height - 5);
+            ctx.fillText('% O₂', width / 2, height - 3);
             
             ctx.save();
-            ctx.translate(12, height / 2);
+            ctx.translate(10, height / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('Prof. (m)', 0, 0);
             ctx.restore();
 
             // Graduations X
-            ctx.font = '10px Arial';
+            ctx.font = '8px Arial';
             for (let nitrox = 20; nitrox <= 40; nitrox += 5) {
                 const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
-                ctx.fillText(nitrox, x, height - margin.bottom + 15);
+                ctx.fillText(nitrox, x, height - margin.bottom + 12);
             }
 
             // Graduations Y
             ctx.textAlign = 'right';
             for (let depth = 0; depth <= 60; depth += 15) {
                 const y = height - margin.bottom - (depth / 60) * chartHeight;
-                ctx.fillText(depth, margin.left - 8, y + 4);
+                ctx.fillText(depth, margin.left - 6, y + 3);
             }
 
             // Courbes
             const curves = [
-                { ppo2: 1.3, color: '#64ff64' },
-                { ppo2: 1.4, color: '#66d9ff' },
-                { ppo2: 1.6, color: '#ff9999' }
+                { ppo2: 1.3, color: '#64ff64', width: 2 },
+                { ppo2: 1.4, color: '#66d9ff', width: 2.5 },
+                { ppo2: 1.6, color: '#ff9999', width: 2 }
             ];
 
             curves.forEach(curve => {
                 ctx.strokeStyle = curve.color;
-                ctx.lineWidth = 2;
+                ctx.lineWidth = curve.width;
                 ctx.beginPath();
                 
                 for (let nitrox = 21; nitrox <= 40; nitrox += 0.5) {
@@ -602,8 +663,11 @@
             
             ctx.fillStyle = '#66d9ff';
             ctx.beginPath();
-            ctx.arc(x1, y1, 6, 0, Math.PI * 2);
+            ctx.arc(x1, y1, 5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
 
             const targetDepth = parseInt(depthSlider.value);
             const optimalNitrox = calculateMaxNitrox(targetDepth, ppo2Mode2);
@@ -612,8 +676,11 @@
             
             ctx.fillStyle = '#ffc864';
             ctx.beginPath();
-            ctx.arc(x2, y2, 6, 0, Math.PI * 2);
+            ctx.arc(x2, y2, 5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
         }
 
         nitroxSlider.addEventListener('input', updateMode1);
