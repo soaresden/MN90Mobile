@@ -18,6 +18,8 @@
             color: white;
             overflow-x: hidden;
             position: relative;
+            width: 100vw;
+            max-width: 100%;
         }
 
         /* Bulles animées */
@@ -43,6 +45,8 @@
             padding: 10px;
             position: relative;
             z-index: 10;
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         h1 {
@@ -502,6 +506,32 @@
             const margin = { top: 25, right: 25, bottom: 40, left: 45 };
             const chartWidth = width - margin.left - margin.right;
             const chartHeight = height - margin.top - margin.bottom;
+
+            // ZONE DE MORT - PPO2 > 1.6 (au-dessus de la courbe 1.6)
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            
+            // Tracer le long de la courbe PPO2 1.6
+            for (let nitrox = 21; nitrox <= 40; nitrox += 0.5) {
+                const depth = calculateMaxDepth(nitrox, 1.6);
+                const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                const y = height - margin.bottom - Math.min(depth, 60) / 60 * chartHeight;
+                ctx.lineTo(x, y);
+            }
+            
+            // Fermer la zone vers le haut
+            ctx.lineTo(width - margin.right, margin.top);
+            ctx.closePath();
+            ctx.fill();
+
+            // Texte "ZONE DE MORT" avec crânes
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 50, 50, 0.6)';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('💀 ZONE TOXIQUE 💀', width / 2, margin.top + 15);
+            ctx.restore();
 
             // Axes
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
