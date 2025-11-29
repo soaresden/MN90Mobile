@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur Nitrox 🤿</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #001a33 0%, #003d5c 50%, #005580 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Bulles animées */
+        .bubble {
+            position: absolute;
+            bottom: -100px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.3));
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: rise linear infinite;
+        }
+
+        @keyframes rise {
+            to {
+                bottom: 110vh;
+                transform: translateX(100px);
+            }
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 10px;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.4em;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            background: rgba(0, 50, 80, 0.5);
+            color: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .tab-btn.active {
+            background: #66d9ff;
+            color: #001a33;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: rgba(0, 50, 80, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ppo2-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+
+        .ppo2-btn {
+            flex: 1;
+            padding: 8px 4px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 50, 80, 0.5);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.75em;
+        }
+
+        .ppo2-btn.active {
+            background: #66d9ff;
+            color: #001a33;
+            font-weight: bold;
+            border-color: #66d9ff;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            color: #b3e6ff;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #66d9ff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(102, 217, 255, 0.8);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #66d9ff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(102, 217, 255, 0.8);
+        }
+
+        .value-display {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #66d9ff;
+            text-align: center;
+            margin: 8px 0;
+            text-shadow: 0 0 10px rgba(102, 217, 255, 0.5);
+        }
+
+        .result {
+            background: rgba(102, 217, 255, 0.2);
+            border-left: 4px solid #66d9ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .result h3 {
+            color: #66d9ff;
+            margin-bottom: 6px;
+            font-size: 1em;
+        }
+
+        .result p {
+            font-size: 0.9em;
+            margin: 4px 0;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, rgba(102, 217, 255, 0.3), rgba(100, 255, 100, 0.3));
+            border: 2px solid #66d9ff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .summary-big {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #66d9ff;
+            margin: 8px 0;
+            text-shadow: 0 0 10px rgba(102, 217, 255, 0.8);
+        }
+
+        .summary-text {
+            font-size: 0.95em;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        canvas {
+            width: 100%;
+            height: 250px;
+            background: rgba(0, 30, 50, 0.5);
+            border-radius: 12px;
+        }
+
+        .chart-legend {
+            margin-top: 8px;
+            text-align: center;
+            opacity: 0.7;
+            font-size: 0.75em;
+            line-height: 1.5;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.2);
+            border-left: 4px solid #ff6464;
+        }
+
+        .safe {
+            background: rgba(100, 255, 100, 0.2);
+            border-left: 4px solid #64ff64;
+        }
+    </style>
+</head>
+<body>
+    <!-- Bulles -->
+    <script>
+        for (let i = 0; i < 10; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            const size = Math.random() * 50 + 15;
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.left = Math.random() * 100 + '%';
+            bubble.style.animationDuration = (Math.random() * 8 + 8) + 's';
+            bubble.style.animationDelay = Math.random() * 4 + 's';
+            document.body.appendChild(bubble);
+        }
+    </script>
+
+    <div class="container">
+        <h1>🤿 Calculateur Nitrox</h1>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(1)">📊 Profondeur Max</button>
+            <button class="tab-btn" onclick="switchTab(2)">🎯 Nitrox Optimal</button>
+        </div>
+
+        <!-- Tab 1: Nitrox → Profondeur -->
+        <div class="tab-content active" id="tab1">
+            <div class="card">
+                <div class="ppo2-selector">
+                    <button class="ppo2-btn" onclick="setPPO2Mode1(1.3)">1.3<br>Prudent</button>
+                    <button class="ppo2-btn active" onclick="setPPO2Mode1(1.4)">1.4<br>Standard</button>
+                    <button class="ppo2-btn" onclick="setPPO2Mode1(1.6)">1.6<br>Max</button>
+                </div>
+
+                <div class="input-group">
+                    <label for="nitrox">% Oxygène</label>
+                    <input type="range" id="nitrox" min="21" max="40" value="32" step="1">
+                    <div class="value-display">Nitrox <span id="nitrox-value">32</span>%</div>
+                </div>
+
+                <div class="summary">
+                    <div class="summary-big"><span id="summary1-depth">33.7</span>m MAX</div>
+                    <div class="summary-text" id="summary1-text">Avec Nitrox 32%, tu peux plonger jusqu'à 33.7 mètres</div>
+                </div>
+
+                <div class="result" id="result-mode1">
+                    <p style="font-size: 0.85em; opacity: 0.8;">PPO₂ = <span id="ppo2-mode1">1.4</span> bar</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Profondeur → Nitrox -->
+        <div class="tab-content" id="tab2">
+            <div class="card">
+                <div class="ppo2-selector">
+                    <button class="ppo2-btn" onclick="setPPO2Mode2(1.3)">1.3<br>Prudent</button>
+                    <button class="ppo2-btn active" onclick="setPPO2Mode2(1.4)">1.4<br>Standard</button>
+                    <button class="ppo2-btn" onclick="setPPO2Mode2(1.6)">1.6<br>Max</button>
+                </div>
+
+                <div class="input-group">
+                    <label for="depth">Profondeur planifiée</label>
+                    <input type="range" id="depth" min="10" max="60" value="35" step="1">
+                    <div class="value-display"><span id="depth-value">35</span> mètres</div>
+                </div>
+
+                <div class="summary">
+                    <div class="summary-big">Nitrox <span id="summary2-nitrox">30.0</span>% MAX</div>
+                    <div class="summary-text" id="summary2-text">Pour plonger à 35m, utilise maximum Nitrox 30%</div>
+                </div>
+
+                <div class="result" id="result-mode2">
+                    <p style="font-size: 0.85em; opacity: 0.8;">PPO₂ = <span id="ppo2-mode2">1.4</span> bar</p>
+                </div>
+
+                <div id="nitrox-recommendation"></div>
+            </div>
+        </div>
+
+        <!-- Graphique (toujours visible) -->
+        <div class="card">
+            <canvas id="chart"></canvas>
+            <div class="chart-legend">
+                <div><span style="color: #66d9ff;">━━</span> 1.4 Standard</div>
+                <div><span style="color: #64ff64;">━━</span> 1.3 Prudent <span style="margin: 0 10px;"></span> <span style="color: #ff9999;">━━</span> 1.6 Max</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ppo2Mode1 = 1.4;
+        let ppo2Mode2 = 1.4;
+
+        const nitroxSlider = document.getElementById('nitrox');
+        const nitroxValue = document.getElementById('nitrox-value');
+        const ppo2Mode1Display = document.getElementById('ppo2-mode1');
+        const summary1Depth = document.getElementById('summary1-depth');
+        const summary1Text = document.getElementById('summary1-text');
+
+        const depthSlider = document.getElementById('depth');
+        const depthValue = document.getElementById('depth-value');
+        const ppo2Mode2Display = document.getElementById('ppo2-mode2');
+        const summary2Nitrox = document.getElementById('summary2-nitrox');
+        const summary2Text = document.getElementById('summary2-text');
+        const nitroxRecommendation = document.getElementById('nitrox-recommendation');
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i + 1 === tab);
+            });
+            document.querySelectorAll('.tab-content').forEach((content, i) => {
+                content.classList.toggle('active', i + 1 === tab);
+            });
+        }
+
+        function calculateMaxDepth(nitrox, ppo2) {
+            const o2Fraction = nitrox / 100;
+            return (ppo2 / o2Fraction) * 10 - 10;
+        }
+
+        function calculateMaxNitrox(depth, ppo2) {
+            const absolutePressure = (depth + 10) / 10;
+            return (ppo2 / absolutePressure) * 100;
+        }
+
+        function updateMode1() {
+            const nitrox = parseInt(nitroxSlider.value);
+            nitroxValue.textContent = nitrox;
+            
+            const maxDepth = calculateMaxDepth(nitrox, ppo2Mode1);
+            summary1Depth.textContent = maxDepth.toFixed(1);
+            ppo2Mode1Display.textContent = ppo2Mode1;
+
+            summary1Text.textContent = `Avec Nitrox ${nitrox}%, tu peux plonger jusqu'à ${maxDepth.toFixed(1)} mètres (PPO₂ ${ppo2Mode1} bar)`;
+
+            const resultDiv = document.getElementById('result-mode1');
+            if (maxDepth < 20) {
+                resultDiv.className = 'result warning';
+            } else {
+                resultDiv.className = 'result safe';
+            }
+
+            drawChart();
+        }
+
+        function updateMode2() {
+            const depth = parseInt(depthSlider.value);
+            depthValue.textContent = depth;
+            
+            const maxNitrox = calculateMaxNitrox(depth, ppo2Mode2);
+            summary2Nitrox.textContent = maxNitrox.toFixed(1);
+            ppo2Mode2Display.textContent = ppo2Mode2;
+
+            summary2Text.textContent = `Pour plonger à ${depth}m, utilise maximum Nitrox ${maxNitrox.toFixed(1)}% (PPO₂ ${ppo2Mode2} bar)`;
+
+            let recommendation = '';
+            if (maxNitrox < 21) {
+                recommendation = '<div class="result warning" style="margin-top: 10px; font-size: 0.85em;"><strong>⚠️ Attention</strong><br>Même l\'air (21%) dépasse la PPO₂. Augmente PPO₂ ou réduis profondeur.</div>';
+            } else if (maxNitrox >= 21 && maxNitrox < 26) {
+                recommendation = '<div class="result" style="margin-top: 10px; font-size: 0.85em;"><strong>💨 Utilise Air (21%)</strong><br>Le Nitrox n\'apporte pas d\'avantage ici.</div>';
+            } else if (maxNitrox >= 26 && maxNitrox <= 40) {
+                const recommended = Math.floor(maxNitrox / 2) * 2;
+                recommendation = `<div class="result safe" style="margin-top: 10px; font-size: 0.85em;"><strong>✅ Nitrox ${recommended}% recommandé</strong></div>`;
+            }
+            nitroxRecommendation.innerHTML = recommendation;
+
+            drawChart();
+        }
+
+        function setPPO2Mode1(value) {
+            ppo2Mode1 = value;
+            document.querySelectorAll('#tab1 .ppo2-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            updateMode1();
+        }
+
+        function setPPO2Mode2(value) {
+            ppo2Mode2 = value;
+            document.querySelectorAll('#tab2 .ppo2-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            updateMode2();
+        }
+
+        function drawChart() {
+            const canvas = document.getElementById('chart');
+            const ctx = canvas.getContext('2d');
+            
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = rect.height;
+
+            ctx.fillStyle = 'rgba(0, 30, 50, 0.8)';
+            ctx.fillRect(0, 0, width, height);
+
+            const margin = { top: 25, right: 25, bottom: 40, left: 45 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+
+            // Axes
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, height - margin.bottom);
+            ctx.lineTo(width - margin.right, height - margin.bottom);
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#b3e6ff';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('% O₂', width / 2, height - 5);
+            
+            ctx.save();
+            ctx.translate(12, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Prof. (m)', 0, 0);
+            ctx.restore();
+
+            // Graduations X
+            ctx.font = '10px Arial';
+            for (let nitrox = 20; nitrox <= 40; nitrox += 5) {
+                const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                ctx.fillText(nitrox, x, height - margin.bottom + 15);
+            }
+
+            // Graduations Y
+            ctx.textAlign = 'right';
+            for (let depth = 0; depth <= 60; depth += 15) {
+                const y = height - margin.bottom - (depth / 60) * chartHeight;
+                ctx.fillText(depth, margin.left - 8, y + 4);
+            }
+
+            // Courbes
+            const curves = [
+                { ppo2: 1.3, color: '#64ff64' },
+                { ppo2: 1.4, color: '#66d9ff' },
+                { ppo2: 1.6, color: '#ff9999' }
+            ];
+
+            curves.forEach(curve => {
+                ctx.strokeStyle = curve.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let nitrox = 21; nitrox <= 40; nitrox += 0.5) {
+                    const depth = calculateMaxDepth(nitrox, curve.ppo2);
+                    const x = margin.left + ((nitrox - 20) / 20) * chartWidth;
+                    const y = height - margin.bottom - Math.min(depth, 60) / 60 * chartHeight;
+                    
+                    if (nitrox === 21) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            });
+
+            // Points actuels
+            const currentNitrox = parseInt(nitroxSlider.value);
+            const currentDepth = calculateMaxDepth(currentNitrox, ppo2Mode1);
+            const x1 = margin.left + ((currentNitrox - 20) / 20) * chartWidth;
+            const y1 = height - margin.bottom - Math.min(currentDepth, 60) / 60 * chartHeight;
+            
+            ctx.fillStyle = '#66d9ff';
+            ctx.beginPath();
+            ctx.arc(x1, y1, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            const targetDepth = parseInt(depthSlider.value);
+            const optimalNitrox = calculateMaxNitrox(targetDepth, ppo2Mode2);
+            const x2 = margin.left + ((optimalNitrox - 20) / 20) * chartWidth;
+            const y2 = height - margin.bottom - (targetDepth / 60) * chartHeight;
+            
+            ctx.fillStyle = '#ffc864';
+            ctx.beginPath();
+            ctx.arc(x2, y2, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        nitroxSlider.addEventListener('input', updateMode1);
+        depthSlider.addEventListener('input', updateMode2);
+        window.addEventListener('resize', drawChart);
+
+        updateMode1();
+        updateMode2();
+    </script>
+</body>
+</html>
