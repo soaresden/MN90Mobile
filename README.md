@@ -1,345 +1,430 @@
-# 🤿 MN90Mobile - Planificateur de Plongée
+# 🤿 MN90 Mobile Planner
 
-Un calculateur de plongée interactif et responsive basé sur les **Tables MN90-FFESSM**, conçu pour les plongeurs à l'air comprimé.
+> **Professional Dive Planning Tool** - Plan your dives safely with French MN90 decompression tables on any device! 📱💻
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Mobile](https://img.shields.io/badge/responsive-mobile%20%2F%20desktop-brightgreen)
-
----
-
-## 📋 Table des matières
-
-- [Fonctionnalités](#-fonctionnalités)
-- [Utilisation](#-utilisation)
-- [Installation](#-installation)
-- [Interface](#-interface)
-- [Technologie](#-technologie)
-- [Licence](#-licence)
+[![HTML5](https://img.shields.io/badge/HTML5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)](https://html.spec.whatwg.org)
+[![JavaScript](https://img.shields.io/badge/JavaScript-%23F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=black)](https://www.javascript.com)
+[![Responsive](https://img.shields.io/badge/Responsive-Mobile%20First-blue?style=for-the-badge)](https://en.wikipedia.org/wiki/Responsive_web_design)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 ---
 
-## ✨ Fonctionnalités
+## ✨ Features
 
-### 📊 Planificateur de Plongée
-- **Profil unique** : Calculez les paliers de décompression pour une plongée simple
-- **Plongées successives** : Planifiez deux plongées avec intervalle en surface
-- **Paliers intelligents** :
-  - Palier 6m obligatoire (selon MN90)
-  - Palier 3m de sécurité supplémentaire
-- **Calcul DTR** (Durée Totale de Remontée)
-- **GPS (Groupe de Plongée)** automatique selon profondeur et durée
+### 🧮 Advanced Dive Calculations
+- **Real-time dive planning** with instant feedback
+- **Autonomy calculations** (bottom time vs. air consumption)
+- **Safety pressure management** and gas reserve tracking
+- **Decompression requirements** based on MN90 French tables
+- **Multi-level dive profiles** with stop simulations
 
-### 🫁 Autonomie Optimale
-- Prédiction du **temps maximum au fond** selon votre consommation
-- **Consommation en surface** (adaptée à la profondeur)
-- Calcul de l'autonomie avec paliers inclus
-- Sélection de **bouteilles réalistes** (10L à 20L)
-- Réserve de sécurité configurable (en bar)
-- **Graphique dual-axis** : profondeur + pression en temps réel
+### 📊 Interactive Visualizations
+- **Beautiful dive profiles** with color-coded decompression stops
+  - 🟠 Bottom time (orange)
+  - 🔵 15m stops (cyan)
+  - 🟢 12m stops (green)
+  - 🟣 9m stops (purple)
+  - 🔴 6m stops (red/pink)
+  - 🟡 3m stops (yellow)
+- **Live graphing** with Chart.js
+- **DTR (Decompression Time Remaining)** display
+- **Autonomy trends** showing consumption patterns
+- **MN90 tables viewer** with dynamic columns
 
-### 📈 Visualisation Avancée
-- **Profil de plongée graphique** en temps réel
-- **Dual-plongées** avec couleurs distinctes (Rose 🔷 / Cyan 🔷)
-- **Ligne d'intervalle** en blanc pour les plongées successives
-- **Code couleur paliers** : Orange (6m) / Vert (3m)
-- **Graphe de pression** avec dégradés de couleur (Vert → Jaune → Orange → Rouge)
-- Légende interactive et tooltips détaillés
+### 📱 Fully Responsive Design
+- ✅ **Desktop** - Full-featured split-view interface
+- ✅ **Tablet** - Optimized vertical layout
+- ✅ **Mobile** - Touch-friendly controls (handles, sliders)
+- ✅ **Drag-to-resize** panels on all devices
+- ✅ **Touch-optimized sliders** (28px handles on mobile)
 
-### 📚 Tables MN90-FFESSM
-- **Tableau principal** de désaturation (6-75m)
-- **Tableau I** : Azote résiduel
-- **Tableau II** : Majoration
-- **Tableau III** : Réduction O2
-- **Tableau IV** : Remontée
-- Toutes les tables accessibles dans une modal
+### 🎯 Three Powerful Tabs
 
-### 🌊 Animations Fond Marin
-- 🫧 **Bulles** montantes (3 tailles, mouvements fluides)
-- 🐠 **Poissons** animés (🐠 🐟 🦈 🐙)
-- 🌿 **Algues** ondulantes (🌿 🪷 🌱)
-- Atmosphère immersive sous-marine
+#### 1️⃣ **Autonomy Tab** 🫁
+Calculate how long you can stay underwater based on:
+- Depth (6-65m)
+- Bottom time
+- Gas mixture (AIR, Nitrox, Custom)
+- Initial pressure
+- Consumption rate
+- Safety pressure margin
 
-### 📱 Responsive Design
-- **Mobile-first** : Layout vertical avec graphe en footer
-- **Desktop** : Layout côte à côte optimisé
-- **Redimensionnable** : Ajustez la hauteur du graphe sur mobile ou la largeur sur desktop
-- Splitter intuitif avec curseur adaptatif
+**Features:**
+- Real-time validation warnings
+- PPO₂ (Partial Pressure of Oxygen) calculation
+- Optimal dive curves showing maximum possible bottom time
+- Autonomy trends chart
+- Margin of optimization analysis
 
----
+#### 2️⃣ **Tables Tab** 📋
+Browse official MN90 decompression tables with:
+- Depth selection (6-65m)
+- Bottom time lookup
+- Dynamic decompression stops (P15, P12, P9, P6, P3)
+- Group letter assignment
+- **Colored dive profile visualization** with palier zones
+- DTR calculation
+- User's selected dive highlighted in summary
 
-## 🚀 Utilisation
-
-### Mode Planificateur
-
-1. **Réglez la profondeur** de votre plongée (6-65m)
-2. **Indiquez le temps au fond** souhaité (1-400 min)
-3. **Consultez les résultats** :
-   - Paliers obligatoires
-   - Temps total de remontée
-   - Groupe de plongée
-
-**Pour une plongée successive :**
-4. Cochez **"Ajouter 2ème plongée"**
-5. Réglez l'intervalle en surface
-6. Configurez la 2ème plongée
-7. Visualisez les deux profils superposés
-
-### Mode Autonomie
-
-1. **Profondeur visée** : Réglez votre profondeur de plongée
-2. **Conso en surface** : Entrez votre consommation réelle à cette profondeur
-3. **Bouteille** : Sélectionnez la capacité (10-20L)
-4. **Pression initiale** : Pression au départ (50-300 bar)
-5. **Réserve** : Marge de sécurité (0-100 bar)
-6. **Consultez** :
-   - Temps max au fond
-   - Autonomie totale avec paliers
-   - Pression à la surface
-
-### Consulter les Tables
-
-Cliquez sur **"📊 AFFICHER TABLES MN90 COMPLÈTES"** pour accéder à toutes les tables de référence officielles MN90-FFESSM.
+#### 3️⃣ **Settings Tab** ⚙️
+Fine-tune your dive planning:
+- Gas mix parameters
+- PPO₂ limits
+- Safety thresholds
+- Consumption profiles
 
 ---
 
-## 💻 Installation
+## 🚀 Quick Start
 
-### Option 1 : En ligne (Recommandée)
-Ouvrez directement le fichier HTML dans votre navigateur :
+### Option 1: Direct Usage
+Simply open `mn90_mobile_compact_improved.html` in any modern web browser:
 ```bash
-MN90Mobile.html
+# On macOS
+open mn90_mobile_compact_improved.html
+
+# On Linux
+xdg-open mn90_mobile_compact_improved.html
+
+# On Windows
+start mn90_mobile_compact_improved.html
 ```
 
-### Option 2 : Serveur local
+### Option 2: Local Server (Recommended)
 ```bash
-# Avec Python 3
-python -m http.server 8000
+# Using Python 3
+python3 -m http.server 8000
 
-# Avec Python 2
-python -m SimpleHTTPServer 8000
+# Using Node.js
+npx http-server
 
-# Puis accédez à http://localhost:8000
+# Using PHP
+php -S localhost:8000
 ```
 
-### Option 3 : Serveur Node.js
-```bash
-npm install -g http-server
-http-server
-```
+Then open: `http://localhost:8000/mn90_mobile_compact_improved.html`
 
 ---
 
-## 🎨 Interface
+## 📖 How to Use
 
-### Onglets
-- **📊 Planificateur** : Calculez vos plongées
-- **🫁 Autonomie Optimale** : Optimisez votre temps au fond
-- **📋 Tables MN90** : Consultez les tables officielles
+### 🫁 **Autonomy Tab**
 
-### Panneau Gauche
-- Entrées de paramètres (sliders intuitifs)
-- Résultats instantanés colorisés
-- Explications détaillées
-- Info-box pédagogique
+1. **Set your dive parameters:**
+   - Adjust depth with the depth slider (6-65m)
+   - Set bottom time (how long you want to stay at depth)
+   - Choose your gas mixture (AIR, Nitrox, Custom)
+   - Set initial bottle pressure
+   - Adjust consumption rate
 
-### Panneau Droit (Footer Mobile)
-- Graphe de profil interactif
-- Légende détaillée
-- Explication textuelle
-- Redimensionnable
+2. **View results:**
+   - 📊 Real-time autonomy calculation
+   - ⚠️ Validation warnings (if safety exceeded)
+   - 📈 Consumption trend chart
+   - 💡 Optimization margin (if you can dive longer safely)
 
----
+3. **Optimize:**
+   - The "optimal dive curves" (dashed lines) show maximum possible bottom time
+   - Compare with your planned dive (solid lines)
 
-## 🛠 Technologie
+### 📋 **Tables Tab**
 
-### Frontend
-- **HTML5** : Structure sémantique
-- **CSS3** : Animations fluides, responsive design
-  - Gradients et transparences
-  - Keyframes pour bulles/poissons/algues
-  - Media queries (mobile/desktop)
-  - Flexbox & Grid
+1. **Select depth:** Use the depth slider (6-65m)
+2. **Set bottom time:** Choose your desired time at depth
+3. **View profile:** 
+   - 🎨 Colored dive profile with palier zones
+   - 📊 MN90 table for selected depth
+   - 📌 Your selected dive highlighted
+4. **Check decompression:**
+   - 🔺 DTR (Decompression Time Remaining)
+   - 🧮 Palier requirements (15m, 12m, 9m, 6m, 3m)
+   - 📍 Group letter assignment
 
-- **JavaScript (Vanilla)** : Logique pure
-  - Algorithme MN90-FFESSM
-  - Calcul de décompression
-  - Gestion du graphe dynamique
-  - Event listeners pour interaction
-  
-- **Chart.js 3.9.1** : Visualisation graphique
-  - Graphes dual-axis
-  - Segments de couleur
-  - Tooltips interactifs
-
-### Architecture
-```
-MN90Mobile.html (Fichier unique)
-├── HTML (Sections, Input, Canvas)
-├── CSS (Styling, Animations, Responsive)
-└── JavaScript (Logique, Calculs, Interactivité)
-```
-
-### Compatibilité
-- ✅ Chrome/Edge (dernières versions)
-- ✅ Firefox (dernières versions)
-- ✅ Safari (iOS 12+)
-- ✅ Tous les navigateurs modernes
-- ✅ Mobile (iOS/Android)
-- ✅ Tablet (iPad, etc.)
+### ⚙️ **Settings Tab**
+Configure defaults for all calculations and gas mixtures.
 
 ---
 
-## 📐 Spécifications Techniques
+## 🎮 Mobile Controls
 
-### Profondeurs supportées
-- Min : 6m
-- Max : 75m
-- Tables MN90 officielles
+### 📍 Drag to Resize
+- **All panel separators (▌)** are draggable
+- Works with **mouse** or **touch**
+- Panels maintain minimum size constraints
+- Charts auto-update when resized
 
-### Durées au fond
-- Min : 1 min
-- Max : 400 min
-- Résolution : 1 min
+### 👆 Touch Optimization
+- Sliders: **28px touch targets** on mobile (vs 18px on desktop)
+- All controls have generous spacing
+- Full touch support for all interactions
 
-### Bouteilles autonomie
-- Min : 10L
-- Max : 20L
-- Résolution : 0.5L
-
-### Pressions
-- Init : 50-300 bar
-- Réserve : 0-100 bar
-- Résolution : 1 bar
+### 📱 Responsive Breakpoints
+- **< 768px:** Tablet/Mobile layout (vertical stacking)
+- **< 480px:** Small phone optimization
+- **> 1024px:** Full desktop experience
 
 ---
 
-## 🎯 Fonctionnalités Détaillées
+## 🛠️ Technical Stack
 
-### Calculs MN90
-- Détermine les paliers selon profondeur/durée
-- Ajoute palier 3m de sécurité
-- Calcule DTR (temps total remontée)
-- Génère GPS (Groupe de Plongée)
-- Supporte plongées successives avec majoration
-
-### Graphiques
-- **Plongée 1** : Rose (#FF99FF)
-- **Plongée 2** : Cyan (#00CCFF)
-- **Intervalle** : Blanc pointillé (#FFFFFF)
-- **Palier 6m** : Orange (#FFA500)
-- **Palier 3m** : Vert (#22FF00)
-- **Pression** : Dégradé couleur temps réel
-
-### Animations
-- Bulles montantes (4-6s)
-- Poissons nageants (15-20s)
-- Algues ondulantes (3s)
-- 15+ éléments animés simultanément
+| Component | Technology |
+|-----------|-----------|
+| **Frontend** | HTML5 + Vanilla JavaScript |
+| **Charting** | Chart.js 3.x |
+| **Data** | MN90 French Decompression Tables (410+ entries) |
+| **Styling** | CSS3 (Flexbox, Grid, Media Queries) |
+| **Storage** | LocalStorage for settings (no server needed!) |
+| **Compatibility** | All modern browsers (Chrome, Firefox, Safari, Edge) |
 
 ---
 
-## 📱 Responsive Breakpoints
+## 📊 Data Source
 
-| Device | Breakpoint | Layout | Splitter |
-|--------|-----------|--------|----------|
-| Mobile | < 1024px | Vertical (Stack) | Horizontal (hauteur) |
-| Tablet | 1024-1365px | Horizontal | Vertical (largeur) |
-| Desktop | ≥ 1366px | Horizontal (optimisé) | Vertical (largeur) |
+All decompression data based on the **French MN90 Standard** tables:
+- ✅ 29 depths (6m to 65m)
+- ✅ Multiple bottom times per depth
+- ✅ Decompression stops at 15m, 12m, 9m, 6m, 3m
+- ✅ Group letter assignments (A-P, *)
+- ✅ 410+ dive profiles
 
 ---
 
-## ⚖️ Licence
-
-MIT License - Voir le fichier LICENSE pour les détails.
+## 🎨 Color Scheme
 
 ```
-Copyright (c) 2024
+Background:     #1a2332 (Dark Navy)
+Primary:        #00d4d4 (Cyan) ━ Dive planning color
+Accent:         #06b6d4 (Bright Cyan) ━ Highlights
+Success:        #2d8b8b (Teal)
+Warning:        #f59e0b (Amber)
+Danger:         #ef4444 (Red)
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software...
+Palier Colors:
+  P15: #06b6d4 (Cyan)
+  P12: #22c55e (Green)
+  P9:  #a855f7 (Purple)
+  P6:  #f43f5e (Red)
+  P3:  #fbbf24 (Yellow)
 ```
 
 ---
 
-## 🤝 Contribution
+## ⚙️ Configuration
 
-Les contributions sont bienvenues ! Pour contribuer :
+### Default Parameters
+Edit inside `<script>` section:
 
-1. **Fork** le repository
-2. **Créez une branche** : `git checkout -b feature/ma-feature`
-3. **Committez** : `git commit -m 'Ajoute ma-feature'`
-4. **Push** : `git push origin feature/ma-feature`
-5. **Ouvrez une Pull Request**
+```javascript
+// Initial values
+const initialDepth = 20;        // meters
+const initialTime = 20;         // minutes
+const initialConsumption = 23;  // L/min
+const initialBottlePressure = 210; // bar
+const safetyPressure = 50;      // bar reserve
+```
 
-### Ideas de Features
-- [ ] Profils utilisateur personnalisés
-- [ ] Export PDF du plan de plongée
-- [ ] Calcul avec Nitrox/Trimix
-- [ ] Historique des plongées
-- [ ] API intégration météo/marées
-- [ ] Partage de plans de plongée
-- [ ] Support du multi-langue
+### Gas Mixtures
+Modify the gas mix definitions:
+- AIR: 21% O₂, 79% N₂ (standard)
+- NITROX: Customizable O₂ percentage
+- CUSTOM: Define your own mix
 
 ---
 
-## ⚠️ Disclaimer
+## 🔐 Safety Considerations
 
-**IMPORTANT** : Ce calculateur est un **outil de planification éducatif**. 
+⚠️ **DISCLAIMER:**
+This tool is for **educational and planning purposes only**. Always:
+- ✅ Follow your certification agency's guidelines
+- ✅ Consult official tables and dive computers
+- ✅ Never dive alone
+- ✅ Plan conservative dives with margin
+- ✅ Follow your training and experience limits
+- ✅ Check with qualified instructors
 
-- Ne remplacez **jamais** vos tables officielles MN90-FFESSM
-- Consultez un **instructeur FFESSM certifié** avant chaque plongée
-- Respectez **TOUJOURS** les procédures de sécurité
-- Testez en **milieu contrôlé** avant l'usage en conditions réelles
-- Les développeurs ne sont **pas responsables** des accidents de plongée
+**This tool does NOT replace professional dive training or certification!**
 
-*La plongée est une activité dangereuse. Entraînez-vous correctement.*
+---
+
+## 🐛 Browser Support
+
+| Browser | Version | Status |
+|---------|---------|--------|
+| Chrome | 90+ | ✅ Full Support |
+| Firefox | 88+ | ✅ Full Support |
+| Safari | 14+ | ✅ Full Support |
+| Edge | 90+ | ✅ Full Support |
+| Opera | 76+ | ✅ Full Support |
+| IE 11 | - | ❌ Not Supported |
+
+---
+
+## 📦 File Structure
+
+```
+mn90_mobile_compact_improved.html
+├── HTML Structure (3 tabs)
+├── CSS Styling (responsive)
+├── Chart.js Integration
+├── MN90 Data Tables (410 entries)
+└── JavaScript Logic
+    ├── Calculations
+    ├── Validations
+    ├── Graphing
+    ├── Touch/Resize Handlers
+    └── Mobile Optimization
+```
+
+**File Size:** ~120 KB (self-contained, no dependencies except Chart.js via CDN)
+
+---
+
+## 🎯 Key Formulas
+
+### Autonomy Calculation
+```
+Final Pressure = Initial Pressure - (Depth + 10) / 10 × Consumption × Time
+```
+
+### Decompression Requirements
+Based on MN90 tables:
+- Depth & bottom time → Decompression stops
+- Stops at 15m, 12m, 9m, 6m, 3m (as required)
+- Ascent rate: 6 m/min (standard safety)
+
+### PPO₂ (Partial Pressure O₂)
+```
+PPO₂ = (Depth/10 + 1) × O₂%
+```
+
+---
+
+## 🚀 Features Roadmap
+
+- [ ] 📍 Altitude dive adjustments
+- [ ] 🌡️ Temperature effects simulation
+- [ ] 💾 Dive logging & history
+- [ ] 🔗 Share dive plans (URL encoding)
+- [ ] 🌙 Dark/Light theme toggle
+- [ ] 🗣️ Multi-language support (FR, EN, DE, ES)
+- [ ] 📲 Progressive Web App (PWA)
+- [ ] ⌚ Apple Watch integration
+- [ ] 🎓 Tutorial & certification modes
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! 🎉
+
+### To Contribute:
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Test thoroughly on mobile & desktop
+4. Commit changes: `git commit -m 'Add amazing feature'`
+5. Push to branch: `git push origin feature/amazing-feature`
+6. Open a Pull Request
+
+### Code Style:
+- Use meaningful variable names
+- Add comments for complex calculations
+- Test on multiple devices
+- Maintain responsive design
+
+---
+
+## 📝 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+```
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction...
+```
+
+---
+
+## 👨‍💻 Author
+
+**Built with ❤️ for the diving community** 🤿
+
+Questions? Issues? Feature requests?
+
+→ Open an issue on GitHub  
+→ Submit a pull request  
+→ Contact: [your-email@example.com]
+
+---
+
+## 🙏 Acknowledgments
+
+- 🇫🇷 **French MN90 Decompression Tables** - FFESSM/CMAS Standard
+- 📊 **Chart.js** - Beautiful JavaScript Charting
+- 🌐 **MDN Web Docs** - Web Platform Reference
+- 🤿 **Diving Community** - For the feedback and safety culture
+
+---
+
+## 🎬 Usage Examples
+
+### Scenario 1: Planning a 30m dive 🏊
+
+1. Go to **Autonomy Tab**
+2. Set Depth: **30m**
+3. Initial Pressure: **210 bar**
+4. Adjust bottom time until autonomy shows comfortable margin
+5. Switch to **Tables Tab** to see exact decompression requirements
+6. Review colored profile and DTR
+7. Plan your decompression stops! ✅
+
+### Scenario 2: Nitrox dive at 20m 🫁
+
+1. Go to **Settings Tab**
+2. Select **NITROX** gas mix
+3. Set O₂: **32%** (Nitrox32)
+4. Back to **Autonomy Tab** - see improved autonomy!
+5. Check PPO₂ - should be safe at 20m
+6. Plan your dive! 🚀
+
+### Scenario 3: Mobile dive planning on the boat 📱
+
+1. Open on your phone
+2. Tap sliders to adjust parameters
+3. Drag panel separators to see more details
+4. Screenshot the profile for reference
+5. Dive safely! 🌊
 
 ---
 
 ## 📞 Support
 
-Pour les problèmes, suggestions ou questions :
-
-1. Consultez la [documentation MN90-FFESSM officielle](https://www.ffessm.fr/)
-2. Ouvrez une [Issue sur GitHub](https://github.com/yourname/MN90Mobile/issues)
-3. Contactez un instructeur FFESSM
-
----
-
-## 🔗 Ressources
-
-- **Tables MN90-FFESSM** : Standard de référence pour plongée à l'air
-- **Chart.js** : https://www.chartjs.org/
-- **FFESSM** : https://www.ffessm.fr/
+- **Bug Reports:** Open an issue with details
+- **Feature Requests:** Describe your use case
+- **Questions:** Check existing issues first
+- **Security:** Report security issues privately
 
 ---
 
-## 🎉 Crédits
+## 🌟 If you find this useful...
 
-Développé avec ❤️ pour la communauté des plongeurs.
-
-Merci à la FFESSM pour les tables MN90 officielles.
-
----
-
-**Dernière mise à jour** : Novembre 2024
-
-**Version** : 1.0.0
-
-**Status** : ✅ Production Ready
+⭐ **Star the repository!**  
+📢 **Share with your dive buddies!**  
+💪 **Contribute improvements!**
 
 ---
 
-## 📊 Stats
+**Happy diving! 🤿✨**
 
-- **Animations** : 15+ éléments simultanés
-- **Tables** : 60+ entrées MN90
-- **Taille du fichier** : ~80KB (unique HTML)
-- **Dépendances externes** : 1 (Chart.js CDN)
-- **Temps de chargement** : < 1s
-- **Support mobile** : 100%
+```
+      ❖ ~ ❖ ~ ❖
+    🤿 MN90 Planner 🤿
+      ❖ ~ ❖ ~ ❖
+     Safety First Always
+```
 
 ---
 
-**Bon courage pour vos plongées ! 🤿🌊✨**
+**Last Updated:** 2025-01-16  
+**Version:** 1.0.0  
+**Status:** Stable & Production Ready ✅
