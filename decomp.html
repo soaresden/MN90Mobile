@@ -993,10 +993,14 @@
             let prevSat = 0;
             
             for (let seg of state.segments) {
-                if (seg.auto) continue; // Skip auto segments
-                
                 const row = document.createElement('tr');
                 if (seg.type === 'deco') row.className = 'palier-row';
+                
+                // Style spécial pour les segments auto (complétion)
+                if (seg.auto) {
+                    row.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    row.style.fontStyle = 'italic';
+                }
                 
                 let phase = '';
                 let depth = '';
@@ -1055,11 +1059,11 @@
                         depth = '0';
                         break;
                     case 'descent':
-                        phase = '↓ Descente';
+                        phase = seg.auto ? '↓ Descente (auto)' : '↓ Descente';
                         depth = `${seg.toDepth.toFixed(0)}`;
                         break;
                     case 'ascent':
-                        phase = '↑ Remontée';
+                        phase = seg.auto ? '↑ Remontée (auto)' : '↑ Remontée';
                         depth = `${seg.toDepth.toFixed(0)}`;
                         break;
                     case 'bottom':
@@ -1067,7 +1071,7 @@
                         depth = seg.depth.toFixed(0);
                         break;
                     case 'deco':
-                        phase = `⚠ Palier ${(seg.to - seg.from).toFixed(0)}min`;
+                        phase = seg.auto ? `⚠ Palier ${(seg.to - seg.from).toFixed(0)}min (auto)` : `⚠ Palier ${(seg.to - seg.from).toFixed(0)}min`;
                         depth = seg.depth.toFixed(0);
                         break;
                 }
