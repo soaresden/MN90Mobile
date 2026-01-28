@@ -314,9 +314,100 @@
             flex-shrink: 0;
         }
         
-        @media (max-width: 1600px) {
+        /* MOBILE TABS */
+        .mobile-tabs {
+            display: none;
+            background: var(--bg-medium);
+            padding: 10px;
+            border-radius: 12px;
+            border: 2px solid var(--grid);
+            margin-bottom: 15px;
+            gap: 8px;
+        }
+        
+        .mobile-tab-btn {
+            flex: 1;
+            padding: 12px 8px;
+            background: var(--bg-light);
+            border: 2px solid var(--grid);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-tab-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-dark);
+        }
+        
+        @media (max-width: 1200px) {
+            .mobile-tabs {
+                display: flex;
+            }
+            
             .main-layout {
-                grid-template-columns: 1fr;
+                display: flex;
+                flex-direction: column;
+                height: calc(100vh - 200px);
+            }
+            
+            .panel, .graph-panel {
+                display: none;
+            }
+            
+            .panel.mobile-visible,
+            .graph-panel.mobile-visible {
+                display: flex !important;
+                flex: 1;
+                height: 100%;
+            }
+            
+            #mobilePanel1, #mobilePanel2 {
+                min-height: 400px;
+            }
+            
+            #drawCanvas, #resultCanvas {
+                min-height: 350px;
+            }
+            
+            .settings {
+                margin-bottom: 10px;
+            }
+            
+            .setting-group {
+                margin-bottom: 10px;
+            }
+            
+            .instructions {
+                font-size: 0.7em;
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+            
+            .gf-controls {
+                gap: 8px;
+                margin-top: 10px;
+            }
+            
+            .gf-control {
+                padding: 8px;
+            }
+            
+            .mobile-tab-btn {
+                font-size: 0.75em;
+                padding: 10px 6px;
             }
         }
     </style>
@@ -328,9 +419,17 @@
             <div class="subtitle">Dessinez votre profil à la souris - Génération automatique du tableau</div>
         </header>
         
+        <!-- ONGLETS MOBILE -->
+        <div class="mobile-tabs">
+            <button class="mobile-tab-btn active" onclick="switchMobileTab(0)">⚙️ Réglages</button>
+            <button class="mobile-tab-btn" onclick="switchMobileTab(1)">✏️ Dessin</button>
+            <button class="mobile-tab-btn" onclick="switchMobileTab(2)">📊 Analyse</button>
+            <button class="mobile-tab-btn" onclick="switchMobileTab(3)">📋 Tableau</button>
+        </div>
+        
         <div class="main-layout">
-            <!-- Panel gauche : Contrôles -->
-            <div class="panel">
+            <!-- Panel 0 : Contrôles -->
+            <div class="panel mobile-visible" id="mobilePanel0">
                 <div class="panel-title">Paramètres</div>
                 
                 <div class="instructions">
@@ -368,21 +467,20 @@
                 </div>
             </div>
             
-            <!-- Colonne centrale : 2 graphiques empilés -->
-            <div class="graphs-container">
-                <div class="graph-panel">
-                    <div class="panel-title">Dessin du Profil</div>
-                    <canvas id="drawCanvas"></canvas>
-                </div>
-                
-                <div class="graph-panel">
-                    <div class="panel-title">Profondeur & Saturation N₂</div>
-                    <canvas id="resultCanvas"></canvas>
-                </div>
+            <!-- Panel 1 : Canvas de dessin -->
+            <div class="graph-panel" id="mobilePanel1">
+                <div class="panel-title">Dessin du Profil</div>
+                <canvas id="drawCanvas"></canvas>
             </div>
             
-            <!-- Panel droit : Tableau -->
-            <div class="panel">
+            <!-- Panel 2 : Canvas d'analyse -->
+            <div class="graph-panel" id="mobilePanel2">
+                <div class="panel-title">Profondeur & Saturation N₂</div>
+                <canvas id="resultCanvas"></canvas>
+            </div>
+            
+            <!-- Panel 3 : Tableau -->
+            <div class="panel" id="mobilePanel3">
                 <div class="panel-title">Tableau de Plongée</div>
                 
                 <div style="flex: 1; overflow-y: auto; border: 1px solid var(--grid); border-radius: 8px; min-height: 0;">
@@ -1410,6 +1508,37 @@
             initResultCanvas();
             if (state.segments.length > 0) drawResult();
         });
+        
+        // MOBILE TABS
+        function switchMobileTab(index) {
+            // Retirer la classe active de tous les boutons
+            document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
+            // Ajouter la classe active au bouton cliqué
+            document.querySelectorAll('.mobile-tab-btn')[index].classList.add('active');
+            
+            // Cacher tous les panels
+            document.querySelectorAll('.panel, .graph-panel').forEach(panel => {
+                panel.classList.remove('mobile-visible');
+            });
+            
+            // Afficher le panel sélectionné
+            const targetPanel = document.getElementById(`mobilePanel${index}`);
+            if (targetPanel) {
+                targetPanel.classList.add('mobile-visible');
+                
+                // Resize selon le panel affiché
+                setTimeout(() => {
+                    if (index === 1) {
+                        // Canvas de dessin
+                        initDrawCanvas();
+                    } else if (index === 2) {
+                        // Canvas d'analyse
+                        initResultCanvas();
+                        if (state.segments.length > 0) drawResult();
+                    }
+                }, 100);
+            }
+        }
     </script>
 </body>
 </html>
