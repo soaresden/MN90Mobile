@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dessin de Profil de Plongée</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0a4d68;
+            --secondary: #088395;
+            --accent: #05bfdb;
+            --danger: #ff6b35;
+            --warning: #f7931e;
+            --safe: #4ade80;
+            --bg-dark: #0d1b2a;
+            --bg-medium: #1b2838;
+            --bg-light: #2c3e50;
+            --text: #e0e1dd;
+            --grid: #1e3a5f;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1f3a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(8, 131, 149, 0.1) 0%, rgba(5, 191, 219, 0.05) 100%);
+            border-radius: 12px;
+            border: 2px solid var(--secondary);
+        }
+        
+        h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 2em;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .subtitle {
+            font-size: 0.9em;
+            color: var(--secondary);
+            margin-top: 8px;
+        }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr 400px;
+            gap: 15px;
+            height: calc(100vh - 180px);
+        }
+        
+        .panel {
+            background: var(--bg-medium);
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid var(--grid);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 1.1em;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid var(--grid);
+        }
+        
+        .graphs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow: hidden;
+        }
+        
+        .graph-panel {
+            background: var(--bg-medium);
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid var(--grid);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .settings {
+            margin-bottom: 20px;
+        }
+        
+        .setting-group {
+            margin-bottom: 15px;
+        }
+        
+        .setting-label {
+            font-size: 0.85em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .setting-input {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 2px solid var(--grid);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        #drawCanvas {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            border-radius: 8px;
+            background: #0d1b2a;
+            cursor: crosshair;
+            border: 2px solid var(--accent);
+        }
+        
+        #resultCanvas {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            border-radius: 8px;
+            background: #0d1b2a;
+        }
+        
+        .btn {
+            background: var(--secondary);
+            color: var(--text);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 1em;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: var(--accent);
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .dive-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        
+        .dive-table th {
+            background: var(--bg-light);
+            padding: 8px 5px;
+            color: var(--accent);
+            text-transform: uppercase;
+            font-weight: 600;
+            border: 1px solid var(--grid);
+            font-size: 0.8em;
+        }
+        
+        .dive-table td {
+            padding: 6px;
+            border: 1px solid var(--grid);
+            text-align: center;
+        }
+        
+        .dive-table .designation {
+            text-align: left;
+            font-size: 0.85em;
+            color: var(--secondary);
+        }
+        
+        .dive-table .palier-row {
+            background: rgba(247, 147, 30, 0.1);
+        }
+        
+        .dive-table .palier-row .designation {
+            color: var(--warning);
+            font-weight: 600;
+        }
+        
+        .instructions {
+            background: var(--bg-light);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.75em;
+            line-height: 1.4;
+        }
+        
+        .instructions strong {
+            color: var(--accent);
+        }
+        
+        .gf-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .gf-control {
+            background: var(--bg-light);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .gf-label {
+            font-size: 0.75em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .gf-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 5px;
+            border-radius: 3px;
+            background: linear-gradient(to right, var(--secondary), var(--accent));
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--bg-light);
+            border-radius: 8px;
+            font-size: 0.8em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 18px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        @media (max-width: 1600px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✏️ Dessin de Profil de Plongée</h1>
+            <div class="subtitle">Dessinez votre profil à la souris - Génération automatique du tableau</div>
+        </header>
+        
+        <div class="main-layout">
+            <!-- Panel gauche : Contrôles -->
+            <div class="panel">
+                <div class="panel-title">Paramètres</div>
+                
+                <div class="instructions">
+                    <strong>Mode d'emploi :</strong><br>
+                    • Cliquez pour placer des points<br>
+                    • Glissez un point pour le déplacer<br>
+                    • Analyse automatique en temps réel
+                </div>
+                
+                <div class="settings">
+                    <div class="setting-group">
+                        <label class="setting-label">Profondeur Max (m)</label>
+                        <input type="number" class="setting-input" id="maxDepthInput" value="40" min="5" max="65" step="5">
+                    </div>
+                    <div class="setting-group">
+                        <label class="setting-label">Durée Max (min)</label>
+                        <input type="number" class="setting-input" id="maxTimeInput" value="80" min="10" max="120" step="5">
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="clearDrawing()">🗑️ Effacer Tout</button>
+                <button class="btn" onclick="undoLastPoint()" style="background: var(--warning);">↶ Annuler Point</button>
+                
+                <div class="gf-controls">
+                    <div class="gf-control">
+                        <div class="gf-label">GF Low</div>
+                        <div class="gf-value" id="gfLowValue">30%</div>
+                        <input type="range" id="gfLowSlider" min="10" max="100" value="30" step="5">
+                    </div>
+                    <div class="gf-control">
+                        <div class="gf-label">GF High</div>
+                        <div class="gf-value" id="gfHighValue">85%</div>
+                        <input type="range" id="gfHighSlider" min="10" max="100" value="85" step="5">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Colonne centrale : 2 graphiques empilés -->
+            <div class="graphs-container">
+                <div class="graph-panel">
+                    <div class="panel-title">Dessin du Profil</div>
+                    <canvas id="drawCanvas"></canvas>
+                </div>
+                
+                <div class="graph-panel">
+                    <div class="panel-title">Profondeur & Saturation N₂</div>
+                    <canvas id="resultCanvas"></canvas>
+                </div>
+            </div>
+            
+            <!-- Panel droit : Tableau -->
+            <div class="panel">
+                <div class="panel-title">Tableau de Plongée</div>
+                
+                <div style="flex: 1; overflow-y: auto; border: 1px solid var(--grid); border-radius: 8px; min-height: 0;">
+                    <table class="dive-table" id="diveTable" style="margin: 0;">
+                        <thead style="position: sticky; top: 0; background: var(--bg-medium); z-index: 10;">
+                            <tr>
+                                <th>Temps<br>(min)</th>
+                                <th>Prof.<br>(m)</th>
+                                <th>N₂<br>(%)</th>
+                                <th>Phase</th>
+                            </tr>
+                        </thead>
+                        <tbody id="diveTableBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--secondary); padding: 20px; font-size: 0.85em;">
+                                    Dessinez un profil...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tables MN90
+        const MN90_TABLES = {
+            15: { 60: 0, 75: 2, 90: 5, 120: 12 },
+            20: { 40: 0, 50: 3, 60: 7, 75: 15 },
+            25: { 20: 0, 30: 3, 40: 10, 50: 18 },
+            30: { 15: 0, 20: 3, 25: 7, 30: 12, 40: 20 },
+            35: { 10: 0, 15: 4, 20: 9, 25: 15, 30: 21 },
+            40: { 10: 3, 12: 7, 15: 12, 20: 20, 25: 28 },
+        };
+        
+        // État
+        let state = {
+            gfLow: 30,
+            gfHigh: 85,
+            drawnPoints: [],
+            segments: [],
+            isDrawing: false,
+            hoverPoint: null,
+            selectedPointIndex: -1,
+            isDragging: false
+        };
+        
+        const ASCENT_RATE = 10; // m/min
+        
+        // Canvas de dessin
+        const drawCanvas = document.getElementById('drawCanvas');
+        const drawCtx = drawCanvas.getContext('2d');
+        const resultCanvas = document.getElementById('resultCanvas');
+        const resultCtx = resultCanvas.getContext('2d');
+        
+        function initDrawCanvas() {
+            const rect = drawCanvas.getBoundingClientRect();
+            drawCanvas.width = rect.width;
+            drawCanvas.height = rect.height;
+            redrawCanvas();
+        }
+        
+        function initResultCanvas() {
+            const rect = resultCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            resultCanvas.width = rect.width * dpr;
+            resultCanvas.height = rect.height * dpr;
+            resultCtx.scale(dpr, dpr);
+        }
+        
+        // GF controls
+        document.getElementById('gfLowSlider').addEventListener('input', (e) => {
+            state.gfLow = parseInt(e.target.value);
+            document.getElementById('gfLowValue').textContent = `${state.gfLow}%`;
+            if (state.segments.length > 0) drawResult();
+        });
+        
+        document.getElementById('gfHighSlider').addEventListener('input', (e) => {
+            state.gfHigh = parseInt(e.target.value);
+            document.getElementById('gfHighValue').textContent = `${state.gfHigh}%`;
+            if (state.segments.length > 0) drawResult();
+        });
+        
+        // Paramètres
+        document.getElementById('maxDepthInput').addEventListener('change', redrawCanvas);
+        document.getElementById('maxTimeInput').addEventListener('change', redrawCanvas);
+        
+        function redrawCanvas() {
+            const w = drawCanvas.width;
+            const h = drawCanvas.height;
+            const maxDepth = parseFloat(document.getElementById('maxDepthInput').value) || 40;
+            const maxTime = parseFloat(document.getElementById('maxTimeInput').value) || 60;
+            
+            drawCtx.clearRect(0, 0, w, h);
+            drawCtx.fillStyle = '#0d1b2a';
+            drawCtx.fillRect(0, 0, w, h);
+            
+            const margin = 40;
+            const graphW = w - 2 * margin;
+            const graphH = h - 2 * margin;
+            
+            // Grille
+            drawCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            drawCtx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = margin + (i / 5) * graphH;
+                drawCtx.beginPath();
+                drawCtx.moveTo(margin, y);
+                drawCtx.lineTo(margin + graphW, y);
+                drawCtx.stroke();
+            }
+            
+            for (let i = 0; i <= 6; i++) {
+                const x = margin + (i / 6) * graphW;
+                drawCtx.beginPath();
+                drawCtx.moveTo(x, margin);
+                drawCtx.lineTo(x, margin + graphH);
+                drawCtx.stroke();
+            }
+            
+            // Axes
+            drawCtx.strokeStyle = '#ffffff';
+            drawCtx.lineWidth = 2;
+            drawCtx.beginPath();
+            drawCtx.moveTo(margin, margin);
+            drawCtx.lineTo(margin, margin + graphH);
+            drawCtx.lineTo(margin + graphW, margin + graphH);
+            drawCtx.stroke();
+            
+            // Labels
+            drawCtx.fillStyle = '#05bfdb';
+            drawCtx.font = '11px "JetBrains Mono"';
+            drawCtx.textAlign = 'center';
+            drawCtx.fillText(`0 - ${maxTime} min`, margin + graphW / 2, h - 10);
+            
+            drawCtx.save();
+            drawCtx.translate(15, margin + graphH / 2);
+            drawCtx.rotate(-Math.PI / 2);
+            drawCtx.fillText(`0 - ${maxDepth}m`, 0, 0);
+            drawCtx.restore();
+            
+            // Valeurs
+            drawCtx.fillStyle = '#ffffff';
+            drawCtx.font = '9px "JetBrains Mono"';
+            for (let i = 0; i <= 5; i++) {
+                const depth = (i / 5) * maxDepth;
+                const y = margin + (i / 5) * graphH;
+                drawCtx.textAlign = 'right';
+                drawCtx.fillText(Math.round(depth) + 'm', margin - 5, y + 3);
+            }
+            
+            // Redessiner les points
+            if (state.drawnPoints.length > 1) {
+                // Ligne entre les points
+                drawCtx.strokeStyle = '#05bfdb';
+                drawCtx.lineWidth = 3;
+                drawCtx.lineCap = 'round';
+                drawCtx.lineJoin = 'round';
+                drawCtx.beginPath();
+                drawCtx.moveTo(state.drawnPoints[0].x, state.drawnPoints[0].y);
+                for (let i = 1; i < state.drawnPoints.length; i++) {
+                    drawCtx.lineTo(state.drawnPoints[i].x, state.drawnPoints[i].y);
+                }
+                drawCtx.stroke();
+                
+                // Points individuels
+                for (let i = 0; i < state.drawnPoints.length; i++) {
+                    const p = state.drawnPoints[i];
+                    
+                    // Cercle blanc avec bordure cyan (plus gros si sélectionné)
+                    const radius = state.selectedPointIndex === i ? 7 : 5;
+                    const lineWidth = state.selectedPointIndex === i ? 3 : 2;
+                    
+                    drawCtx.fillStyle = '#ffffff';
+                    drawCtx.strokeStyle = state.selectedPointIndex === i ? '#f59e0b' : '#05bfdb';
+                    drawCtx.lineWidth = lineWidth;
+                    drawCtx.beginPath();
+                    drawCtx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                    drawCtx.fill();
+                    drawCtx.stroke();
+                    
+                    // Numéro du point
+                    if (i > 0) {
+                        drawCtx.fillStyle = '#05bfdb';
+                        drawCtx.font = 'bold 10px "JetBrains Mono"';
+                        drawCtx.textAlign = 'center';
+                        drawCtx.fillText(i, p.x, p.y - 12);
+                    }
+                }
+            }
+            
+            // Complétion automatique (palier + remontée) en pointillés gris
+            if (state.drawnPoints.length > 1 && state.segments.length > 0) {
+                const autoSegments = state.segments.filter(s => s.auto);
+                if (autoSegments.length > 0) {
+                    drawCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    drawCtx.lineWidth = 2;
+                    drawCtx.setLineDash([5, 3]);
+                    
+                    for (let seg of autoSegments) {
+                        if (seg.type === 'descent' || seg.type === 'ascent') {
+                            const x1 = margin + (seg.from / maxTime) * graphW;
+                            const y1 = margin + (seg.fromDepth / maxDepth) * graphH;
+                            const x2 = margin + (seg.to / maxTime) * graphW;
+                            const y2 = margin + (seg.toDepth / maxDepth) * graphH;
+                            
+                            drawCtx.beginPath();
+                            drawCtx.moveTo(x1, y1);
+                            drawCtx.lineTo(x2, y2);
+                            drawCtx.stroke();
+                        } else {
+                            const x1 = margin + (seg.from / maxTime) * graphW;
+                            const x2 = margin + (seg.to / maxTime) * graphW;
+                            const y = margin + (seg.depth / maxDepth) * graphH;
+                            
+                            drawCtx.beginPath();
+                            drawCtx.moveTo(x1, y);
+                            drawCtx.lineTo(x2, y);
+                            drawCtx.stroke();
+                        }
+                    }
+                    
+                    drawCtx.setLineDash([]);
+                    
+                    // Label "AUTO"
+                    drawCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    drawCtx.font = 'bold 11px "JetBrains Mono"';
+                    drawCtx.textAlign = 'right';
+                    drawCtx.fillText('Complétion auto →', w - margin - 5, margin + 20);
+                }
+            }
+            
+            // Point de survol (preview)
+            if (state.hoverPoint) {
+                const hp = state.hoverPoint;
+                
+                // Calculer temps et profondeur
+                const time = ((hp.x - margin) / graphW) * maxTime;
+                const depth = ((hp.y - margin) / graphH) * maxDepth;
+                
+                // Ligne pointillée depuis le dernier point
+                if (state.drawnPoints.length > 0) {
+                    const lastPoint = state.drawnPoints[state.drawnPoints.length - 1];
+                    drawCtx.strokeStyle = 'rgba(5, 191, 219, 0.5)';
+                    drawCtx.lineWidth = 2;
+                    drawCtx.setLineDash([3, 3]);
+                    drawCtx.beginPath();
+                    drawCtx.moveTo(lastPoint.x, lastPoint.y);
+                    drawCtx.lineTo(hp.x, hp.y);
+                    drawCtx.stroke();
+                    drawCtx.setLineDash([]);
+                }
+                
+                // Cercle du point de survol
+                drawCtx.fillStyle = 'rgba(5, 191, 219, 0.3)';
+                drawCtx.strokeStyle = '#05bfdb';
+                drawCtx.lineWidth = 2;
+                drawCtx.beginPath();
+                drawCtx.arc(hp.x, hp.y, 7, 0, Math.PI * 2);
+                drawCtx.fill();
+                drawCtx.stroke();
+                
+                // Tooltip avec temps et profondeur
+                const tooltipText = `${time.toFixed(1)} min | ${depth.toFixed(1)}m`;
+                drawCtx.font = 'bold 11px "JetBrains Mono"';
+                drawCtx.textAlign = 'left';
+                const textWidth = drawCtx.measureText(tooltipText).width;
+                
+                // Fond du tooltip
+                const tooltipX = hp.x + 10;
+                const tooltipY = hp.y - 10;
+                drawCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                drawCtx.fillRect(tooltipX - 5, tooltipY - 15, textWidth + 10, 20);
+                
+                // Texte du tooltip
+                drawCtx.fillStyle = '#05bfdb';
+                drawCtx.fillText(tooltipText, tooltipX, tooltipY);
+            }
+        }
+        
+        // Événements de dessin - MODE CLIC PAR CLIC + DRAG & DROP
+        drawCanvas.addEventListener('mousedown', (e) => {
+            const rect = drawCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Vérifier si on clique sur un point existant
+            for (let i = 0; i < state.drawnPoints.length; i++) {
+                const p = state.drawnPoints[i];
+                const distance = Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2));
+                
+                if (distance < 10) {
+                    // On a cliqué sur un point existant
+                    state.selectedPointIndex = i;
+                    state.isDragging = true;
+                    drawCanvas.style.cursor = 'grabbing';
+                    return;
+                }
+            }
+        });
+        
+        drawCanvas.addEventListener('mousemove', (e) => {
+            const rect = drawCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const margin = 40;
+            const graphW = drawCanvas.width - 2 * margin;
+            const graphH = drawCanvas.height - 2 * margin;
+            
+            // Contraintes
+            const clampedX = Math.max(margin, Math.min(x, margin + graphW));
+            const clampedY = Math.max(margin, Math.min(y, margin + graphH));
+            
+            // Si on est en train de déplacer un point
+            if (state.isDragging && state.selectedPointIndex >= 0) {
+                const idx = state.selectedPointIndex;
+                
+                // Contraintes : le point ne peut pas dépasser ses voisins
+                let minX = margin;
+                let maxX = margin + graphW;
+                
+                if (idx > 0) {
+                    minX = state.drawnPoints[idx - 1].x + 5;
+                }
+                if (idx < state.drawnPoints.length - 1) {
+                    maxX = state.drawnPoints[idx + 1].x - 5;
+                }
+                
+                // Ne pas bouger le premier point (surface)
+                if (idx === 0) {
+                    state.drawnPoints[idx].y = clampedY;
+                } else {
+                    state.drawnPoints[idx].x = Math.max(minX, Math.min(clampedX, maxX));
+                    state.drawnPoints[idx].y = clampedY;
+                }
+                
+                analyzeProfileRealTime();
+                redrawCanvas();
+                return;
+            }
+            
+            // Vérifier si on survole un point
+            let onPoint = false;
+            for (let i = 0; i < state.drawnPoints.length; i++) {
+                const p = state.drawnPoints[i];
+                const distance = Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2));
+                
+                if (distance < 10) {
+                    onPoint = true;
+                    drawCanvas.style.cursor = 'grab';
+                    break;
+                }
+            }
+            
+            if (!onPoint) {
+                drawCanvas.style.cursor = 'crosshair';
+                
+                // Preview du prochain point
+                if (state.drawnPoints.length > 0) {
+                    const lastPoint = state.drawnPoints[state.drawnPoints.length - 1];
+                    if (clampedX > lastPoint.x) {
+                        state.hoverPoint = { x: clampedX, y: clampedY };
+                    } else {
+                        state.hoverPoint = null;
+                    }
+                } else {
+                    state.hoverPoint = { x: clampedX, y: clampedY };
+                }
+            } else {
+                state.hoverPoint = null;
+            }
+            
+            redrawCanvas();
+        });
+        
+        drawCanvas.addEventListener('mouseup', () => {
+            state.isDragging = false;
+            state.selectedPointIndex = -1;
+            drawCanvas.style.cursor = 'crosshair';
+        });
+        
+        drawCanvas.addEventListener('mouseleave', () => {
+            state.hoverPoint = null;
+            redrawCanvas();
+        });
+        
+        drawCanvas.addEventListener('click', (e) => {
+            const rect = drawCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const margin = 40;
+            const graphW = drawCanvas.width - 2 * margin;
+            const graphH = drawCanvas.height - 2 * margin;
+            
+            // Contraintes
+            const clampedX = Math.max(margin, Math.min(x, margin + graphW));
+            const clampedY = Math.max(margin, Math.min(y, margin + graphH));
+            
+            // Premier point : forcer à la surface
+            if (state.drawnPoints.length === 0) {
+                state.drawnPoints.push({ x: margin, y: margin });
+            }
+            
+            // Vérifier que le nouveau point est à droite du dernier
+            const lastPoint = state.drawnPoints[state.drawnPoints.length - 1];
+            if (clampedX <= lastPoint.x) {
+                alert('Le point doit être plus à droite que le précédent (temps croissant) !');
+                return;
+            }
+            
+            state.drawnPoints.push({ x: clampedX, y: clampedY });
+            
+            // Analyse en temps réel
+            analyzeProfileRealTime();
+            redrawCanvas();
+        });
+        
+        function clearDrawing() {
+            state.drawnPoints = [];
+            state.segments = [];
+            redrawCanvas();
+            document.getElementById('diveTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--secondary); padding: 20px;">
+                        Dessinez un profil pour générer le tableau...
+                    </td>
+                </tr>
+            `;
+        }
+        
+        function undoLastPoint() {
+            if (state.drawnPoints.length > 1) {
+                state.drawnPoints.pop();
+                redrawCanvas();
+            }
+        }
+        
+        function analyzeProfile() {
+            analyzeProfileRealTime();
+        }
+        
+        function analyzeProfileRealTime() {
+            if (state.drawnPoints.length < 2) {
+                state.segments = [];
+                return;
+            }
+            
+            const maxDepth = parseFloat(document.getElementById('maxDepthInput').value);
+            const maxTime = parseFloat(document.getElementById('maxTimeInput').value);
+            const margin = 40;
+            const graphW = drawCanvas.width - 2 * margin;
+            const graphH = drawCanvas.height - 2 * margin;
+            
+            // Convertir les points en temps/profondeur
+            const profile = state.drawnPoints.map(p => ({
+                time: ((p.x - margin) / graphW) * maxTime,
+                depth: ((p.y - margin) / graphH) * maxDepth
+            }));
+            
+            // Créer les segments utilisateur
+            const segments = [];
+            segments.push({ from: 0, to: 0, depth: 0, type: 'surface', auto: false });
+            
+            for (let i = 1; i < profile.length; i++) {
+                const prev = profile[i - 1];
+                const curr = profile[i];
+                
+                if (Math.abs(curr.depth - prev.depth) > maxDepth * 0.05) {
+                    // Changement de profondeur
+                    if (curr.depth > prev.depth) {
+                        segments.push({
+                            from: prev.time,
+                            to: curr.time,
+                            fromDepth: prev.depth,
+                            toDepth: curr.depth,
+                            type: 'descent',
+                            auto: false
+                        });
+                    } else {
+                        segments.push({
+                            from: prev.time,
+                            to: curr.time,
+                            fromDepth: prev.depth,
+                            toDepth: curr.depth,
+                            type: 'ascent',
+                            auto: false
+                        });
+                    }
+                } else {
+                    // Palier horizontal
+                    segments.push({
+                        from: prev.time,
+                        to: curr.time,
+                        depth: curr.depth,
+                        type: curr.depth > maxDepth * 0.2 ? 'bottom' : 'deco',
+                        auto: false
+                    });
+                }
+            }
+            
+            // Calculer la complétion automatique (palier + remontée)
+            const lastSeg = segments[segments.length - 1];
+            let currentTime = lastSeg.to || lastSeg.from || 0;
+            let currentDepth = 0;
+            
+            if (lastSeg.depth !== undefined) {
+                currentDepth = lastSeg.depth;
+            } else if (lastSeg.toDepth !== undefined) {
+                currentDepth = lastSeg.toDepth;
+            } else if (lastSeg.fromDepth !== undefined) {
+                currentDepth = lastSeg.fromDepth;
+            }
+            
+            // Calculer paliers MN90
+            const maxProfileDepth = Math.max(...profile.map(p => p.depth));
+            const bottomTime = segments.filter(s => s.type === 'bottom').reduce((sum, s) => sum + (s.to - s.from), 0);
+            
+            if (maxProfileDepth > 5 && bottomTime > 0 && currentDepth > 1) {
+                const palierDuration = getPalierMN90(maxProfileDepth, bottomTime);
+                
+                if (palierDuration > 0) {
+                    // Remontée au palier (6m)
+                    if (currentDepth > 6) {
+                        const ascentTime = (currentDepth - 6) / ASCENT_RATE;
+                        segments.push({
+                            from: currentTime,
+                            to: currentTime + ascentTime,
+                            fromDepth: currentDepth,
+                            toDepth: 6,
+                            type: 'ascent',
+                            auto: true
+                        });
+                        currentTime += ascentTime;
+                        currentDepth = 6;
+                    }
+                    
+                    // Palier
+                    segments.push({
+                        from: currentTime,
+                        to: currentTime + palierDuration,
+                        depth: 6,
+                        type: 'deco',
+                        auto: true
+                    });
+                    currentTime += palierDuration;
+                }
+                
+                // Remontée finale vers surface
+                if (currentDepth > 0) {
+                    const finalAscent = currentDepth / ASCENT_RATE;
+                    segments.push({
+                        from: currentTime,
+                        to: currentTime + finalAscent,
+                        fromDepth: currentDepth,
+                        toDepth: 0,
+                        type: 'ascent',
+                        auto: true
+                    });
+                }
+            } else if (currentDepth > 0) {
+                // Pas de palier nécessaire, juste remontée
+                const finalAscent = currentDepth / ASCENT_RATE;
+                segments.push({
+                    from: currentTime,
+                    to: currentTime + finalAscent,
+                    fromDepth: currentDepth,
+                    toDepth: 0,
+                    type: 'ascent',
+                    auto: true
+                });
+            }
+            
+            state.segments = segments;
+            generateTable();
+            drawResult();
+        }
+        
+        
+        function getPalierMN90(depth, time) {
+            const depths = Object.keys(MN90_TABLES).map(Number).sort((a, b) => a - b);
+            let tableDepth = depths[0];
+            for (let d of depths) {
+                if (depth >= d) tableDepth = d;
+            }
+            
+            const table = MN90_TABLES[tableDepth];
+            const times = Object.keys(table).map(Number).sort((a, b) => a - b);
+            
+            let palierTime = 0;
+            for (let t of times) {
+                if (time >= t) palierTime = table[t];
+            }
+            
+            return palierTime;
+        }
+        
+        function generateTable() {
+            const tbody = document.getElementById('diveTableBody');
+            tbody.innerHTML = '';
+            
+            // Calculer la saturation pour chaque segment
+            const halfLife = 20;
+            const k = Math.log(2) / halfLife;
+            let tissuePressure = 0.79; // Pression N2 initiale à la surface
+            let prevSat = 0;
+            
+            for (let seg of state.segments) {
+                if (seg.auto) continue; // Skip auto segments
+                
+                const row = document.createElement('tr');
+                if (seg.type === 'deco') row.className = 'palier-row';
+                
+                let phase = '';
+                let depth = '';
+                let time = seg.from.toFixed(1);
+                
+                // Calculer N2 à ce moment (utiliser toDepth en priorité)
+                let depth_calc = 0;
+                if (seg.depth !== undefined) {
+                    depth_calc = seg.depth;
+                } else if (seg.toDepth !== undefined) {
+                    depth_calc = seg.toDepth;
+                } else if (seg.fromDepth !== undefined) {
+                    depth_calc = seg.fromDepth;
+                }
+                
+                const ambient = 1 + (depth_calc / 10);
+                const inspiredN2 = ambient * 0.79;
+                const dt = seg.to - seg.from;
+                
+                // Équation de Haldane
+                const prevTissuePressure = tissuePressure;
+                tissuePressure = inspiredN2 + (tissuePressure - inspiredN2) * Math.exp(-k * dt);
+                
+                // AFFICHAGE 1 : Charge N2 (0% = surface, 100% = saturé à cette profondeur)
+                const surfaceN2 = 0.79;
+                const chargePercent = ((tissuePressure - surfaceN2) / Math.max(0.01, inspiredN2 - surfaceN2)) * 100;
+                
+                // AFFICHAGE 2 : Gradient M-value (pour les couleurs)
+                const gradient = tissuePressure - ambient;
+                const mValue = 1.6 + 0.7 * ambient;
+                const maxGradient = mValue - ambient;
+                const gradientPercent = (gradient / maxGradient) * 100;
+                
+                // Afficher la charge, mais colorer selon le gradient
+                const n2Display = Math.max(0, Math.min(150, chargePercent)).toFixed(0);
+                
+                // Déterminer couleur selon gradient (zones GF)
+                const isCharging = chargePercent > prevSat;
+                prevSat = chargePercent;
+                
+                let n2Color = '#4ade80'; // vert par défaut
+                
+                if (gradientPercent > state.gfHigh) {
+                    n2Color = '#ef4444'; // DANGER rouge
+                } else if (gradientPercent > state.gfLow) {
+                    n2Color = '#f59e0b'; // ATTENTION orange
+                } else if (isCharging) {
+                    n2Color = '#dc2626'; // Charge rouge foncé
+                } else {
+                    n2Color = '#4ade80'; // Décharge vert
+                }
+                
+                switch (seg.type) {
+                    case 'surface':
+                        phase = 'Surface';
+                        depth = '0';
+                        break;
+                    case 'descent':
+                        phase = '↓ Descente';
+                        depth = `${seg.toDepth.toFixed(0)}`;
+                        break;
+                    case 'ascent':
+                        phase = '↑ Remontée';
+                        depth = `${seg.toDepth.toFixed(0)}`;
+                        break;
+                    case 'bottom':
+                        phase = '⏸ Fond';
+                        depth = seg.depth.toFixed(0);
+                        break;
+                    case 'deco':
+                        phase = `⚠ Palier ${(seg.to - seg.from).toFixed(0)}min`;
+                        depth = seg.depth.toFixed(0);
+                        break;
+                }
+                
+                // Indicateur visuel selon zone (basé sur gradient, pas sur charge)
+                let indicator = '';
+                if (gradientPercent > state.gfHigh) {
+                    indicator = '🔴'; // DANGER
+                } else if (gradientPercent > state.gfLow) {
+                    indicator = '🟠'; // ATTENTION
+                } else {
+                    indicator = isCharging ? '▲' : '▼'; // Normal
+                }
+                
+                row.innerHTML = `
+                    <td>${time}</td>
+                    <td>${depth}m</td>
+                    <td style="color: ${n2Color}; font-weight: 700;">${indicator} ${n2Display}%</td>
+                    <td style="font-size: 0.85em;">${phase}</td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+        
+        
+        
+        function drawResult() {
+            const w = resultCanvas.width / (window.devicePixelRatio || 1);
+            const h = resultCanvas.height / (window.devicePixelRatio || 1);
+            
+            resultCtx.clearRect(0, 0, w, h);
+            resultCtx.fillStyle = '#0d1b2a';
+            resultCtx.fillRect(0, 0, w, h);
+            
+            if (state.segments.length === 0) return;
+            
+            const marginLeft = 60;
+            const marginRight = 60;
+            const marginTop = 40;
+            const marginBottom = 50;
+            const graphW = w - marginLeft - marginRight;
+            const graphH = h - marginTop - marginBottom;
+            
+            const maxTime = Math.max(...state.segments.map(s => s.to || 0), 1);
+            const maxDepth = Math.max(...state.segments.map(s => s.depth || s.toDepth || 0), 10);
+            const maxSat = 120;
+            
+            function toX(time) {
+                return marginLeft + (time / maxTime) * graphW;
+            }
+            
+            function toYDepth(depth) {
+                return marginTop + (depth / maxDepth) * graphH;
+            }
+            
+            function toYSat(sat) {
+                return marginTop + graphH - (sat / maxSat) * graphH;
+            }
+            
+            // Grille
+            resultCtx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+            resultCtx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const y = marginTop + (i / 10) * graphH;
+                resultCtx.beginPath();
+                resultCtx.moveTo(marginLeft, y);
+                resultCtx.lineTo(marginLeft + graphW, y);
+                resultCtx.stroke();
+                
+                const x = marginLeft + (i / 10) * graphW;
+                resultCtx.beginPath();
+                resultCtx.moveTo(x, marginTop);
+                resultCtx.lineTo(x, marginTop + graphH);
+                resultCtx.stroke();
+            }
+            
+            // Zone danger + zones GF
+            // Zone 3 : DANGER (> GF High) - Rouge
+            resultCtx.fillStyle = 'rgba(239, 68, 68, 0.25)';
+            resultCtx.fillRect(marginLeft, marginTop, graphW, toYSat(state.gfHigh) - marginTop);
+            
+            // Zone 2 : INCERTAINE (entre GF Low et GF High) - Orange
+            resultCtx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+            resultCtx.fillRect(marginLeft, toYSat(state.gfHigh), graphW, toYSat(state.gfLow) - toYSat(state.gfHigh));
+            
+            // Zone 1 : OK (< GF Low) - Verte
+            resultCtx.fillStyle = 'rgba(74, 222, 128, 0.1)';
+            resultCtx.fillRect(marginLeft, toYSat(state.gfLow), graphW, (marginTop + graphH) - toYSat(state.gfLow));
+            
+            // Labels des zones
+            resultCtx.font = 'bold 14px "Rajdhani"';
+            resultCtx.textAlign = 'center';
+            
+            // Zone Bulle
+            resultCtx.fillStyle = 'rgba(239, 68, 68, 0.8)';
+            const bubbleY = (marginTop + toYSat(state.gfHigh)) / 2;
+            resultCtx.fillText('ZONE BULLES', marginLeft + graphW / 2, bubbleY);
+            
+            // Zone Incertaine
+            resultCtx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+            const uncertainY = (toYSat(state.gfHigh) + toYSat(state.gfLow)) / 2;
+            resultCtx.fillText('ZONE INCERTAINE', marginLeft + graphW / 2, uncertainY);
+            
+            // Zone Safe
+            resultCtx.fillStyle = 'rgba(74, 222, 128, 0.8)';
+            const safeY = (toYSat(state.gfLow) + (marginTop + graphH)) / 2;
+            resultCtx.fillText('ZONE SAFE', marginLeft + graphW / 2, safeY);
+            
+            // Ligne GF Low
+            resultCtx.setLineDash([8, 4]);
+            resultCtx.strokeStyle = '#f59e0b';
+            resultCtx.lineWidth = 2.5;
+            resultCtx.beginPath();
+            resultCtx.moveTo(marginLeft, toYSat(state.gfLow));
+            resultCtx.lineTo(marginLeft + graphW, toYSat(state.gfLow));
+            resultCtx.stroke();
+            
+            // Label GF Low
+            resultCtx.fillStyle = '#f59e0b';
+            resultCtx.font = 'bold 11px "Rajdhani"';
+            resultCtx.textAlign = 'right';
+            resultCtx.fillText(`GF LOW ${state.gfLow}%`, marginLeft + graphW - 5, toYSat(state.gfLow) - 5);
+            
+            // Ligne GF High
+            resultCtx.strokeStyle = '#ef4444';
+            resultCtx.lineWidth = 3;
+            resultCtx.beginPath();
+            resultCtx.moveTo(marginLeft, toYSat(state.gfHigh));
+            resultCtx.lineTo(marginLeft + graphW, toYSat(state.gfHigh));
+            resultCtx.stroke();
+            
+            // Label GF High
+            resultCtx.fillStyle = '#ef4444';
+            resultCtx.fillText(`GF HIGH ${state.gfHigh}%`, marginLeft + graphW - 5, toYSat(state.gfHigh) - 5);
+            
+            resultCtx.setLineDash([]);
+            
+            // Calcul saturation
+            const halfLife = 20;
+            const k = Math.log(2) / halfLife;
+            let tissuePressure = 0.79;
+            const satPoints = [];
+            
+            for (let seg of state.segments) {
+                const steps = Math.max(20, Math.round((seg.to - seg.from) * 5));
+                const dt = (seg.to - seg.from) / steps;
+                
+                for (let i = 0; i <= steps; i++) {
+                    const t = seg.from + dt * i;
+                    let depth;
+                    
+                    if (seg.type === 'descent' || seg.type === 'ascent') {
+                        const progress = i / steps;
+                        depth = seg.fromDepth + (seg.toDepth - seg.fromDepth) * progress;
+                    } else {
+                        depth = seg.depth || 0;
+                    }
+                    
+                    const ambientPressure = 1 + depth / 10;
+                    const ambientN2 = ambientPressure * 0.79;
+                    const prevTissue = tissuePressure;
+                    
+                    if (i > 0) {
+                        tissuePressure = ambientN2 + (tissuePressure - ambientN2) * Math.exp(-k * dt);
+                    }
+                    
+                    // CALCUL % M-VALUE (Bühlmann pour compartiment 20min)
+                    // M0 = 32 mètres, ΔM = 0.75 * depth
+                    const M0 = 32; // metres
+                    const deltaM = 0.75;
+                    const mValue = M0 + deltaM * depth; // M-value en mètres
+                    
+                    // Gradient en mètres eau = (P_tissue - P_ambient) * 10
+                    const gradient = (tissuePressure - ambientPressure) * 10;
+                    
+                    // % de M-value
+                    let saturationPercent = (gradient / mValue) * 100;
+                    
+                    // Gérer cas spéciaux
+                    if (depth < 1) saturationPercent = 0; // Surface = 0%
+                    const sat = Math.max(0, Math.min(120, saturationPercent));
+                    
+                    const charging = tissuePressure > prevTissue;
+                    satPoints.push({ time: t, sat, charging });
+                }
+            }
+            
+            // Tracer saturation en JAUNE
+            if (satPoints.length > 1) {
+                resultCtx.strokeStyle = '#fbbf24'; // Jaune
+                resultCtx.lineWidth = 3;
+                resultCtx.lineCap = 'round';
+                resultCtx.lineJoin = 'round';
+                resultCtx.beginPath();
+                resultCtx.moveTo(toX(satPoints[0].time), toYSat(satPoints[0].sat));
+                for (let p of satPoints) {
+                    resultCtx.lineTo(toX(p.time), toYSat(p.sat));
+                }
+                resultCtx.stroke();
+                
+                // Points colorés
+                const pointStep = Math.max(1, Math.floor(satPoints.length / 30));
+                for (let i = 0; i < satPoints.length; i += pointStep) {
+                    const p = satPoints[i];
+                    let color, size;
+                    
+                    if (p.sat > state.gfHigh) {
+                        color = '#ff6b35'; // DANGER orange vif
+                        size = 7;
+                    } else if (p.sat > state.gfLow) {
+                        color = '#f59e0b'; // ATTENTION orange
+                        size = 6;
+                    } else if (p.charging) {
+                        color = '#dc2626'; // Charge rouge foncé
+                        size = 5;
+                    } else {
+                        color = '#22c55e'; // Décharge vert
+                        size = 5;
+                    }
+                    
+                    resultCtx.fillStyle = color;
+                    resultCtx.strokeStyle = '#ffffff';
+                    resultCtx.lineWidth = 2;
+                    resultCtx.beginPath();
+                    resultCtx.arc(toX(p.time), toYSat(p.sat), size, 0, Math.PI * 2);
+                    resultCtx.fill();
+                    resultCtx.stroke();
+                }
+            }
+            
+            // Profil coloré selon charge/décharge
+            resultCtx.lineWidth = 3.5;
+            resultCtx.lineCap = 'round';
+            resultCtx.lineJoin = 'round';
+            
+            for (let seg of state.segments) {
+                // Déterminer la couleur selon le type
+                let segColor;
+                if (seg.type === 'descent' || seg.type === 'bottom') {
+                    // ROUGE = On se CHARGE en N2
+                    segColor = '#ef4444';
+                } else if (seg.type === 'ascent' || seg.type === 'deco') {
+                    // VERT = On DÉSATURE
+                    segColor = '#4ade80';
+                } else {
+                    // Surface = cyan
+                    segColor = '#05bfdb';
+                }
+                
+                resultCtx.strokeStyle = segColor;
+                resultCtx.beginPath();
+                
+                if (seg.type === 'surface') {
+                    resultCtx.moveTo(toX(0), toYDepth(0));
+                    resultCtx.lineTo(toX(seg.to), toYDepth(0));
+                } else if (seg.type === 'descent' || seg.type === 'ascent') {
+                    const x1 = toX(seg.from);
+                    const y1 = toYDepth(seg.fromDepth);
+                    const x2 = toX(seg.to);
+                    const y2 = toYDepth(seg.toDepth);
+                    resultCtx.moveTo(x1, y1);
+                    resultCtx.lineTo(x2, y2);
+                } else {
+                    // bottom ou deco (horizontal)
+                    const x1 = toX(seg.from);
+                    const x2 = toX(seg.to);
+                    const y = toYDepth(seg.depth);
+                    resultCtx.moveTo(x1, y);
+                    resultCtx.lineTo(x2, y);
+                }
+                
+                resultCtx.stroke();
+            }
+            
+            // Axes
+            resultCtx.strokeStyle = '#ffffff';
+            resultCtx.lineWidth = 2;
+            resultCtx.beginPath();
+            resultCtx.moveTo(marginLeft, marginTop);
+            resultCtx.lineTo(marginLeft, marginTop + graphH);
+            resultCtx.lineTo(marginLeft + graphW, marginTop + graphH);
+            resultCtx.lineTo(marginLeft + graphW, marginTop);
+            resultCtx.stroke();
+            
+            // Labels
+            resultCtx.fillStyle = '#05bfdb';
+            resultCtx.font = 'bold 12px "Rajdhani"';
+            resultCtx.textAlign = 'center';
+            resultCtx.fillText('TEMPS (min)', marginLeft + graphW / 2, h - 12);
+            
+            resultCtx.save();
+            resultCtx.translate(15, marginTop + graphH / 2);
+            resultCtx.rotate(-Math.PI / 2);
+            resultCtx.fillText('PROFONDEUR (m)', 0, 0);
+            resultCtx.restore();
+            
+            resultCtx.fillStyle = '#fbbf24'; // Jaune
+            resultCtx.save();
+            resultCtx.translate(w - 15, marginTop + graphH / 2);
+            resultCtx.rotate(Math.PI / 2);
+            resultCtx.fillText('SATURATION (%)', 0, 0);
+            resultCtx.restore();
+            
+            // Valeurs axes
+            resultCtx.font = '10px "JetBrains Mono"';
+            resultCtx.fillStyle = '#ffffff';
+            resultCtx.textAlign = 'center';
+            for (let i = 0; i <= 10; i++) {
+                const t = (i / 10) * maxTime;
+                resultCtx.fillText(t.toFixed(0), marginLeft + (i / 10) * graphW, marginTop + graphH + 20);
+            }
+            
+            resultCtx.textAlign = 'right';
+            resultCtx.fillStyle = '#05bfdb';
+            for (let i = 0; i <= 5; i++) {
+                const d = (i / 5) * maxDepth;
+                resultCtx.fillText(d.toFixed(0) + 'm', marginLeft - 10, toYDepth(d) + 4);
+            }
+            
+            resultCtx.textAlign = 'left';
+            resultCtx.fillStyle = '#fbbf24'; // Jaune
+            for (let i = 0; i <= 10; i++) {
+                const s = (i / 10) * maxSat;
+                resultCtx.fillText(s.toFixed(0) + '%', marginLeft + graphW + 10, toYSat(s) + 4);
+            }
+        }
+        
+        // Init
+        window.addEventListener('load', () => {
+            initDrawCanvas();
+            initResultCanvas();
+        });
+        
+        window.addEventListener('resize', () => {
+            initDrawCanvas();
+            initResultCanvas();
+            if (state.segments.length > 0) drawResult();
+        });
+    </script>
+</body>
+</html>
