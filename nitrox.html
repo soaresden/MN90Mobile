@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur Nitrox - Cours d'Initiation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #001a33 0%, #003d5c 50%, #005580 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 15px;
+            font-size: 1.8em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: rgba(255,255,255,0.25);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 0 8px 8px 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .calculator-section {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #66d9ff;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #66d9ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(102,217,255,0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #66d9ff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(102,217,255,0.5);
+        }
+
+        .value-display {
+            min-width: 60px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, rgba(102,217,255,0.2), rgba(255,200,100,0.2));
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .result-box h2 {
+            font-size: 2.5em;
+            color: #66d9ff;
+            text-shadow: 0 0 10px rgba(102,217,255,0.5);
+            margin-bottom: 5px;
+        }
+
+        .result-box p {
+            font-size: 0.9em;
+            color: #ffc864;
+        }
+
+        .ppo2-buttons {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .ppo2-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+
+        .ppo2-btn.active {
+            background: rgba(102,217,255,0.3);
+            border-color: #66d9ff;
+            box-shadow: 0 0 15px rgba(102,217,255,0.4);
+        }
+
+        .ppo2-btn .label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .ppo2-btn .desc {
+            font-size: 0.75em;
+            opacity: 0.8;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            margin: 15px 0;
+        }
+
+        .warning {
+            background: rgba(255,100,100,0.2);
+            border-left: 4px solid #ff6464;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .info {
+            background: rgba(102,217,255,0.2);
+            border-left: 4px solid #66d9ff;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .formula-box {
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .formula-box code {
+            color: #ffc864;
+            font-size: 1.1em;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .comparison-table th {
+            background: rgba(102,217,255,0.2);
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .comparison-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .ead-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        .ead-result .label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .ead-result .value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #66d9ff;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+                padding: 10px 5px;
+            }
+            
+            .tabs {
+                gap: 3px;
+            }
+
+            .tab {
+                padding: 10px 5px;
+                font-size: 0.8em;
+            }
+
+            .tab-content {
+                padding: 10px;
+            }
+
+            .calculator-section {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+
+            .calculator-section h3 {
+                font-size: 1em;
+                margin-bottom: 10px;
+            }
+
+            .input-group {
+                margin-bottom: 12px;
+            }
+
+            .input-group label {
+                font-size: 0.85em;
+                margin-bottom: 8px;
+            }
+
+            /* Sliders plus gros pour les doigts */
+            input[type="range"] {
+                height: 12px;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                width: 28px;
+                height: 28px;
+            }
+
+            input[type="range"]::-moz-range-thumb {
+                width: 28px;
+                height: 28px;
+            }
+
+            .value-display {
+                min-width: 55px;
+                font-size: 1em;
+                padding: 8px;
+            }
+            
+            .result-box {
+                padding: 15px;
+                margin: 12px 0;
+            }
+
+            .result-box h2 {
+                font-size: 2.2em;
+            }
+
+            .result-box p {
+                font-size: 0.85em;
+            }
+
+            /* Boutons PPO2 plus accessibles */
+            .ppo2-buttons {
+                gap: 5px;
+            }
+
+            .ppo2-btn {
+                padding: 12px 8px;
+                font-size: 0.8em;
+            }
+
+            .ppo2-btn .label {
+                font-size: 1.1em;
+            }
+
+            .ppo2-btn .desc {
+                font-size: 0.7em;
+            }
+            
+            canvas {
+                height: 220px;
+                margin: 10px 0;
+            }
+
+            .warning, .info {
+                padding: 10px;
+                font-size: 0.85em;
+                margin: 10px 0;
+            }
+
+            .formula-box {
+                padding: 12px;
+                font-size: 0.85em;
+            }
+
+            .formula-box code {
+                font-size: 0.95em;
+                word-break: break-all;
+            }
+
+            .formula-box h4 {
+                font-size: 0.95em;
+                margin-bottom: 8px;
+            }
+
+            .comparison-table {
+                font-size: 0.8em;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 8px 5px;
+            }
+
+            .ead-result {
+                padding: 8px;
+                margin: 8px 0;
+            }
+
+            .ead-result .label {
+                font-size: 0.85em;
+            }
+
+            .ead-result .value {
+                font-size: 1.1em;
+            }
+
+            /* Listes plus compactes */
+            ul {
+                margin-left: 15px;
+            }
+
+            ul li {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤿 Calculateur Nitrox - Initiation</h1>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">📊 MOD</button>
+            <button class="tab" onclick="switchTab(1)">🎯 Nitrox Optimal</button>
+            <button class="tab" onclick="switchTab(2)">📐 EAD</button>
+            <button class="tab" onclick="switchTab(3)">📚 Formules</button>
+        </div>
+
+        <!-- TAB 1: Profondeur Max (MOD) -->
+        <div class="tab-content active">
+            <div class="calculator-section">
+                <h3>Calcul de la Profondeur Maximale d'Utilisation (MOD)</h3>
+                
+                <div class="input-group">
+                    <label>Pourcentage d'O₂ dans le mélange</label>
+                    <div class="slider-container">
+                        <input type="range" id="nitrox-slider" min="21" max="40" value="32" step="1">
+                        <div class="value-display"><span id="nitrox-value">32</span>%</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Pression Partielle d'O₂ (PPO₂) limite</label>
+                    <div class="ppo2-buttons">
+                        <button class="ppo2-btn" onclick="setPPO2('mod', 1.3)">
+                            <span class="label">1.3</span>
+                            <span class="desc">Prudent</span>
+                        </button>
+                        <button class="ppo2-btn active" onclick="setPPO2('mod', 1.4)">
+                            <span class="label">1.4</span>
+                            <span class="desc">Standard</span>
+                        </button>
+                        <button class="ppo2-btn" onclick="setPPO2('mod', 1.6)">
+                            <span class="label">1.6</span>
+                            <span class="desc">Paliers</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <h2 id="mod-result">33m</h2>
+                    <p>Profondeur maximale d'utilisation</p>
+                </div>
+
+                <div class="warning">
+                    ⚠️ <strong>DANGER</strong> : Au-delà de cette profondeur, risque d'hyperoxie (convulsions, perte de conscience).
+                </div>
+
+                <canvas id="mod-chart"></canvas>
+
+                <div class="info">
+                    <strong>Formule appliquée :</strong><br>
+                    Profondeur max = (<span id="ppo2-display-1">1.4</span> / <span id="nitrox-display-1">0.32</span>) × 10 - 10 = <span id="mod-calc">33</span>m
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Nitrox Optimal -->
+        <div class="tab-content">
+            <div class="calculator-section">
+                <h3>Calcul du Nitrox Optimal pour une profondeur donnée</h3>
+                
+                <div class="input-group">
+                    <label>Profondeur de plongée prévue</label>
+                    <div class="slider-container">
+                        <input type="range" id="depth-slider" min="5" max="60" value="30" step="1">
+                        <div class="value-display"><span id="depth-value">30</span>m</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Pression Partielle d'O₂ (PPO₂) limite</label>
+                    <div class="ppo2-buttons">
+                        <button class="ppo2-btn" onclick="setPPO2('optimal', 1.3)">
+                            <span class="label">1.3</span>
+                            <span class="desc">Prudent</span>
+                        </button>
+                        <button class="ppo2-btn active" onclick="setPPO2('optimal', 1.4)">
+                            <span class="label">1.4</span>
+                            <span class="desc">Standard</span>
+                        </button>
+                        <button class="ppo2-btn" onclick="setPPO2('optimal', 1.6)">
+                            <span class="label">1.6</span>
+                            <span class="desc">Paliers</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <h2 id="optimal-result">35%</h2>
+                    <p>Nitrox maximal utilisable</p>
+                </div>
+
+                <canvas id="optimal-chart"></canvas>
+
+                <div class="info">
+                    <strong>Formule appliquée :</strong><br>
+                    % O₂ max = (<span id="ppo2-display-2">1.4</span> × 10) / (<span id="depth-display-2">30</span> + 10) = <span id="optimal-calc">35</span>%
+                </div>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th>Nitrox</th>
+                        <th>Utilisable?</th>
+                        <th>MOD</th>
+                    </tr>
+                    <tbody id="nitrox-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: EAD -->
+        <div class="tab-content">
+            <div class="calculator-section">
+                <h3>Profondeur Équivalente Air (EAD)</h3>
+                <p style="font-size: 0.9em; opacity: 0.8; margin-bottom: 15px;">
+                    L'EAD permet d'utiliser les tables air classiques avec du Nitrox
+                </p>
+
+                <div class="input-group">
+                    <label>Pourcentage d'O₂</label>
+                    <div class="slider-container">
+                        <input type="range" id="ead-nitrox-slider" min="21" max="40" value="32" step="1">
+                        <div class="value-display"><span id="ead-nitrox-value">32</span>%</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Profondeur réelle</label>
+                    <div class="slider-container">
+                        <input type="range" id="ead-depth-slider" min="5" max="40" value="30" step="1">
+                        <div class="value-display"><span id="ead-depth-value">30</span>m</div>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <h2 id="ead-result">24m</h2>
+                    <p>Profondeur équivalente air</p>
+                </div>
+
+                <div class="ead-result">
+                    <span class="label">Profondeur réelle :</span>
+                    <span class="value" id="ead-real">30m</span>
+                </div>
+
+                <div class="ead-result">
+                    <span class="label">Utiliser les tables pour :</span>
+                    <span class="value" id="ead-table">24m</span>
+                </div>
+
+                <div class="info">
+                    <strong>Avantage :</strong> À 30m réels, tu planifies comme si tu étais à 24m → Moins de paliers, plus de temps au fond !
+                </div>
+
+                <div class="formula-box">
+                    <strong>Formule :</strong><br>
+                    <code>EAD = ((1 - %O₂) / 0.79) × (Prof + 10) - 10</code>
+                </div>
+
+                <canvas id="ead-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- TAB 4: Formules -->
+        <div class="tab-content">
+            <div class="calculator-section">
+                <h3>📚 Formulaire Nitrox</h3>
+
+                <div class="formula-box">
+                    <h4 style="color: #66d9ff;">1. Profondeur Maximale (MOD)</h4>
+                    <code>MOD = (PPO₂ / %O₂) × 10 - 10</code>
+                    <p style="margin-top: 10px; font-size: 0.9em;">Où :</p>
+                    <ul style="margin-left: 20px; font-size: 0.9em;">
+                        <li>PPO₂ = 1.4 bar (standard) ou 1.6 bar (max paliers)</li>
+                        <li>%O₂ = pourcentage en décimal (ex: 32% = 0.32)</li>
+                    </ul>
+                </div>
+
+                <div class="formula-box">
+                    <h4 style="color: #ffc864;">2. Nitrox Optimal</h4>
+                    <code>%O₂ max = (PPO₂ × 10) / (Profondeur + 10)</code>
+                    <p style="margin-top: 10px; font-size: 0.9em;">Permet de trouver le Nitrox maximal pour une profondeur donnée</p>
+                </div>
+
+                <div class="formula-box">
+                    <h4 style="color: #a8ff78;">3. Profondeur Équivalente Air (EAD)</h4>
+                    <code>EAD = ((1 - %O₂) / 0.79) × (Prof + 10) - 10</code>
+                    <p style="margin-top: 10px; font-size: 0.9em;">Profondeur "air" correspondante pour utiliser les tables classiques</p>
+                </div>
+
+                <div class="formula-box">
+                    <h4 style="color: #ff9966;">4. Pression Partielle (PpO₂)</h4>
+                    <code>PpO₂ = %O₂ × Pression Absolue</code>
+                    <code>Pression Absolue = (Profondeur / 10) + 1</code>
+                    <p style="margin-top: 10px; font-size: 0.9em;">
+                        Exemple : Nitrox 32% à 30m<br>
+                        PpO₂ = 0.32 × ((30/10) + 1) = 0.32 × 4 = 1.28 bar ✅
+                    </p>
+                </div>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th>Nitrox</th>
+                        <th>MOD (1.4 bar)</th>
+                        <th>MOD (1.6 bar)</th>
+                    </tr>
+                    <tr><td>21% (Air)</td><td>56m</td><td>66m</td></tr>
+                    <tr><td>28%</td><td>40m</td><td>47m</td></tr>
+                    <tr><td>30%</td><td>36m</td><td>43m</td></tr>
+                    <tr><td>32%</td><td>34m</td><td>40m</td></tr>
+                    <tr><td>34%</td><td>31m</td><td>37m</td></tr>
+                    <tr><td>36%</td><td>29m</td><td>34m</td></tr>
+                    <tr><td>40%</td><td>25m</td><td>30m</td></tr>
+                </table>
+
+                <div class="warning">
+                    <strong>⚠️ Points clés à retenir :</strong>
+                    <ul style="margin-left: 20px; margin-top: 5px;">
+                        <li>Toujours analyser ta bouteille avant de plonger</li>
+                        <li>PPO₂ 1.4 = plongée, PPO₂ 1.6 = paliers uniquement</li>
+                        <li>Plus d'O₂ = moins profond mais moins de paliers</li>
+                        <li>Le Nitrox ne remplace PAS les paliers de sécurité</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let modPPO2 = 1.4;
+        let optimalPPO2 = 1.4;
+        const isMobile = window.innerWidth <= 600;
+
+        // Fonction principale de calcul MOD
+        function calculateMOD(nitrox, ppo2) {
+            const o2Decimal = nitrox / 100;
+            return Math.round((ppo2 / o2Decimal) * 10 - 10);
+        }
+
+        // Fonction calcul Nitrox optimal
+        function calculateOptimalNitrox(depth, ppo2) {
+            const result = (ppo2 * 10) / (depth + 10);
+            return Math.round(result * 100);
+        }
+
+        // Fonction calcul EAD
+        function calculateEAD(nitrox, depth) {
+            const o2Decimal = nitrox / 100;
+            const n2Fraction = 1 - o2Decimal;
+            return Math.round((n2Fraction / 0.79) * (depth + 10) - 10);
+        }
+
+        // Gestion des onglets
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+            
+            contents.forEach((content, i) => {
+                content.classList.toggle('active', i === index);
+            });
+
+            // Redessiner les graphiques si nécessaire
+            setTimeout(() => {
+                if (index === 0) drawMODChart();
+                if (index === 1) drawOptimalChart();
+                if (index === 2) drawEADChart();
+            }, 50);
+        }
+
+        // Gestion PPO2
+        function setPPO2(mode, value) {
+            if (mode === 'mod') {
+                modPPO2 = value;
+                document.querySelectorAll('.tab-content')[0].querySelectorAll('.ppo2-btn').forEach((btn, i) => {
+                    btn.classList.toggle('active', [1.3, 1.4, 1.6][i] === value);
+                });
+                updateMOD();
+            } else {
+                optimalPPO2 = value;
+                document.querySelectorAll('.tab-content')[1].querySelectorAll('.ppo2-btn').forEach((btn, i) => {
+                    btn.classList.toggle('active', [1.3, 1.4, 1.6][i] === value);
+                });
+                updateOptimal();
+            }
+        }
+
+        // Mise à jour MOD
+        function updateMOD() {
+            const nitrox = parseInt(document.getElementById('nitrox-slider').value);
+            document.getElementById('nitrox-value').textContent = nitrox;
+            
+            const mod = calculateMOD(nitrox, modPPO2);
+            document.getElementById('mod-result').textContent = mod + 'm';
+            
+            document.getElementById('ppo2-display-1').textContent = modPPO2;
+            document.getElementById('nitrox-display-1').textContent = (nitrox/100).toFixed(2);
+            document.getElementById('mod-calc').textContent = mod;
+            
+            drawMODChart();
+        }
+
+        // Mise à jour Optimal
+        function updateOptimal() {
+            const depth = parseInt(document.getElementById('depth-slider').value);
+            document.getElementById('depth-value').textContent = depth;
+            
+            const optimal = calculateOptimalNitrox(depth, optimalPPO2);
+            document.getElementById('optimal-result').textContent = optimal + '%';
+            
+            document.getElementById('ppo2-display-2').textContent = optimalPPO2;
+            document.getElementById('depth-display-2').textContent = depth;
+            document.getElementById('optimal-calc').textContent = optimal;
+            
+            // Mise à jour du tableau
+            updateNitroxTable(depth);
+            drawOptimalChart();
+        }
+
+        // Mise à jour EAD
+        function updateEAD() {
+            const nitrox = parseInt(document.getElementById('ead-nitrox-slider').value);
+            const depth = parseInt(document.getElementById('ead-depth-slider').value);
+            
+            document.getElementById('ead-nitrox-value').textContent = nitrox;
+            document.getElementById('ead-depth-value').textContent = depth;
+            
+            const ead = calculateEAD(nitrox, depth);
+            document.getElementById('ead-result').textContent = ead + 'm';
+            document.getElementById('ead-real').textContent = depth + 'm';
+            document.getElementById('ead-table').textContent = ead + 'm';
+            
+            drawEADChart();
+        }
+
+        // Tableau comparatif Nitrox
+        function updateNitroxTable(targetDepth) {
+            const tbody = document.getElementById('nitrox-table');
+            tbody.innerHTML = '';
+            
+            const nitroxValues = [21, 28, 30, 32, 34, 36, 40];
+            
+            nitroxValues.forEach(n => {
+                const mod = calculateMOD(n, optimalPPO2);
+                const usable = mod >= targetDepth;
+                const row = tbody.insertRow();
+                
+                row.innerHTML = `
+                    <td>${n}%</td>
+                    <td style="color: ${usable ? '#a8ff78' : '#ff6464'};">${usable ? '✅ Oui' : '❌ Non'}</td>
+                    <td>${mod}m</td>
+                `;
+                
+                if (!usable) {
+                    row.style.opacity = '0.5';
+                }
+            });
+        }
+
+        // Dessin graphique MOD
+        function drawMODChart() {
+            const canvas = document.getElementById('mod-chart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = isMobile ? 220 : 300;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+            
+            const fontSize = isMobile ? 9 : 11;
+            const labelFontSize = isMobile ? 10 : 12;
+            const pointRadius = isMobile ? 8 : 6;
+            
+            // Grille
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 6; i++) {
+                const y = margin.top + (chartHeight / 6) * i;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(width - margin.right, y);
+                ctx.stroke();
+            }
+            
+            // Axe des profondeurs (à gauche)
+            ctx.fillStyle = 'white';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 6; i++) {
+                const depth = 60 - (i * 10);
+                const y = margin.top + (chartHeight / 6) * i;
+                ctx.fillText(depth + 'm', margin.left - 5, y + 4);
+            }
+            
+            // Axe des Nitrox (en bas)
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 4; i++) {
+                const nitrox = 21 + (i * 5);
+                const x = margin.left + (chartWidth / 4) * i;
+                ctx.fillText(nitrox + '%', x, height - 10);
+            }
+            
+            // Courbes PPO2
+            const ppo2Values = [
+                { value: 1.3, color: 'rgba(168,255,120,0.6)', label: '1.3' },
+                { value: 1.4, color: 'rgba(102,217,255,0.8)', label: '1.4' },
+                { value: 1.6, color: 'rgba(255,200,100,0.6)', label: '1.6' }
+            ];
+            
+            ppo2Values.forEach(ppo2 => {
+                ctx.strokeStyle = ppo2.color;
+                ctx.lineWidth = ppo2.value === modPPO2 ? 3 : 2;
+                ctx.beginPath();
+                
+                for (let nitrox = 21; nitrox <= 40; nitrox++) {
+                    const mod = calculateMOD(nitrox, ppo2.value);
+                    const x = margin.left + ((nitrox - 21) / 19) * chartWidth;
+                    const y = margin.top + chartHeight - (mod / 60 * chartHeight);
+                    
+                    if (nitrox === 21) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = ppo2.color;
+                ctx.font = `bold ${labelFontSize}px Arial`;
+                const labelX = width - margin.right - (isMobile ? 35 : 40);
+                const labelY = margin.top + 15 + ppo2Values.indexOf(ppo2) * (isMobile ? 16 : 20);
+                ctx.fillText('PPO₂ ' + ppo2.label, labelX, labelY);
+            });
+            
+            // Point actuel
+            const currentNitrox = parseInt(document.getElementById('nitrox-slider').value);
+            const currentMOD = calculateMOD(currentNitrox, modPPO2);
+            const x = margin.left + ((currentNitrox - 21) / 19) * chartWidth;
+            const y = margin.top + chartHeight - (currentMOD / 60 * chartHeight);
+            
+            ctx.fillStyle = '#66d9ff';
+            ctx.beginPath();
+            ctx.arc(x, y, pointRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Label du point
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${isMobile ? 12 : 14}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`${currentNitrox}% → ${currentMOD}m`, x, y - (isMobile ? 12 : 15));
+        }
+
+        // Dessin graphique Optimal
+        function drawOptimalChart() {
+            const canvas = document.getElementById('optimal-chart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = isMobile ? 220 : 300;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+            
+            const fontSize = isMobile ? 9 : 11;
+            const pointRadius = isMobile ? 8 : 6;
+            
+            // Grille
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 6; i++) {
+                const y = margin.top + (chartHeight / 6) * i;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(width - margin.right, y);
+                ctx.stroke();
+            }
+            
+            // Axes
+            ctx.fillStyle = 'white';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 6; i++) {
+                const nitrox = 40 - (i * 4);
+                const y = margin.top + (chartHeight / 6) * i;
+                ctx.fillText(nitrox + '%', margin.left - 5, y + 4);
+            }
+            
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 6; i++) {
+                const depth = 10 + (i * 10);
+                const x = margin.left + (chartWidth / 6) * i;
+                ctx.fillText(depth + 'm', x, height - 10);
+            }
+            
+            // Courbe
+            ctx.strokeStyle = 'rgba(255,200,100,0.8)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            for (let depth = 10; depth <= 60; depth++) {
+                const optimal = calculateOptimalNitrox(depth, optimalPPO2);
+                const x = margin.left + ((depth - 10) / 50) * chartWidth;
+                const y = margin.top + chartHeight - ((optimal - 16) / 24 * chartHeight);
+                
+                if (depth === 10) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // Point actuel
+            const currentDepth = parseInt(document.getElementById('depth-slider').value);
+            const currentOptimal = calculateOptimalNitrox(currentDepth, optimalPPO2);
+            const x = margin.left + ((currentDepth - 10) / 50) * chartWidth;
+            const y = margin.top + chartHeight - ((currentOptimal - 16) / 24 * chartHeight);
+            
+            ctx.fillStyle = '#ffc864';
+            ctx.beginPath();
+            ctx.arc(x, y, pointRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${isMobile ? 12 : 14}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`${currentDepth}m → ${currentOptimal}%`, x, y - (isMobile ? 12 : 15));
+        }
+
+        // Dessin graphique EAD
+        function drawEADChart() {
+            const canvas = document.getElementById('ead-chart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = isMobile ? 220 : 300;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+            
+            const fontSize = isMobile ? 9 : 11;
+            const labelFontSize = isMobile ? 9 : 11;
+            const pointRadius = isMobile ? 8 : 6;
+            
+            // Grille
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = margin.top + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(width - margin.right, y);
+                ctx.stroke();
+            }
+            
+            // Axes
+            ctx.fillStyle = 'white';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 4; i++) {
+                const depth = 40 - (i * 10);
+                const y = margin.top + (chartHeight / 4) * i;
+                ctx.fillText(depth + 'm', margin.left - 5, y + 4);
+            }
+            
+            ctx.textAlign = 'center';
+            const nitroxValues = [21, 28, 32, 36, 40];
+            nitroxValues.forEach((n, i) => {
+                const x = margin.left + (chartWidth / 4) * i;
+                ctx.fillText(n + '%', x, height - 10);
+            });
+            
+            // Ligne identité (profondeur = EAD)
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(width - margin.right, height - margin.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Courbes EAD pour différentes profondeurs
+            const depths = [20, 30, 40];
+            const colors = ['rgba(168,255,120,0.6)', 'rgba(102,217,255,0.8)', 'rgba(255,200,100,0.6)'];
+            
+            depths.forEach((depth, idx) => {
+                ctx.strokeStyle = colors[idx];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                nitroxValues.forEach((n, i) => {
+                    const ead = calculateEAD(n, depth);
+                    const x = margin.left + (chartWidth / 4) * i;
+                    const y = margin.top + chartHeight - (ead / 40 * chartHeight);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.stroke();
+                
+                // Label
+                ctx.fillStyle = colors[idx];
+                ctx.font = `bold ${labelFontSize}px Arial`;
+                ctx.textAlign = 'left';
+                ctx.fillText(`${depth}m réel`, width - margin.right - (isMobile ? 55 : 60), margin.top + 15 + idx * (isMobile ? 16 : 20));
+            });
+            
+            // Point actuel
+            const currentNitrox = parseInt(document.getElementById('ead-nitrox-slider').value);
+            const currentDepth = parseInt(document.getElementById('ead-depth-slider').value);
+            const currentEAD = calculateEAD(currentNitrox, currentDepth);
+            
+            const nitroxIndex = nitroxValues.indexOf(currentNitrox);
+            if (nitroxIndex !== -1) {
+                const x = margin.left + (chartWidth / 4) * nitroxIndex;
+                const y = margin.top + chartHeight - (currentEAD / 40 * chartHeight);
+                
+                ctx.fillStyle = '#a8ff78';
+                ctx.beginPath();
+                ctx.arc(x, y, pointRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('nitrox-slider').addEventListener('input', updateMOD);
+        document.getElementById('depth-slider').addEventListener('input', updateOptimal);
+        document.getElementById('ead-nitrox-slider').addEventListener('input', updateEAD);
+        document.getElementById('ead-depth-slider').addEventListener('input', updateEAD);
+
+        // Initialisation
+        updateMOD();
+        updateOptimal();
+        updateEAD();
+    </script>
+</body>
+</html>
