@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DTR Planner</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --bg:        #f0f4f8;
+  --surface:   #ffffff;
+  --surface2:  #f7f9fc;
+  --border:    #e2e8f0;
+  --text:      #1a2332;
+  --sub:       #64748b;
+  --blue:      #0066cc;
+  --blue-lt:   #dbeafe;
+  --teal:      #0891b2;
+  --teal-lt:   #cffafe;
+  --orange:    #ea580c;
+  --orange-lt: #fed7aa;
+  --green:     #16a34a;
+  --green-lt:  #dcfce7;
+  --red:       #dc2626;
+  --red-lt:    #fee2e2;
+  --tab-h:     60px;
+  --safe:      env(safe-area-inset-bottom, 0px);
+  --r:         14px;
+}
+
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#app { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* HEADER */
+.hdr {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.hdr h1 { font-family:'Poppins',sans-serif; font-size:1.05em; font-weight:800; }
+.hdr p  { font-size:.68em; color:var(--sub); margin-top:1px; }
+
+/* realtime badge */
+.live-badge {
+  display:flex; align-items:center; gap:6px;
+  background:var(--green-lt); border-radius:20px;
+  padding:5px 10px;
+  font-size:.68em; font-weight:600; color:var(--green);
+}
+.live-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--green);
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+/* VIEWS */
+.views { flex:1; overflow:hidden; position:relative; }
+.view {
+  position:absolute; inset:0;
+  overflow-y:auto; overflow-x:hidden;
+  padding: 14px 14px calc(var(--tab-h) + 10px + var(--safe));
+  display:none;
+  -webkit-overflow-scrolling:touch;
+}
+.view.active { display:block; }
+
+/* TABS */
+.tabs {
+  position:fixed; bottom:0; left:0; right:0;
+  height:calc(var(--tab-h) + var(--safe));
+  padding-bottom:var(--safe);
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:flex; z-index:100;
+}
+.tab {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:3px;
+  cursor:pointer; border:none; background:none;
+  color:var(--sub); font-family:'Inter',sans-serif;
+  padding-top:8px; transition:color .15s;
+}
+.tab.on { color:var(--blue); }
+.tab-icon { font-size:1.2em; }
+.tab-lbl  { font-size:.58em; font-weight:600; letter-spacing:.05em; text-transform:uppercase; }
+.tab-bar  { width:22px; height:3px; border-radius:2px; margin-top:2px; background:transparent; transition:background .15s; }
+.tab.on .tab-bar { background:var(--blue); }
+
+/* ══════════════════════════════════════
+   PARAMS VIEW
+══════════════════════════════════════ */
+.param-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); overflow:hidden; margin-bottom:10px;
+}
+.param-item {
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+}
+.param-item:last-child { border-bottom:none; }
+
+.pi-top {
+  display:flex; align-items:flex-start;
+  justify-content:space-between; margin-bottom:10px;
+}
+.pi-label {
+  font-size:.7em; font-weight:600;
+  text-transform:uppercase; letter-spacing:.06em; color:var(--sub);
+}
+.pi-desc { font-size:.65em; color:#94a3b8; margin-top:2px; font-weight:400; }
+.pi-val  {
+  font-family:'Poppins',sans-serif; font-size:1.65em; font-weight:800;
+  color:var(--text); line-height:1; white-space:nowrap;
+}
+.pi-unit { font-size:.4em; color:var(--sub); font-family:'Inter'; font-weight:400; margin-left:2px; }
+
+.pi-bottom { display:flex; align-items:center; gap:10px; }
+input[type=range] {
+  flex:1; height:5px;
+  -webkit-appearance:none; appearance:none; border-radius:3px;
+  background:linear-gradient(90deg, var(--blue) var(--pct,0%), var(--border) var(--pct,0%));
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--surface); border:2.5px solid var(--blue);
+  box-shadow:0 1px 5px rgba(0,0,0,.14); cursor:pointer;
+}
+.btns-pm { display:flex; gap:6px; flex-shrink:0; }
+.btn-pm {
+  width:36px; height:36px; border-radius:10px;
+  background:var(--bg); border:1.5px solid var(--border);
+  color:var(--text); font-size:1.15em; font-weight:600;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .1s;
+}
+.btn-pm:active { background:var(--border); }
+
+/* ══════════════════════════════════════
+   RÉSULTAT VIEW
+══════════════════════════════════════ */
+
+/* Tito card */
+.tito-card {
+  background:var(--surface);
+  border:1.5px solid var(--orange-lt);
+  border-left:4px solid var(--orange);
+  border-radius:var(--r); padding:16px; margin-bottom:10px;
+}
+.tito-eye { font-size:.68em; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--orange); margin-bottom:8px; }
+.tito-row { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; gap:8px; }
+.tito-big {
+  font-family:'Poppins',sans-serif; font-size:2.8em; font-weight:800;
+  color:var(--orange); line-height:1;
+}
+.tito-big small { font-size:.3em; color:var(--sub); font-family:'Inter'; font-weight:400; margin-left:2px; }
+.tito-sub { font-size:.72em; color:var(--sub); line-height:1.5; text-align:right; }
+
+.tito-steps {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:10px 12px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.tito-step { display:flex; align-items:baseline; gap:8px; font-size:.78em; }
+.step-n {
+  background:var(--orange); color:#fff;
+  border-radius:50%; width:17px; height:17px; min-width:17px;
+  font-size:.72em; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; position:relative; top:1px;
+}
+.step-txt { flex:1; color:var(--text); }
+.step-txt b { color:var(--orange); }
+.tito-rule {
+  margin-top:8px; padding-top:8px; border-top:1px solid var(--border);
+  font-size:.76em; font-weight:600; color:var(--orange);
+  display:flex; align-items:center; gap:6px;
+}
+
+/* DTR split */
+.dtr-split {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:14px 16px; margin-bottom:10px;
+}
+.dtr-split-title { font-size:.68em; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--sub); margin-bottom:10px; }
+.dtr-bars { display:flex; border-radius:8px; overflow:hidden; height:32px; gap:2px; }
+.dtr-seg {
+  display:flex; align-items:center; justify-content:center;
+  font-size:.68em; font-weight:700; color:#fff;
+  transition:flex .3s;
+  min-width:2px;
+}
+.dtr-seg.desc { background:#0066cc; }
+.dtr-seg.fond { background:#ea580c; }
+.dtr-leg { display:flex; gap:12px; margin-top:8px; }
+.dtr-leg-item { display:flex; align-items:center; gap:5px; font-size:.68em; color:var(--sub); }
+.dtr-dot { width:10px; height:10px; border-radius:3px; }
+
+/* Status */
+.status-pill {
+  border-radius:10px; padding:11px 14px;
+  font-size:.78em; line-height:1.5;
+  display:flex; align-items:flex-start; gap:9px;
+  margin-bottom:10px; font-weight:500;
+}
+.status-pill.ok   { background:var(--green-lt); color:var(--green); }
+.status-pill.warn { background:var(--orange-lt); color:var(--orange); }
+.status-pill.bad  { background:var(--red-lt); color:var(--red); }
+.s-dot { width:8px; height:8px; min-width:8px; border-radius:50%; margin-top:4px; animation:blink 1.4s infinite; }
+.ok .s-dot   { background:var(--green); }
+.warn .s-dot { background:var(--orange); }
+.bad .s-dot  { background:var(--red); }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.2} }
+
+/* KPIs */
+.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.kpi { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+.kpi-lbl { font-size:.62em; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--sub); margin-bottom:4px; }
+.kpi-val { font-family:'Poppins',sans-serif; font-size:1.55em; font-weight:800; line-height:1; color:var(--text); }
+.kpi-val small { font-size:.38em; color:var(--sub); font-family:'Inter'; font-weight:400; }
+.good { color:var(--green) !important; }
+.warn-col { color:var(--orange) !important; }
+.bad  { color:var(--red) !important; }
+
+/* Stops */
+.sec-hd { font-size:.68em; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--sub); margin-bottom:8px; }
+.stops-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.stop-badge { background:var(--teal-lt); color:var(--teal); border-radius:8px; padding:5px 10px; font-size:.78em; font-weight:600; }
+.ndl-badge  { background:var(--green-lt); color:var(--green); border-radius:8px; padding:5px 12px; font-size:.78em; font-weight:600; }
+
+/* Phase table */
+.phase-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:10px; }
+.phase-hd {
+  display:grid; grid-template-columns:1fr 50px 52px 50px;
+  padding:7px 14px; background:var(--bg); border-bottom:1px solid var(--border);
+  font-size:.6em; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--sub);
+}
+.phase-hd span:not(:first-child) { text-align:right; }
+.phase-row {
+  display:grid; grid-template-columns:1fr 50px 52px 50px;
+  padding:10px 14px; border-bottom:1px solid var(--border); align-items:center;
+  font-size:.78em;
+}
+.phase-row:last-child { border-bottom:none; }
+.ph-name { display:flex; align-items:center; gap:7px; }
+.ph-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.ph-dur  { text-align:right; color:var(--sub); }
+.ph-dp   { text-align:right; color:var(--red); font-weight:500; }
+.ph-p    { text-align:right; font-weight:700; }
+
+/* ══════════════════════════════════════
+   COURBE VIEW
+══════════════════════════════════════ */
+.chart-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:14px; margin-bottom:10px;
+}
+.chart-hd { font-size:.68em; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--sub); margin-bottom:12px; }
+.chart-canvas { position:relative; height:200px; }
+.leg-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+.leg-item { display:flex; align-items:center; gap:5px; font-size:.65em; color:var(--sub); font-weight:500; }
+.leg-line { width:18px; height:2.5px; border-radius:2px; }
+.leg-line.dash { background:none !important; border-top:2px dashed; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="hdr">
+    <div>
+      <h1>🤿 DTR Planner</h1>
+      <p>Règle de Tito</p>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Temps réel</div>
+  </div>
+
+  <div class="views">
+
+    <!-- PARAMS -->
+    <div class="view active" id="v-params">
+      <div class="param-card" id="param-list"></div>
+    </div>
+
+    <!-- RÉSULTAT -->
+    <div class="view" id="v-result">
+      <div id="result-content"></div>
+    </div>
+
+    <!-- COURBE -->
+    <div class="view" id="v-graph">
+      <div id="graph-content"></div>
+    </div>
+
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-view="v-params">
+      <span class="tab-icon">⚙️</span>
+      <span class="tab-lbl">Paramètres</span>
+      <div class="tab-bar"></div>
+    </button>
+    <button class="tab" data-view="v-result">
+      <span class="tab-icon">📊</span>
+      <span class="tab-lbl">Résultat</span>
+      <div class="tab-bar"></div>
+    </button>
+    <button class="tab" data-view="v-graph">
+      <span class="tab-icon">📈</span>
+      <span class="tab-lbl">Courbe</span>
+      <div class="tab-bar"></div>
+    </button>
+  </div>
+
+</div>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// PARAMS
+// ═══════════════════════════════════════════════════════════════
+const PARAMS = [
+  { id:'depth', icon:'📍', label:'Profondeur',         desc:'Profondeur cible',              unit:'m',     min:10,  max:65,  step:1,  val:60  },
+  { id:'dtr',   icon:'⏱', label:'DTR',                desc:'Durée totale = descente + fond', unit:'min',   min:3,   max:60,  step:1,  val:12  },
+  { id:'vdesc', icon:'⬇️', label:'Vitesse descente',   desc:'Typique : 10–20 m/min',          unit:'m/min', min:10,  max:25,  step:1,  val:20  },
+  { id:'vol',   icon:'🛢', label:'Volume bouteille',   desc:'',                               unit:'L',     min:6,   max:24,  step:1,  val:12  },
+  { id:'pinit', icon:'💨', label:'Pression initiale',  desc:'',                               unit:'bar',   min:150, max:300, step:5,  val:200 },
+  { id:'conso', icon:'🫁', label:'Conso surface',      desc:'Litres/min à la surface',        unit:'L/min', min:10,  max:50,  step:1,  val:20  },
+  { id:'pres',  icon:'🔒', label:'Réserve bouteille',  desc:'Pression min à garder',          unit:'bar',   min:20,  max:100, step:5,  val:50  },
+];
+const S = {};
+PARAMS.forEach(p => S[p.id] = p.val);
+
+// ═══════════════════════════════════════════════════════════════
+// MN90
+// ═══════════════════════════════════════════════════════════════
+const MN90 = {
+  10:[{t:100,s:[],g:'A'},{t:300,s:[{d:3,m:3}],g:'B'},{t:400,s:[{d:3,m:9}],g:'C'}],
+  15:[{t:60,s:[],g:'A'},{t:90,s:[],g:'A'},{t:120,s:[{d:3,m:3}],g:'B'},{t:150,s:[{d:3,m:9}],g:'C'},{t:180,s:[{d:3,m:15}],g:'D'}],
+  20:[{t:40,s:[],g:'A'},{t:45,s:[{d:3,m:3}],g:'B'},{t:50,s:[{d:3,m:7}],g:'C'},{t:55,s:[{d:3,m:11}],g:'D'},{t:60,s:[{d:3,m:16}],g:'E'},{t:70,s:[{d:3,m:24}],g:'F'},{t:80,s:[{d:6,m:2},{d:3,m:32}],g:'G'}],
+  25:[{t:20,s:[],g:'A'},{t:25,s:[{d:3,m:3}],g:'B'},{t:30,s:[{d:3,m:8}],g:'C'},{t:35,s:[{d:3,m:14}],g:'D'},{t:40,s:[{d:3,m:20}],g:'E'},{t:45,s:[{d:3,m:28}],g:'F'},{t:50,s:[{d:3,m:37}],g:'G'},{t:55,s:[{d:6,m:2},{d:3,m:46}],g:'H'}],
+  30:[{t:10,s:[],g:'A'},{t:15,s:[{d:3,m:3}],g:'B'},{t:20,s:[{d:3,m:9}],g:'C'},{t:25,s:[{d:3,m:16}],g:'D'},{t:30,s:[{d:3,m:25}],g:'E'},{t:35,s:[{d:3,m:36}],g:'F'},{t:40,s:[{d:3,m:47}],g:'G'},{t:45,s:[{d:6,m:2},{d:3,m:53}],g:'H'}],
+  35:[{t:5,s:[],g:'A'},{t:10,s:[{d:3,m:7}],g:'B'},{t:15,s:[{d:3,m:16}],g:'C'},{t:20,s:[{d:3,m:25}],g:'D'},{t:25,s:[{d:3,m:36}],g:'E'},{t:30,s:[{d:6,m:2},{d:3,m:44}],g:'F'},{t:35,s:[{d:6,m:5},{d:3,m:55}],g:'G'},{t:40,s:[{d:9,m:2},{d:6,m:10},{d:3,m:68}],g:'H'}],
+  40:[{t:5,s:[{d:3,m:3}],g:'B'},{t:10,s:[{d:3,m:14}],g:'C'},{t:15,s:[{d:6,m:2},{d:3,m:26}],g:'D'},{t:20,s:[{d:6,m:7},{d:3,m:39}],g:'E'},{t:25,s:[{d:9,m:2},{d:6,m:13},{d:3,m:53}],g:'F'},{t:30,s:[{d:9,m:5},{d:6,m:20},{d:3,m:70}],g:'G'}],
+  45:[{t:5,s:[{d:3,m:8}],g:'C'},{t:10,s:[{d:3,m:20}],g:'D'},{t:15,s:[{d:6,m:4},{d:3,m:36}],g:'E'},{t:20,s:[{d:9,m:2},{d:6,m:12},{d:3,m:51}],g:'F'},{t:25,s:[{d:12,m:2},{d:9,m:5},{d:6,m:20},{d:3,m:68}],g:'G'}],
+  50:[{t:5,s:[{d:3,m:11}],g:'C'},{t:10,s:[{d:3,m:28}],g:'D'},{t:15,s:[{d:6,m:5},{d:3,m:47}],g:'E'},{t:20,s:[{d:9,m:3},{d:6,m:16},{d:3,m:66}],g:'F'},{t:25,s:[{d:12,m:3},{d:9,m:8},{d:6,m:25},{d:3,m:88}],g:'G'}],
+  55:[{t:5,s:[{d:3,m:14}],g:'D'},{t:10,s:[{d:6,m:2},{d:3,m:34}],g:'E'},{t:15,s:[{d:9,m:2},{d:6,m:10},{d:3,m:57}],g:'F'},{t:20,s:[{d:12,m:2},{d:9,m:6},{d:6,m:20},{d:3,m:79}],g:'G'}],
+  60:[{t:5,s:[{d:3,m:17}],g:'D'},{t:10,s:[{d:6,m:3},{d:3,m:40}],g:'E'},{t:15,s:[{d:9,m:3},{d:6,m:14},{d:3,m:65}],g:'F'},{t:20,s:[{d:12,m:2},{d:9,m:8},{d:6,m:22},{d:3,m:87}],g:'G'}],
+  65:[{t:5,s:[{d:6,m:1},{d:3,m:22}],g:'E'},{t:10,s:[{d:9,m:2},{d:6,m:9},{d:3,m:52}],g:'F'},{t:15,s:[{d:12,m:3},{d:9,m:7},{d:6,m:20},{d:3,m:80}],g:'G'}],
+};
+function mn90Key(d){ const ks=Object.keys(MN90).map(Number).sort((a,b)=>a-b); return ks.find(k=>k>=d)||ks.at(-1); }
+function mn90Row(depth,tFond){ const rows=MN90[mn90Key(depth)]; let best=null; for(const r of rows){if(r.t<=tFond)best=r;else break;} return best; }
+
+// ═══════════════════════════════════════════════════════════════
+// PHYSIQUE
+// ═══════════════════════════════════════════════════════════════
+const pAbs = d => 1 + d/10;
+const dP   = (conso, vol, depth, dt) => (conso * pAbs(depth) * dt) / vol;
+
+function compute() {
+  const {depth, dtr, vdesc, vol, pinit, conso, pres} = S;
+  const V_ASC = 9; // remontée MN90 : 15-17 m/min en pratique, on prend 9 pour être conservateur aux paliers
+
+  // ── DESCENTE ──
+  // Temps réel pour atteindre la profondeur
+  const tDesc = depth / vdesc;
+
+  // Si le DTR est trop court pour même descendre → erreur
+  if (tDesc >= dtr) {
+    return { error: `DTR trop court ! La descente seule prend ${fmtMin(tDesc)} à ${vdesc} m/min.` };
+  }
+
+  // ── FOND ──
+  // Le temps de fond = DTR - temps de descente
+  const tFond = dtr - tDesc;
+
+  // ── TITO : P. décollage ──
+  // La règle utilise le DTR complet (descente + fond)
+  const raw  = depth + dtr * 2;
+  const pdec = Math.ceil(raw / 10) * 10;
+
+  // ── CONSO descente ──
+  // Pendant la descente, profondeur moyenne = depth/2
+  const dpDesc = dP(conso, vol, depth/2, tDesc);
+  const pBottom = pinit - dpDesc;
+
+  // ── CONSO fond ──
+  const dpPerMin = dP(conso, vol, depth, 1);
+  const dpFond   = dpPerMin * tFond;
+  const pAfterFond = pBottom - dpFond;
+
+  // ── DÉCLENCHEUR ──
+  // On décolle quand P <= pdec OU quand tFond épuisé
+  // Le premier qui arrive gagne
+  const tFondByPres = pAfterFond <= pdec
+    ? Math.max(0, (pBottom - pdec) / dpPerMin)  // on aurait dû décoller plus tôt
+    : tFond; // pdec pas encore atteinte → c'est le temps qui déclenche
+
+  const triggerTime  = tFond;
+  const triggerPres  = Math.max(0, (pBottom - pdec) / dpPerMin);
+  const tFondActuel  = Math.min(triggerTime, triggerPres);
+  const trigger      = triggerPres <= triggerTime ? 'pression' : 'temps';
+  const pDéclencheur = pBottom - dpPerMin * tFondActuel;
+
+  // ── MN90 ──
+  const row   = mn90Row(depth, Math.floor(tFondActuel));
+  const stops = row ? row.s : [];
+  const gps   = row ? row.g : '?';
+
+  // ── PHASES complètes ──
+  const phases = [];
+  phases.push({
+    name: `Descente 0 → ${depth}m`,
+    color: '#0066cc',
+    dur: tDesc,
+    dp: dpDesc,
+    dFrom: 0, dTo: depth
+  });
+  phases.push({
+    name: `Fond à ${depth}m`,
+    color: '#ea580c',
+    dur: tFondActuel,
+    dp: dpPerMin * tFondActuel,
+    dFrom: depth, dTo: depth
+  });
+
+  let cur = depth, p = pBottom - dpPerMin * tFondActuel;
+  if (!stops.length) {
+    const t = cur / V_ASC, dp = dP(conso, vol, cur/2, t);
+    phases.push({ name: 'Remontée directe', color: '#16a34a', dur: t, dp, dFrom: cur, dTo: 0 });
+    p -= dp;
+  } else {
+    for (const s of stops) {
+      const t = (cur - s.d) / V_ASC, dp = dP(conso, vol, (cur+s.d)/2, t);
+      phases.push({ name: `Remontée → ${s.d}m`, color: '#0891b2', dur: t, dp, dFrom: cur, dTo: s.d });
+      p -= dp;
+      const dp2 = dP(conso, vol, s.d, s.m);
+      phases.push({ name: `Palier ${s.d}m × ${s.m}'`, color: '#7c3aed', dur: s.m, dp: dp2, dFrom: s.d, dTo: s.d });
+      p -= dp2;
+      cur = s.d;
+    }
+    const t2 = cur / 3, dp2 = dP(conso, vol, cur/2, t2);
+    phases.push({ name: 'Remontée finale', color: '#16a34a', dur: t2, dp: dp2, dFrom: cur, dTo: 0 });
+    p -= dp2;
+  }
+
+  // Running pressure for display
+  let pRun = pinit;
+  phases.forEach(ph => { ph.pBefore = pRun; pRun -= ph.dp; ph.pAfter = Math.max(0, pRun); });
+
+  return {
+    depth, dtr, vdesc, vol, pinit, conso, pres,
+    raw, pdec,
+    tDesc, tFond: tFondActuel,
+    trigger, pDéclencheur,
+    pBottom, dpPerMin,
+    stops, gps,
+    phases,
+    pFinal: p,
+    tTotal: phases.reduce((a,b) => a+b.dur, 0),
+    V_ASC
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORMAT
+// ═══════════════════════════════════════════════════════════════
+function fmtMin(v) {
+  if (v < 0) return '—';
+  const m = Math.floor(v), s = Math.round((v-m)*60);
+  return s > 0 ? `${m}m${String(s).padStart(2,'0')}s` : `${m} min`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderAll() {
+  const R = compute();
+  if (R.error) {
+    document.getElementById('result-content').innerHTML =
+      `<div class="status-pill bad" style="margin-top:0"><div class="s-dot"></div><span>${R.error}</span></div>`;
+    document.getElementById('graph-content').innerHTML = '';
+    return;
+  }
+  renderResult(R);
+  renderGraph(R);
+}
+
+function renderResult(R) {
+  const ok  = R.pFinal >= R.pres;
+  const bad = R.pFinal < 0;
+  let sCls, sMsg;
+  if (bad) {
+    sCls='bad'; sMsg=`⛔ Gaz insuffisant — il manque ${Math.abs(R.pFinal).toFixed(0)} bar pour finir la déco.`;
+  } else if (!ok) {
+    sCls='warn'; sMsg=`⚠️ Réserve insuffisante — ${R.pFinal.toFixed(0)} bar restants (réserve requise : ${R.pres} bar). Réduis le DTR.`;
+  } else {
+    sCls='ok'; sMsg=`✅ Profil correct — ${R.pFinal.toFixed(0)} bar en réserve à la surface.`;
+  }
+
+  const triggerTxt = R.trigger === 'temps'
+    ? `⏱ Décollage déclenché par le <b>temps</b> (DTR épuisé à ${fmtMin(R.dtr)})`
+    : `📉 Décollage déclenché par la <b>pression</b> (${R.pDéclencheur.toFixed(0)} bar atteints avant la fin du DTR)`;
+
+  const stopsHtml = R.stops.length
+    ? R.stops.map(s=>`<span class="stop-badge">${s.d}m × ${s.m}'</span>`).join('')
+    : `<span class="ndl-badge">✅ Sans palier (NDL)</span>`;
+
+  // DTR split bar
+  const descPct = (R.tDesc / R.dtr * 100).toFixed(1);
+  const fondPct = (R.tFond / R.dtr * 100).toFixed(1);
+
+  const phaseRows = R.phases.map(ph => {
+    const pCol = ph.pAfter < R.pres ? 'color:var(--red)' : ph.pAfter < R.pdec+20 ? 'color:var(--orange)' : 'color:var(--green)';
+    return `<div class="phase-row">
+      <div class="ph-name"><div class="ph-dot" style="background:${ph.color}"></div>${ph.name}</div>
+      <div class="ph-dur">${fmtMin(ph.dur)}</div>
+      <div class="ph-dp">−${ph.dp.toFixed(1)}</div>
+      <div class="ph-p" style="${pCol}">${ph.pAfter.toFixed(0)}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('result-content').innerHTML = `
+
+    <div class="tito-card">
+      <div class="tito-eye">📐 Règle de Tito — P. de décollage</div>
+      <div class="tito-row">
+        <div class="tito-big">${R.pdec}<small> bar</small></div>
+        <div class="tito-sub">Décolle quand ton<br>manomètre affiche<br><b style="color:var(--orange)">${R.pdec} bar</b></div>
+      </div>
+      <div class="tito-steps">
+        <div class="tito-step"><div class="step-n">1</div><div class="step-txt">Profondeur = <b>${R.depth} m</b></div></div>
+        <div class="tito-step"><div class="step-n">2</div><div class="step-txt">DTR × 2 = <b>${R.dtr} × 2 = ${R.dtr*2}</b></div></div>
+        <div class="tito-step"><div class="step-n">3</div><div class="step-txt">${R.depth} + ${R.dtr*2} = <b>${R.raw}</b>${R.pdec!==R.raw?` → arrondi → <b>${R.pdec} bar</b>`:''}</div></div>
+        <div class="tito-rule">🔑 ${triggerTxt}</div>
+      </div>
+    </div>
+
+    <div class="dtr-split">
+      <div class="dtr-split-title">Décomposition du DTR (${R.dtr} min)</div>
+      <div class="dtr-bars">
+        <div class="dtr-seg desc" style="flex:${R.tDesc}">${fmtMin(R.tDesc)}</div>
+        <div class="dtr-seg fond" style="flex:${R.tFond}">${fmtMin(R.tFond)}</div>
+      </div>
+      <div class="dtr-leg">
+        <div class="dtr-leg-item"><div class="dtr-dot" style="background:#0066cc"></div>Descente (${R.depth}m à ${R.vdesc}m/min)</div>
+        <div class="dtr-leg-item"><div class="dtr-dot" style="background:#ea580c"></div>Fond</div>
+      </div>
+    </div>
+
+    <div class="status-pill ${sCls}"><div class="s-dot"></div><span>${sMsg}</span></div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-lbl">Descente</div><div class="kpi-val">${fmtMin(R.tDesc)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Fond</div><div class="kpi-val">${fmtMin(R.tFond)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">GPS MN90</div><div class="kpi-val">${R.gps}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Durée totale</div><div class="kpi-val">${fmtMin(R.tTotal)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">P. au fond</div><div class="kpi-val">${R.pBottom.toFixed(0)}<small> bar</small></div></div>
+      <div class="kpi"><div class="kpi-lbl">P. finale</div><div class="kpi-val ${ok?'good':bad?'bad':'warn-col'}">${R.pFinal.toFixed(0)}<small> bar</small></div></div>
+    </div>
+
+    <div class="sec-hd">Paliers MN90</div>
+    <div class="stops-row">${stopsHtml}</div>
+
+    <div class="sec-hd">Phases</div>
+    <div class="phase-card">
+      <div class="phase-hd"><span>Phase</span><span>Durée</span><span>ΔP bar</span><span>P bar</span></div>
+      ${phaseRows}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════════════
+let c1=null, c2=null;
+
+function renderGraph(R) {
+  const profPts=[], presPts=[];
+  let t=0, p=R.pinit;
+  profPts.push({x:0,y:0}); presPts.push({x:0,y:p});
+  R.phases.forEach(ph => {
+    t += ph.dur; p -= ph.dp; if(p<0)p=0;
+    profPts.push({x:t, y:ph.dTo});
+    presPts.push({x:t, y:p});
+  });
+  const tMax = t * 1.06;
+  const GC='rgba(0,0,0,.05)', TC='#94a3b8';
+  const tf={family:'Inter',size:10,weight:'500'};
+  const tip={backgroundColor:'#1e293b',titleColor:'#e2e8f0',bodyColor:'#94a3b8',borderColor:'#334155',borderWidth:1,titleFont:tf,bodyFont:tf};
+
+  // Markers: t_fond = descente + fond
+  const tDecollage = R.tDesc + R.tFond;
+
+  document.getElementById('graph-content').innerHTML = `
+    <div class="chart-card">
+      <div class="chart-hd">📍 Profil de profondeur</div>
+      <div class="chart-canvas"><canvas id="c1"></canvas></div>
+      <div class="leg-row">
+        <div class="leg-item"><div class="leg-line" style="background:#0066cc"></div>Profondeur (m)</div>
+        <div class="leg-item"><div class="leg-line dash" style="border-color:#ea580c"></div>Décollage DTR (${fmtMin(R.dtr)})</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">💨 Pression bouteille</div>
+      <div class="chart-canvas"><canvas id="c2"></canvas></div>
+      <div class="leg-row">
+        <div class="leg-item"><div class="leg-line" style="background:#16a34a"></div>Pression (bar)</div>
+        <div class="leg-item"><div class="leg-line dash" style="border-color:#ea580c"></div>P. déco Tito (${R.pdec} bar)</div>
+        <div class="leg-item"><div class="leg-line dash" style="border-color:#dc2626"></div>Réserve (${R.pres} bar)</div>
+      </div>
+    </div>
+  `;
+
+  if(c1)c1.destroy();
+  c1 = new Chart(document.getElementById('c1'), {
+    type:'line',
+    data:{ datasets:[
+      { data:profPts, borderColor:'#0066cc', backgroundColor:'rgba(0,102,204,.08)', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#0066cc', fill:true, tension:0, label:'Profondeur' },
+      { data:[{x:tDecollage,y:0},{x:tDecollage,y:R.depth*1.1}], borderColor:'rgba(234,88,12,.5)', borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false, label:'Décollage' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:200},
+      plugins:{ legend:{display:false}, tooltip:{...tip, callbacks:{label:c=>`${c.parsed.y.toFixed(1)} m`}} },
+      scales:{
+        x:{ type:'linear', min:0, max:tMax, title:{display:true,text:'min',color:TC,font:tf}, ticks:{color:TC,font:tf}, grid:{color:GC} },
+        y:{ reverse:true, min:0, title:{display:true,text:'m',color:'#0066cc',font:tf}, ticks:{color:'#0066cc',font:tf}, grid:{color:GC} },
+      }
+    }
+  });
+
+  if(c2)c2.destroy();
+  c2 = new Chart(document.getElementById('c2'), {
+    type:'line',
+    data:{ datasets:[
+      { data:presPts, borderColor:'#16a34a', backgroundColor:'rgba(22,163,74,.07)', borderWidth:2.5, pointRadius:2, fill:true, tension:0.2, label:'Pression' },
+      { data:[{x:0,y:R.pdec},{x:tMax,y:R.pdec}], borderColor:'rgba(234,88,12,.7)', borderWidth:1.5, borderDash:[7,4], pointRadius:0, fill:false, label:'P. déco' },
+      { data:[{x:0,y:R.pres},{x:tMax,y:R.pres}], borderColor:'rgba(220,38,38,.6)', borderWidth:1, borderDash:[4,3], pointRadius:0, fill:false, label:'Réserve' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:200},
+      plugins:{ legend:{display:false}, tooltip:{...tip, callbacks:{label:c=>`${c.parsed.y.toFixed(1)} bar`}} },
+      scales:{
+        x:{ type:'linear', min:0, max:tMax, title:{display:true,text:'min',color:TC,font:tf}, ticks:{color:TC,font:tf}, grid:{color:GC} },
+        y:{ min:0, max:R.pinit+15, title:{display:true,text:'bar',color:'#16a34a',font:tf}, ticks:{color:'#16a34a',font:tf}, grid:{color:GC} },
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PARAMS VIEW BUILD
+// ═══════════════════════════════════════════════════════════════
+function buildParams() {
+  document.getElementById('param-list').innerHTML = PARAMS.map(p => `
+    <div class="param-item">
+      <div class="pi-top">
+        <div>
+          <div class="pi-label">${p.icon} ${p.label}</div>
+          ${p.desc ? `<div class="pi-desc">${p.desc}</div>` : ''}
+        </div>
+        <div class="pi-val" id="pv-${p.id}">${S[p.id]}<span class="pi-unit">${p.unit}</span></div>
+      </div>
+      <div class="pi-bottom">
+        <input type="range" id="sl-${p.id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${S[p.id]}">
+        <div class="btns-pm">
+          <button class="btn-pm" data-id="${p.id}" data-d="-${p.step}">−</button>
+          <button class="btn-pm" data-id="${p.id}" data-d="${p.step}">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  PARAMS.forEach(p => {
+    const sl = document.getElementById('sl-'+p.id);
+    sl.addEventListener('input', () => setP(p.id, +sl.value));
+    fillSl(sl);
+  });
+  document.querySelectorAll('.btn-pm').forEach(b => {
+    b.addEventListener('click', () => {
+      const p = PARAMS.find(x=>x.id===b.dataset.id);
+      setP(p.id, Math.min(p.max, Math.max(p.min, S[p.id] + (+b.dataset.d))));
+    });
+  });
+}
+
+function setP(id, val) {
+  const p = PARAMS.find(x=>x.id===id);
+  val = Math.min(p.max, Math.max(p.min, +val));
+  S[id] = val;
+  document.getElementById('pv-'+id).innerHTML = `${val}<span class="pi-unit">${p.unit}</span>`;
+  const sl = document.getElementById('sl-'+id);
+  sl.value = val; fillSl(sl);
+  renderAll(); // ← TEMPS RÉEL
+}
+
+function fillSl(sl) {
+  const pct = ((+sl.value - +sl.min) / (+sl.max - +sl.min) * 100).toFixed(1) + '%';
+  sl.style.setProperty('--pct', pct);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`.tab[data-view="${id}"]`).classList.add('on');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  buildParams();
+  renderAll();
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.view)));
+});
+</script>
+</body>
+</html>
