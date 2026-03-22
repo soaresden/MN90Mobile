@@ -179,7 +179,7 @@ let ambient,sun,caustic,water,bubbles3D=[],armGroup=null;
 
 // Modèle blessé
 let victimModel=null,victimMixer=null,victimBubbleTimer=0;
-const VP=new THREE.Vector3(0,-19.5,-8);
+const VP=new THREE.Vector3(0,-19.5,-5);
 
 // ============================================================
 // CHARGEMENT GLB
@@ -194,14 +194,16 @@ function loadVictimModel(onLoaded){
       document.getElementById('loading-bar-wrap').style.display='none';
       const model=gltf.scene;
 
-      // Ajuster l'échelle
-      // Le modèle Mixamo est debout sur Y, on le met à l'horizontale (flottant)
-      model.scale.set(0.012,0.012,0.012);
+      // Scale précis : ~170 unités C4D = 1.8m
+      model.scale.set(0.0106, 0.0106, 0.0106);
       model.position.copy(VP);
-      // Face vers le joueur (qui est à Z positif)
-      model.rotation.y=0;
-      // Couché sur le dos, horizontal dans l'eau — rotation X pour l'allonger
-      model.rotation.x=Math.PI/2;
+      // Modèle debout sur Y, nage vers Z+, dos vers le joueur
+      // → Y=PI : retourner face vers Z- (face joueur)
+      // → X=-PI/2 : coucher horizontal (flottant inerte)
+      model.rotation.order='YXZ';
+      model.rotation.y=Math.PI;
+      model.rotation.x=-Math.PI/2;
+      model.rotation.z=0;
 
       // Matériaux sous-marins
       model.traverse(child=>{
@@ -561,10 +563,12 @@ function updateHUD(depth, dt){
   const nd=Math.max(0,Math.round(currentSite.nodeco-gameTime/60));
   document.getElementById('hud-nodeco').textContent=nd+"'";
 
+  // CALCUL CORRECT :
+  // consoReel est en L/MIN → diviser par 60 pour avoir L/SEC
+  // bouteille 2400L, x2 accélération gameplay = ~27 min à 20m
   const ata=depth/10+1;
-  const consoSurface=rescued?18:15;
-  const consoReel=consoSurface*ata*1.5;
-  const ratePerSec=consoReel/2400;
+  const consoLmin=(rescued?18:15)*ata; // L/min réel
+  const ratePerSec=consoLmin/2400/60*2.0; // fraction bouteille/seconde (x2 gameplay)
   gasLevel=Math.max(0,gasLevel-ratePerSec*dt);
   const bar=Math.round(gasLevel*200);
 
@@ -634,9 +638,9 @@ function animate(){
   camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
 
   // Mouvement avec inertie sous-marine
-  const maxSpd=rescued?1.4:3.2;
-  const accel=rescued?4.0:7.0;
-  const friction=rescued?0.88:0.82; // plus de friction = plus fluide/lent à s'arrêter
+  const maxSpd=rescued?2.0:5.0;   // m/s - plus rapide
+  const accel=rescued?6.0:12.0;   // accélération
+  const friction=rescued?0.90:0.85; // friction eau
 
   const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);fwd.y=0;fwd.normalize();
   const rgt=new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);rgt.y=0;rgt.normalize();
