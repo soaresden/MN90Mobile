@@ -38,6 +38,9 @@ const G={
   lungInterval:null,
   bubbleTimer:0,
   victimBubbleTimer:0,
+  currentDepth:0,
+  rescueTime:null,
+  hadSurpression:false,
 };
 
 function selectSite(btn){

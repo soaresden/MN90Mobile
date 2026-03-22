@@ -44,83 +44,97 @@ function buildScene(site,onReady){
   loadVictimModel(onReady);
 }
 
-// ===== FOSSE VLG — piscine cylindrique =====
+// ===== FOSSE VLG — piscine cylindrique optimisée =====
 function _buildPoolScene(site){
-  const depth=site.depthMax; // 20m
-  const radius=8; // rayon piscine ~8m
+  const depth=site.depthMax;
+  const radius=8;
 
   // Sol carrelé
-  const floorGeo=new THREE.CircleGeometry(radius,32);
-  const floor=new THREE.Mesh(floorGeo,new THREE.MeshLambertMaterial({color:0x1a2535}));
+  const floor=new THREE.Mesh(
+    new THREE.CircleGeometry(radius,32),
+    new THREE.MeshLambertMaterial({color:0x1a2535})
+  );
   floor.rotation.set(-Math.PI/2,0,0);floor.position.y=-depth;scene.add(floor);
 
-  // Lignes de carrelage sol
+  // Grille sol
   for(let i=-7;i<=7;i++){
-    const lg=new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-radius,0,i),new THREE.Vector3(radius,0,i)
-    ]);
-    const lv=new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(i,0,-radius),new THREE.Vector3(i,0,radius)
-    ]);
-    const lmat=new THREE.LineBasicMaterial({color:0x253545,transparent:true,opacity:0.4});
-    const lh=new THREE.Line(lg,lmat);lh.position.y=-depth+0.02;scene.add(lh);
-    const lvl=new THREE.Line(lv,lmat);lvl.position.y=-depth+0.02;scene.add(lvl);
+    const lmat=new THREE.LineBasicMaterial({color:0x253545,transparent:true,opacity:0.35});
+    const lh=new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-radius,0,i),new THREE.Vector3(radius,0,i)]),lmat);
+    lh.position.y=-depth+0.02;scene.add(lh);
+    const lv=new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i,0,-radius),new THREE.Vector3(i,0,radius)]),lmat);
+    lv.position.y=-depth+0.02;scene.add(lv);
   }
 
   // Paroi cylindrique
-  const wallGeo=new THREE.CylinderGeometry(radius,radius,depth+1,32,1,true);
-  const wall=new THREE.Mesh(wallGeo,new THREE.MeshLambertMaterial({
-    color:0x1e2d3e,side:THREE.BackSide
-  }));
+  const wall=new THREE.Mesh(
+    new THREE.CylinderGeometry(radius,radius,depth+1,32,1,true),
+    new THREE.MeshLambertMaterial({color:0x1e2d3e,side:THREE.BackSide})
+  );
   wall.position.y=-depth/2;scene.add(wall);
 
-  // Lumières LED verticales sur les parois — 8 colonnes
+  // LEDs sur paroi — InstancedMesh pour perf (8 colonnes × depth = 160 instances)
+  const ledGeo=new THREE.BoxGeometry(0.10,0.07,0.03);
+  const ledMat=new THREE.MeshBasicMaterial({color:0x88ccff});
+  const ledInst=new THREE.InstancedMesh(ledGeo,ledMat,8*depth);
+  const dummy=new THREE.Object3D();
+  let idx=0;
   for(let col=0;col<8;col++){
     const angle=col/8*Math.PI*2;
     const wx=Math.cos(angle)*(radius-0.3);
     const wz=Math.sin(angle)*(radius-0.3);
-
-    // Strip LED — petits rectangles lumineux
     for(let d=1;d<=depth;d++){
-      const ledGeo=new THREE.BoxGeometry(0.12,0.08,0.04);
-      const led=new THREE.Mesh(ledGeo,new THREE.MeshBasicMaterial({color:0x88ccff}));
-      led.position.set(wx,-d,wz);
-      led.lookAt(0,-d,0);
-      scene.add(led);
-    }
-
-    // Lumière point par colonne (espacées sur la hauteur)
-    for(let d=2;d<=depth;d+=4){
-      const pl=new THREE.PointLight(0x4488bb,0.4,6);
-      pl.position.set(wx,-d,wz);scene.add(pl);
+      dummy.position.set(wx,-d,wz);
+      dummy.lookAt(0,-d,0);
+      dummy.updateMatrix();
+      ledInst.setMatrixAt(idx++,dummy.matrix);
     }
   }
+  ledInst.instanceMatrix.needsUpdate=true;
+  scene.add(ledInst);
 
-  // Graduation métrique — lignes horizontales sur la paroi
+  // Seulement 4 PointLights — réparties en croix à mi-profondeur
+  for(let i=0;i<4;i++){
+    const a=i/4*Math.PI*2;
+    const pl=new THREE.PointLight(0x4488bb,1.2,20);
+    pl.position.set(Math.cos(a)*(radius-1),-depth/2,Math.sin(a)*(radius-1));
+    scene.add(pl);
+  }
+  // Lumière centrale
+  scene.add(Object.assign(new THREE.PointLight(0x3377cc,0.8,25),{position:{x:0,y:-depth/2,z:0}}));
+
+  // Graduation métrique — lignes horizontales (segments réduits à 16)
   for(let d=1;d<=depth;d++){
     const pts=[];
-    const segs=32;
-    for(let s=0;s<=segs;s++){
-      const a=s/segs*Math.PI*2;
+    for(let s=0;s<=16;s++){
+      const a=s/16*Math.PI*2;
       pts.push(new THREE.Vector3(Math.cos(a)*radius,-d,Math.sin(a)*radius));
     }
-    const lg=new THREE.BufferGeometry().setFromPoints(pts);
     const isMajor=d%5===0;
-    const lm=new THREE.LineBasicMaterial({
-      color:isMajor?0x6699bb:0x2a3d50,
-      transparent:true,opacity:isMajor?0.7:0.3
-    });
-    scene.add(new THREE.Line(lg,lm));
+    scene.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({color:isMajor?0x6699bb:0x2a3d50,transparent:true,opacity:isMajor?0.65:0.25})
+    ));
   }
 
-  // Surface eau
+  // Labels métriques sur la paroi (tous les 5m)
+  // On utilise des petites BoxGeometry colorées comme marqueurs
+  for(let d=5;d<=depth;d+=5){
+    const markerMat=new THREE.MeshBasicMaterial({color:0xffcc44});
+    const marker=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.05,0.05),markerMat);
+    marker.position.set(radius-0.2,-d,0);
+    scene.add(marker);
+  }
+
+  // Surface
   water=new THREE.Mesh(
     new THREE.CircleGeometry(radius,32),
     new THREE.MeshLambertMaterial({color:0x021c26,transparent:true,opacity:0.6,side:THREE.DoubleSide})
   );
   water.rotation.set(-Math.PI/2,0,0);water.position.y=0.3;scene.add(water);
 
-  console.log('[scene] Fosse VLG construite — cylindre r='+radius+' depth='+depth);
+  console.log('[scene] Fosse VLG construite OK (optimisée)');
 }
 
 // ===== SITES NATURELS =====
@@ -292,8 +306,21 @@ function buildArm(){
   wg.rotation.set(Math.PI/2,0,0);wg.position.set(0,0.072,0.018);leftArm.add(wg);
   const sb=mk(new THREE.BoxGeometry(0.018,0.050,0.085),0x060606);
   sb.position.set(0,0.072,0.075);leftArm.add(sb);
-  leftArm.position.set(-0.28,-0.22,0);
-  leftArm.rotation.set(0,0,0.15);
+  // Ordi de plongée sur bras gauche (boîtier + écran)
+  const computer=new THREE.Group();
+  const body=mk(new THREE.BoxGeometry(0.10,0.055,0.016),0x111820);
+  body.rotation.set(Math.PI/2,0,0);computer.add(body);
+  const screen=mk(new THREE.BoxGeometry(0.082,0.038,0.002),0x001a14);
+  screen.rotation.set(Math.PI/2,0,0);screen.position.set(0,0,-0.009);computer.add(screen);
+  // Petit reflet écran
+  const glow=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.025,0.001),
+    new THREE.MeshBasicMaterial({color:0x00cc88,transparent:true,opacity:0.6}));
+  glow.rotation.set(Math.PI/2,0,0);glow.position.set(0,0,-0.011);computer.add(glow);
+  computer.position.set(0,0.072,-0.04);
+  leftArm.add(computer);
+
+  leftArm.position.set(-0.18,-0.22,0);
+  leftArm.rotation.set(0,0,0.1);
   armGroup.add(leftArm);
 
   const rightArm=new THREE.Group();
@@ -386,8 +413,12 @@ function spawnBubble(pos,isVictim){
 
 function spawnVictimBubbles(){
   if(!victimModel)return;
-  const pos=VP.clone();pos.z+=0.8;pos.y+=0.3;
-  for(let i=0;i<2+Math.floor(Math.random()*3);i++)setTimeout(()=>spawnBubble(pos,true),i*100);
+  // Bulles depuis la tête/masque du blessé (position group + offset tête)
+  const headPos=victimModel.position.clone().add(new THREE.Vector3(0,0.62,0));
+  const count=G.rescued?4+Math.floor(Math.random()*4):2+Math.floor(Math.random()*3);
+  for(let i=0;i<count;i++){
+    setTimeout(()=>spawnBubble(headPos,true),i*80);
+  }
 }
 
 function updateBubbles(dt){
@@ -412,7 +443,10 @@ function sceneAnimate(dt,gameTime){
   G.bubbleTimer+=dt;
   if(G.bubbleTimer>0.20){G.bubbleTimer=0;spawnBubble(null,false);}
   G.victimBubbleTimer+=dt;
-  if(G.victimBubbleTimer>3.5+Math.random()*2){G.victimBubbleTimer=0;spawnVictimBubbles();}
+  const victimBubbleRate=G.rescued?1.2:2.0; // plus fréquent si pris en charge
+  if(G.victimBubbleTimer>victimBubbleRate+Math.random()){
+    G.victimBubbleTimer=0;spawnVictimBubbles();
+  }
   updateBubbles(dt);
   renderer.render(scene,camera);
 }

@@ -4,123 +4,85 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="screen-orientation" content="landscape">
-<title>Remontée Assistée</title>
+<title>Remontée Assistée — Simulateur de Sauvetage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-/* Forcer landscape sur mobile */
-@media screen and (orientation:portrait) and (max-width:768px){
-  body::before{
-    content:'Tournez votre téléphone en paysage';
-    position:fixed;inset:0;z-index:9999;
-    background:#000;color:#00e5cc;
-    font-family:'Courier New',monospace;font-size:14px;letter-spacing:2px;
-    display:flex;align-items:center;justify-content:center;text-align:center;
-    padding:20px;
-  }
-  body>*{display:none!important}
-  body::before{display:flex!important}
-}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{overflow:hidden;background:#000;font-family:'Courier New',monospace;touch-action:none}
+body{overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif;touch-action:none}
 canvas{display:block;position:absolute;top:0;left:0}
-/* === COUCHES Z-INDEX ===
-   z:1   canvas 3D
-   z:10  effets visuels (vignette, couleur)
-   z:20  masque — cadre noir avec clip-path
-   z:30  tous les contrôles HUD
-   z:50  joysticks
-*/
+
+/* PORTRAIT MOBILE → message */
+@media screen and (orientation:portrait) and (max-width:768px){
+  body>*{display:none!important}
+  body::after{content:'↻  Tournez votre appareil';display:flex!important;position:fixed;inset:0;z-index:9999;background:#000;color:#00e5cc;font-family:'Rajdhani',sans-serif;font-size:18px;letter-spacing:3px;align-items:center;justify-content:center}
+}
+
+/* ===== EFFETS VISUELS ===== */
 #overlay{position:absolute;inset:0;pointer-events:none;z-index:10}
 #mask-vignette{position:absolute;inset:0;pointer-events:none;transition:box-shadow .8s}
 #mask-color{position:absolute;inset:0;pointer-events:none;opacity:0.14;transition:background 1.5s,opacity .8s}
 #depth-color-overlay{position:absolute;inset:0;pointer-events:none;transition:background .5s,opacity .5s;opacity:0;mix-blend-mode:multiply}
 
-/* Masque monoverre FPS — 4 bandes noires autour d'un trou central
-   avec encoche nez en bas centre.
-   On utilise 4 divs positionnés pour former le cadre. */
+/* ===== MASQUE MONOVERRE ===== */
 #mask-frame{position:fixed;inset:0;pointer-events:none;z-index:20}
-/* Les 4 bandes du cadre */
 #mask-top   {position:absolute;top:0;    left:0;right:0;    height:12%;  background:#000}
 #mask-bottom{position:absolute;bottom:0; left:0;right:0;    height:10%;  background:#000}
 #mask-left  {position:absolute;top:12%;  left:0;            width:6%;   height:78%; background:#000}
 #mask-right {position:absolute;top:12%;  right:0;           width:6%;   height:78%; background:#000}
-/* Coins arrondis : 4 quarts de cercle dans les coins pour arrondir le verre */
-#mask-tl,#mask-tr,#mask-bl,#mask-br{position:absolute;width:60px;height:60px;background:#000}
-#mask-tl{top:12%;   left:6%;  border-radius:0 0 100% 0}
-#mask-tr{top:12%;   right:6%; border-radius:0 0 0 100%}
-#mask-bl{bottom:10%;left:6%;  border-radius:0 100% 0 0}
-#mask-br{bottom:10%;right:6%; border-radius:100% 0 0 0}
-/* Encoche nez — triangle en bas centre */
-#mask-nose{
-  position:absolute;
-  bottom:10%;left:50%;
-  transform:translateX(-50%);
-  width:0;height:0;
-  border-left:40px solid transparent;
-  border-right:40px solid transparent;
-  border-bottom:28px solid #000;
-}
-/* Bords intérieurs légèrement visibles (verre) */
-#mask-glass-border{
-  position:absolute;
-  top:12%;left:6%;right:6%;bottom:10%;
-  border:1.5px solid rgba(90,95,105,0.35);
-  pointer-events:none;
-}
-#mask-frame svg{display:none}
-/* Contrôles HUD — couche z:30 */
+#mask-tl{position:absolute;top:12%;left:6%;  width:60px;height:60px;background:#000;border-radius:0 0 100% 0}
+#mask-tr{position:absolute;top:12%;right:6%; width:60px;height:60px;background:#000;border-radius:0 0 0 100%}
+#mask-bl{position:absolute;bottom:10%;left:6%;  width:60px;height:60px;background:#000;border-radius:0 100% 0 0}
+#mask-br{position:absolute;bottom:10%;right:6%; width:60px;height:60px;background:#000;border-radius:100% 0 0 0}
+#mask-nose{position:absolute;bottom:10%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:28px solid #000}
+#mask-glass-border{position:absolute;top:12%;left:6%;right:6%;bottom:10%;border:1.5px solid rgba(90,95,105,0.3);pointer-events:none}
+
+/* ===== HUD LAYER ===== */
 #hud-layer{position:fixed;inset:0;pointer-events:none;z-index:30}
+#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px}
+.ch-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,0.35);margin-top:-.5px}
+.ch-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.35);margin-left:-.5px}
+.ch-c{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,0.5);transform:translate(-50%,-50%)}
 #wrist-hud{position:absolute;bottom:90px;left:55px;transform:perspective(400px) rotateY(15deg) rotateX(-7deg) rotate(-6deg);transform-origin:left bottom;pointer-events:none}
 #suunto-watch{width:190px;height:190px;position:relative}
 #suunto-canvas{position:absolute;top:0;left:0;width:190px;height:190px;border-radius:50%}
-.watch-data{position:absolute;top:0;left:0;width:190px;height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.w-label{font-size:8px;letter-spacing:2px;color:#00e5cc;text-transform:uppercase;margin-bottom:1px}
-.w-depth{font-size:36px;font-weight:bold;color:#fff;line-height:1;letter-spacing:-2px}
-.w-unit{font-size:13px;color:#fff;font-weight:bold}
-.w-divider{width:85px;height:1px;background:rgba(0,229,204,0.25);margin:5px 0}
-.w-row{display:flex;gap:12px}
-.w-cell{text-align:center}
-.w-cell-label{font-size:7px;color:#00e5cc;letter-spacing:1.5px;text-transform:uppercase}
-.w-cell-val{font-size:17px;font-weight:bold;color:#fff;line-height:1}
-.w-sep{width:1px;height:28px;background:rgba(0,229,204,0.18);margin-top:12px}
-.w-temp{margin-top:4px;text-align:center}
-.w-temp-label{font-size:7px;color:#00e5cc;letter-spacing:2px;text-transform:uppercase}
-.w-temp-val{font-size:14px;font-weight:bold;color:#fff}
-.w-alert{margin-top:3px;font-size:8px;letter-spacing:1.5px;text-align:center;min-height:11px;color:rgba(0,229,204,0.5);transition:color .2s}
-.w-alert.warn{color:#ffcc00;animation:blink .8s infinite}
-.w-alert.danger{color:#ff3333;animation:blink .4s infinite}
+
+/* Alerte sous la montre */
+#hud-alert-bar{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(0,229,204,0.5);transition:color .2s;white-space:nowrap}
+#hud-alert-bar.warn{color:#ffcc00;animation:blink .8s infinite}
+#hud-alert-bar.danger{color:#ff3333;animation:blink .4s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
-#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px}
-.ch-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,0.4);margin-top:-.5px}
-.ch-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.4);margin-left:-.5px}
-.ch-c{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,0.5);transform:translate(-50%,-50%)}
-#victim-status{position:absolute;top:24px;right:24px;background:rgba(0,8,18,0.72);border:1px solid rgba(80,160,220,0.2);border-radius:8px;padding:9px 13px;color:rgba(140,195,235,0.7);font-size:10px;letter-spacing:1px;display:none}
-.vs-name{color:rgba(140,195,235,0.95);font-size:12px;margin-bottom:3px}
+
+#victim-status{position:absolute;top:24px;right:24px;background:rgba(0,8,18,0.75);border:1px solid rgba(80,160,220,0.2);border-radius:8px;padding:9px 13px;color:rgba(140,195,235,0.7);font-size:11px;letter-spacing:1px;display:none;font-family:'Rajdhani',sans-serif}
+.vs-name{color:rgba(140,195,235,0.95);font-size:13px;font-weight:600;margin-bottom:3px}
 .vs-bar-wrap{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin:4px 0;overflow:hidden}
 .vs-bar{height:100%;background:#4fc3f7;border-radius:2px;transition:width 2s}
-#palier-banner{position:absolute;top:32px;left:50%;transform:translateX(-50%);background:rgba(25,15,0,0.82);border:1px solid rgba(255,200,0,0.45);border-radius:6px;padding:7px 24px;font-size:11px;letter-spacing:2.5px;color:#ffcc00;text-transform:uppercase;display:none;text-align:center}
-#interact-prompt{position:absolute;top:58%;left:50%;transform:translateX(-50%);background:rgba(0,8,20,0.72);border:1px solid rgba(80,200,255,0.3);border-radius:6px;padding:8px 20px;font-size:11px;color:rgba(140,215,255,0.9);letter-spacing:1.5px;display:none;pointer-events:all;cursor:pointer}
-#sound-btn{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,8,20,0.7);border:1px solid rgba(80,200,255,0.2);border-radius:6px;padding:5px 14px;font-size:10px;letter-spacing:2px;color:rgba(100,200,255,0.6);cursor:pointer;pointer-events:all}
-#torch-btn{position:absolute;top:12px;left:calc(50% + 85px);background:rgba(20,15,0,0.7);border:1px solid rgba(255,200,80,0.2);border-radius:6px;padding:5px 12px;font-size:10px;letter-spacing:2px;color:rgba(255,200,80,0.6);cursor:pointer;pointer-events:all}
+
+#palier-banner{position:absolute;top:32px;left:50%;transform:translateX(-50%);background:rgba(25,15,0,0.85);border:1px solid rgba(255,200,0,0.45);border-radius:6px;padding:8px 28px;font-size:13px;font-weight:700;letter-spacing:3px;color:#ffcc00;text-transform:uppercase;display:none;text-align:center;font-family:'Rajdhani',sans-serif}
+#interact-prompt{position:absolute;top:58%;left:50%;transform:translateX(-50%);background:rgba(0,8,20,0.75);border:1px solid rgba(80,200,255,0.3);border-radius:6px;padding:9px 22px;font-size:12px;font-weight:600;color:rgba(140,215,255,0.9);letter-spacing:2px;display:none;pointer-events:all;cursor:pointer;font-family:'Rajdhani',sans-serif}
+#sound-btn{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,8,20,0.7);border:1px solid rgba(80,200,255,0.18);border-radius:6px;padding:5px 16px;font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(100,200,255,0.55);cursor:pointer;pointer-events:all;font-family:'Rajdhani',sans-serif}
+#torch-btn{position:absolute;top:12px;left:calc(50% + 90px);background:rgba(20,15,0,0.7);border:1px solid rgba(255,200,80,0.18);border-radius:6px;padding:5px 14px;font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(255,200,80,0.55);cursor:pointer;pointer-events:all;font-family:'Rajdhani',sans-serif}
 #loading-bar-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;display:none}
-#loading-txt{color:rgba(0,229,204,0.7);font-size:11px;letter-spacing:3px;margin-bottom:10px}
+#loading-txt{color:rgba(0,229,204,0.7);font-size:12px;font-weight:600;letter-spacing:3px;margin-bottom:10px;font-family:'Rajdhani',sans-serif}
 #loading-bar{width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
 #loading-fill{height:100%;background:#00e5cc;width:0%;transition:width .3s}
-/* Joysticks z:50 — dans hud-layer, priorité tactile */
+
 .joystick-zone{position:absolute;bottom:20px;width:120px;height:120px;pointer-events:all;touch-action:none;z-index:50}
 #joy-left{left:10px}
 #joy-right{right:10px}
-.joy-base{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.3)}
-.joy-stick{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.3);top:50%;left:50%;transform:translate(-50%,-50%)}
-.joy-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:8px;color:rgba(255,255,255,0.25);letter-spacing:1px;white-space:nowrap}
-#btn-interact{position:absolute;bottom:90px;right:20px;width:60px;height:60px;border-radius:50%;background:rgba(0,150,200,0.2);border:2px solid rgba(80,200,255,0.4);color:rgba(140,215,255,0.9);font-family:'Courier New',monospace;font-size:11px;letter-spacing:1px;pointer-events:all;cursor:pointer;display:none;align-items:center;justify-content:center;text-align:center}
-/* Panneaux flottabilité */
-.buoy-panel{position:absolute;display:none;background:rgba(0,8,20,0.82);border:1px solid rgba(80,160,220,0.25);border-radius:10px;padding:10px 12px;font-family:'Courier New',monospace;pointer-events:all}
-.buoy-title{font-size:8px;letter-spacing:2px;color:rgba(80,180,255,0.5);text-transform:uppercase;margin-bottom:8px}
+.joy-base{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3)}
+.joy-stick{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);top:50%;left:50%;transform:translate(-50%,-50%)}
+.joy-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:rgba(255,255,255,0.2);letter-spacing:1px;white-space:nowrap;font-family:'Rajdhani',sans-serif}
+#btn-interact{position:absolute;bottom:90px;right:20px;width:60px;height:60px;border-radius:50%;background:rgba(0,150,200,0.2);border:2px solid rgba(80,200,255,0.4);color:rgba(140,215,255,0.9);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;pointer-events:all;cursor:pointer;display:none;align-items:center;justify-content:center;text-align:center}
+
+/* ===== PANNEAUX FLOTTABILITÉ ===== */
+.buoy-panel{position:absolute;display:none;background:rgba(0,8,20,0.82);border:1px solid rgba(80,160,220,0.22);border-radius:10px;padding:10px 12px;font-family:'Rajdhani',sans-serif;pointer-events:all}
+.buoy-title{font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(80,180,255,0.5);text-transform:uppercase;margin-bottom:6px}
 .buoy-bar-wrap{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin:4px 0 8px}
 .buoy-bar{height:100%;border-radius:3px;transition:width .3s}
-.buoy-val{font-size:12px;font-weight:bold;color:#fff;margin-bottom:2px}
-.buoy-sub{font-size:8px;color:rgba(120,180,220,0.5);letter-spacing:1px;margin-bottom:6px}
-.buoy-btn{width:100%;padding:6px;border-radius:6px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:1.5px;cursor:pointer;border:1px solid;margin-bottom:4px;text-align:center;transition:opacity .15s;user-select:none}
+.buoy-val{font-size:14px;font-weight:700;color:#fff;margin-bottom:2px}
+.buoy-sub{font-size:9px;color:rgba(120,180,220,0.5);letter-spacing:1px;margin-bottom:6px}
+.buoy-btn{width:100%;padding:7px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;letter-spacing:1.5px;cursor:pointer;border:1px solid;margin-bottom:4px;text-align:center;transition:opacity .15s;user-select:none}
 .buoy-btn:last-child{margin-bottom:0}
 .buoy-btn:active{opacity:.7}
 .btn-inflate{background:rgba(0,120,220,0.18);border-color:rgba(0,120,220,0.4);color:#4499ff}
@@ -132,16 +94,130 @@ canvas{display:block;position:absolute;top:0;left:0}
 #panel-purge-me{bottom:150px;right:10px;width:140px}
 #panel-victim-ds{bottom:228px;right:10px;width:140px}
 #panel-lung{top:45%;right:160px;transform:translateY(-50%);width:148px}
-#start-screen{position:absolute;inset:0;background:rgba(0,4,12,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:all;z-index:20}
-#start-screen h1{color:#00e5cc;font-size:22px;letter-spacing:5px;text-transform:uppercase;font-weight:normal}
-.site-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:min(380px,90vw)}
-.site-btn{padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.7);font-family:'Courier New',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;text-align:left;transition:all .2s}
-.site-btn:hover,.site-btn.selected{border-color:rgba(0,220,180,0.5);background:rgba(0,220,180,0.08);color:#00e5cc}
-.site-btn .site-name{font-size:12px;font-weight:bold;margin-bottom:3px}
-.site-btn .site-info{font-size:8px;opacity:.5;letter-spacing:1px}
-.params-box{color:rgba(90,170,210,0.6);font-size:10px;border:1px solid rgba(90,170,210,0.12);border-radius:6px;padding:9px 22px;letter-spacing:1.5px;line-height:2.1;text-align:center}
-#start-btn{padding:11px 44px;background:rgba(0,200,170,0.1);border:1px solid rgba(0,200,170,0.4);border-radius:6px;color:#00e5cc;font-family:'Courier New',monospace;font-size:13px;letter-spacing:3px;cursor:pointer;text-transform:uppercase;transition:all .2s}
-#start-btn:hover{background:rgba(0,200,170,0.22);border-color:rgba(0,200,170,0.7)}
+
+/* ===== ÉCRAN TITRE ===== */
+#start-screen{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg,#000a18 0%,#001428 50%,#000d20 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;pointer-events:all;z-index:200;overflow:hidden;
+}
+/* Lignes de scan animées */
+#start-screen::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,180,160,0.015) 2px,rgba(0,180,160,0.015) 4px);
+  pointer-events:none;
+}
+/* Halo central */
+#start-screen::after{
+  content:'';position:absolute;top:35%;left:50%;
+  transform:translate(-50%,-50%);
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,180,160,0.08) 0%,transparent 65%);
+  pointer-events:none;
+}
+
+.ss-top-line{
+  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:6px;color:rgba(0,229,204,0.3);text-transform:uppercase;
+  margin-bottom:16px;
+}
+.ss-title{
+  font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,56px);
+  font-weight:900;color:#fff;line-height:1;
+  text-shadow:0 0 40px rgba(0,229,204,0.3),0 0 80px rgba(0,229,204,0.1);
+  margin-bottom:4px;letter-spacing:2px;
+}
+.ss-title span{color:#00e5cc}
+.ss-subtitle{
+  font-family:'Rajdhani',sans-serif;font-size:clamp(16px,2.5vw,22px);
+  font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:8px;
+  text-transform:uppercase;margin-bottom:20px;
+}
+.ss-mission{
+  font-family:'Rajdhani',sans-serif;font-size:clamp(14px,2vw,18px);
+  font-weight:700;color:#ff4422;letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:24px;
+  text-shadow:0 0 20px rgba(255,60,20,0.4);
+}
+
+/* Layout principal deux colonnes */
+.ss-main{display:flex;gap:20px;align-items:flex-start;width:min(860px,96vw);margin-bottom:14px}
+/* Objectifs — colonne gauche */
+.ss-left{width:230px;flex-shrink:0}
+.ss-obj-title,.ss-sites-title{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(0,229,204,0.4);margin-bottom:8px;text-transform:uppercase;display:block}
+.ss-objectives{display:flex;flex-direction:column;gap:5px}
+.ss-obj{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);border-radius:5px}
+.ss-obj-n{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#00e5cc;min-width:16px;margin-top:1px}
+.ss-obj-t{display:block;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:rgba(255,255,255,0.85);line-height:1.2}
+.ss-obj-d{display:block;font-family:'Rajdhani',sans-serif;font-size:9px;color:rgba(255,255,255,0.3)}
+/* Sites — colonne droite */
+.ss-sites{flex:1}
+.site-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.site-btn{
+  border-radius:8px;
+  border:2px solid rgba(255,255,255,0.1);
+  background:rgba(5,12,25,0.95);
+  cursor:pointer;text-align:left;
+  transition:border-color .2s,box-shadow .2s;
+  position:relative;padding:0;
+}
+.site-btn:hover{border-color:rgba(0,229,204,0.5)}
+.site-btn.selected{border-color:#00e5cc;box-shadow:0 0 14px rgba(0,229,204,0.3)}
+.site-btn.selected::after{content:'\2713';position:absolute;top:4px;right:6px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e5cc;}
+/* Ligne 1 : thumbnail avec canvas dedans */
+.site-thumb{height:60px;border-radius:6px 6px 0 0;overflow:hidden;position:relative;}
+.site-preview{position:absolute;inset:0;width:100%;height:100%;}
+/* Ligne 2 : nom */
+.site-name{
+  display:block;
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  color:#fff;letter-spacing:1px;
+  padding:6px 8px 3px;
+  border-top:1px solid rgba(255,255,255,0.1);
+}
+.site-btn.selected .site-name{color:#00e5cc}
+/* Ligne 3 : description */
+.site-meta{
+  display:block;
+  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;
+  color:rgba(180,200,220,0.65);
+  padding:0 8px 8px;
+  line-height:1.4;
+}
+.ss-rule{
+  font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:1.5px;color:rgba(0,229,204,0.5);
+  border:1px solid rgba(0,229,204,0.15);border-radius:4px;
+  padding:5px 12px;
+}
+
+/* Bouton plonger */
+#start-btn{
+  font-family:'Orbitron',sans-serif;font-size:clamp(13px,2vw,16px);
+  font-weight:700;letter-spacing:6px;
+  color:#00e5cc;
+  background:transparent;
+  border:1px solid rgba(0,229,204,0.35);
+  border-radius:4px;
+  padding:14px 52px;
+  cursor:pointer;
+  text-transform:uppercase;
+  transition:all .3s;
+  position:relative;overflow:hidden;
+}
+#start-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(0,229,204,0.08),transparent);
+  transform:translateX(-100%);transition:transform .4s;
+}
+#start-btn:hover::before{transform:translateX(100%)}
+#start-btn:hover{
+  background:rgba(0,229,204,0.1);
+  border-color:rgba(0,229,204,0.8);
+  text-shadow:0 0 20px rgba(0,229,204,0.8);
+  letter-spacing:8px;
+}
 </style>
 </head>
 <body>
@@ -152,50 +228,32 @@ canvas{display:block;position:absolute;top:0;left:0}
   <div id="depth-color-overlay"></div>
 </div>
 
-<!-- Masque monoverre FPS — 4 bandes + coins arrondis + encoche nez -->
 <div id="mask-frame">
-  <div id="mask-top"></div>
-  <div id="mask-bottom"></div>
-  <div id="mask-left"></div>
-  <div id="mask-right"></div>
-  <div id="mask-tl"></div>
-  <div id="mask-tr"></div>
-  <div id="mask-bl"></div>
-  <div id="mask-br"></div>
-  <div id="mask-nose"></div>
-  <div id="mask-glass-border"></div>
+  <div id="mask-top"></div><div id="mask-bottom"></div>
+  <div id="mask-left"></div><div id="mask-right"></div>
+  <div id="mask-tl"></div><div id="mask-tr"></div>
+  <div id="mask-bl"></div><div id="mask-br"></div>
+  <div id="mask-nose"></div><div id="mask-glass-border"></div>
 </div>
 
-<!-- HUD layer — z:30, tous les contrôles par-dessus le masque -->
 <div id="hud-layer">
   <div id="crosshair"><div class="ch-h"></div><div class="ch-v"></div><div class="ch-c"></div></div>
   <div id="wrist-hud">
     <div id="suunto-watch">
       <canvas id="suunto-canvas" width="190" height="190"></canvas>
-      <div class="watch-data">
-        <div class="w-label">Depth</div>
-        <div><span class="w-depth" id="hud-depth">20</span><span class="w-unit">m</span></div>
-        <div class="w-divider"></div>
-        <div class="w-row">
-          <div class="w-cell"><div class="w-cell-label">No Deco</div><div class="w-cell-val" id="hud-nodeco">40'</div></div>
-          <div class="w-sep"></div>
-          <div class="w-cell"><div class="w-cell-label">Dive Time</div><div class="w-cell-val" id="hud-divetime">0'<span id="hud-secs" style="font-size:10px">00</span></div></div>
-        </div>
-        <div class="w-temp"><div class="w-temp-label">Temperature</div><div class="w-temp-val" id="hud-temp">—</div></div>
-        <div class="w-alert" id="hud-alert">SYS OK</div>
-      </div>
     </div>
+    <div id="hud-alert-bar">SYS OK</div>
   </div>
   <div id="victim-status">
     <div class="vs-name">Blessé · Homme · Norm.</div>
-    <div>Semi-conscient</div>
+    <div style="font-size:10px;opacity:.6">Semi-conscient</div>
     <div class="vs-bar-wrap"><div class="vs-bar" style="width:65%"></div></div>
-    <div style="font-size:8px;color:rgba(90,150,190,0.5);margin-top:3px">État : <span id="vs-state">Stable</span></div>
+    <div style="font-size:9px;color:rgba(90,150,190,0.5);margin-top:3px">État : <span id="vs-state">Stable</span></div>
   </div>
   <div id="palier-banner">Palier 3 m — <span id="palier-countdown">60</span> s</div>
   <div id="interact-prompt" onclick="tryRescue()">[E] Prendre en charge le blessé</div>
   <div id="sound-btn" onclick="toggleSound()">SON : OFF</div>
-  <div id="torch-btn" onclick="toggleTorch()">LAMPE : OFF</div>
+  <div id="torch-btn" onclick="toggleTorch()">LAMPE : ON</div>
   <div id="loading-bar-wrap"><div id="loading-txt">CHARGEMENT DU MODÈLE</div><div id="loading-bar"><div id="loading-fill"></div></div></div>
   <div class="joystick-zone" id="joy-left"><div class="joy-base"></div><div class="joy-stick" id="joy-left-stick"></div><div class="joy-label">NAGER</div></div>
   <div class="joystick-zone" id="joy-right"><div class="joy-base"></div><div class="joy-stick" id="joy-right-stick"></div><div class="joy-label">CAMÉRA</div></div>
@@ -228,35 +286,211 @@ canvas{display:block;position:absolute;top:0;left:0}
     <div class="buoy-val" id="lung-val">3.5 L</div>
     <div class="buoy-sub" id="lung-sub">NEUTRE</div>
     <div class="buoy-bar-wrap"><div class="buoy-bar" id="lung-bar" style="background:#00cc88;width:55%"></div></div>
+    <canvas id="lung-wave" width="126" height="28" style="display:block;width:100%;margin:4px 0 6px;opacity:0.8"></canvas>
     <div class="buoy-btn btn-insp" onclick="triggerLung('in')">↑ INSPIRER 5s</div>
     <div class="buoy-btn btn-exp" onclick="triggerLung('out')">↓ EXPIRER 5s</div>
   </div>
 </div>
 
+<!-- ÉCRAN TITRE -->
 <div id="start-screen">
-  <h1>Remontée Assistée</h1>
-  <p style="color:rgba(140,210,240,0.4);font-size:10px;letter-spacing:2px;margin-bottom:4px">Choisissez votre site</p>
-  <div class="site-grid">
-    <button class="site-btn selected" data-site="roussay" onclick="selectSite(this)"><div class="site-name">ROUSSAY</div><div class="site-info">EAU DOUCE · 40m · VERT TROUBLE</div></button>
-    <button class="site-btn" data-site="martinique" onclick="selectSite(this)"><div class="site-name">ST-PIERRE</div><div class="site-info">MARTINIQUE · ∞ · BLEU CRISTAL</div></button>
-    <button class="site-btn" data-site="vlg" onclick="selectSite(this)"><div class="site-name">FOSSE VLG</div><div class="site-info">EAU DOUCE · 20m · GRIS SOMBRE</div></button>
-    <button class="site-btn" data-site="nemo" onclick="selectSite(this)"><div class="site-name">NEMO 33</div><div class="site-info">BRUXELLES · 33m · TURQUOISE PUR</div></button>
+  <div class="ss-top-line">Formation · Sécurité · Plongée</div>
+  <div class="ss-title">Remontée<span> Assistée</span></div>
+  <div class="ss-subtitle">Simulateur N3</div>
+  <div class="ss-mission">⚠ Sauvez votre binôme d'une mort certaine</div>
+
+  <div class="ss-main">
+    <div class="ss-left">
+      <div class="ss-obj-title">Objectifs</div>
+      <div class="ss-objectives">
+        <div class="ss-obj"><span class="ss-obj-n">1</span><div><span class="ss-obj-t">Trouvez le blessé</span><span class="ss-obj-d">Approchez-vous · touche E</span></div></div>
+        <div class="ss-obj"><span class="ss-obj-n">2</span><div><span class="ss-obj-t">Gérez la flottabilité</span><span class="ss-obj-d">Stabs + poumon · max 10 m/min</span></div></div>
+        <div class="ss-obj"><span class="ss-obj-n">3</span><div><span class="ss-obj-t">Palier 3 m · 60 s</span><span class="ss-obj-d">Stop obligatoire avant surface</span></div></div>
+        <div class="ss-obj"><span class="ss-obj-n">4</span><div><span class="ss-obj-t">360° en surface</span><span class="ss-obj-d">Stabilisez à 5–6 m · guettez bateaux</span></div></div>
+      </div>
+    </div>
+    <div class="ss-sites">
+      <div class="ss-sites-title">Choisissez votre site</div>
+      <div class="site-grid">
+        <button class="site-btn selected" data-site="roussay" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#0d2a0d,#030a02)">
+            <canvas class="site-preview" data-site="roussay"></canvas>
+          </div>
+          <div class="site-name">ROUSSAY</div>
+          <div class="site-meta">Lac · 40 m · 11°C · Eau verte trouble</div>
+        </button>
+        <button class="site-btn" data-site="martinique" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#041830,#010c1a)">
+            <canvas class="site-preview" data-site="martinique"></canvas>
+          </div>
+          <div class="site-name">ST-PIERRE</div>
+          <div class="site-meta">Martinique · ∞ · 28°C · Bleu cristal</div>
+        </button>
+        <button class="site-btn" data-site="vlg" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#080f1a,#030710)">
+            <canvas class="site-preview" data-site="vlg"></canvas>
+          </div>
+          <div class="site-name">FOSSE VLG</div>
+          <div class="site-meta">Piscine · 20 m · 13°C · Cylindre LEDs</div>
+        </button>
+        <button class="site-btn" data-site="nemo" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#021520,#010810)">
+            <canvas class="site-preview" data-site="nemo"></canvas>
+          </div>
+          <div class="site-name">NEMO 33</div>
+          <div class="site-meta">Bruxelles · 33 m · 33°C · Turquoise</div>
+        </button>
+      </div>
+    </div>
   </div>
-  <div class="params-box">Site : <span id="sel-site">Roussay</span> · Prof. : <span id="sel-depth">20m</span><br>Blessé : Homme · Norm. · Semi-conscient</div>
-  <button id="start-btn" onclick="startSim()">Plonger →</button>
+
+  <!-- IDs requis -->
+  <span id="sel-site" style="display:none">Roussay</span>
+  <span id="sel-depth" style="display:none">20m</span>
+  <span id="hud-temp" style="display:none">—</span>
+
+  <button id="start-btn" onclick="startSim()">PLONGER</button>
 </div>
 
-<!-- CDN Three.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<!-- Modules du simulateur — ordre important -->
 <script src="config.js"></script>
 <script src="hud.js"></script>
 <script src="scene.js"></script>
 <script src="buoyancy.js"></script>
 <script src="sound.js"></script>
+<script src="lowair.js"></script>
 <script src="effects.js"></script>
 <script src="controls.js"></script>
 <script src="game.js"></script>
+
+<script>
+// Previews sites — après chargement de tous les scripts
+function drawSitePreviews(){
+  document.querySelectorAll('.site-preview').forEach(cv=>{
+    const site=cv.dataset.site;
+    // Adapter la résolution canvas à la taille CSS réelle
+    const rect=cv.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    const W=Math.round(rect.width||160)*dpr;
+    const H=Math.round(rect.height||90)*dpr;
+    cv.width=W; cv.height=H;
+    const ctx=cv.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const cw=W/dpr, ch=H/dpr; // dimensions CSS
+
+    const s={
+      roussay:{top:'#0a1a08',bot:'#030a02',floor:'#1a2a10',fogCol:'rgba(20,50,10,',fogAmt:0.55,accent:'#2a6a20'},
+      martinique:{top:'#041830',bot:'#010c1a',floor:'#0a2818',fogCol:'rgba(0,20,60,',fogAmt:0.1,accent:'#0066cc'},
+      vlg:{top:'#080f1a',bot:'#030710',floor:'#151f2a',fogCol:'rgba(5,10,20,',fogAmt:0.05,accent:'#4488cc'},
+      nemo:{top:'#021520',bot:'#010810',floor:'#082030',fogCol:'rgba(0,15,30,',fogAmt:0.08,accent:'#00aacc'},
+    }[site]||{top:'#0a1a08',bot:'#030a02',floor:'#1a2a10',fogCol:'rgba(0,0,0,',fogAmt:0.3,accent:'#226622'};
+
+    // Fond dégradé eau
+    const grad=ctx.createLinearGradient(0,0,0,ch);
+    grad.addColorStop(0,s.top); grad.addColorStop(1,s.bot);
+    ctx.fillStyle=grad; ctx.fillRect(0,0,cw,ch);
+
+    if(site==='vlg'){
+      // === FOSSE VLG — vue cylindrique depuis le fond ===
+      // Sol carrelé
+      ctx.fillStyle='#151f28'; ctx.fillRect(0,ch*0.75,cw,ch*0.25);
+      // Lignes de carrelage
+      ctx.strokeStyle='rgba(30,50,70,0.6)'; ctx.lineWidth=0.5;
+      for(let i=0;i<6;i++){
+        const lx=i/5*cw;
+        ctx.beginPath();ctx.moveTo(lx,ch*0.75);ctx.lineTo(cw/2,ch);ctx.stroke();
+      }
+      // Parois gauche et droite
+      const wallGrad=ctx.createLinearGradient(0,0,cw,0);
+      wallGrad.addColorStop(0,'rgba(20,40,65,0.95)');
+      wallGrad.addColorStop(0.15,'rgba(10,20,35,0.4)');
+      wallGrad.addColorStop(0.85,'rgba(10,20,35,0.4)');
+      wallGrad.addColorStop(1,'rgba(20,40,65,0.95)');
+      ctx.fillStyle=wallGrad; ctx.fillRect(0,0,cw,ch*0.75);
+      // LEDs verticales gauche
+      for(let i=0;i<7;i++){
+        const ly=i/6*ch*0.72+2;
+        ctx.fillStyle=`rgba(100,180,255,${0.5+i%2*0.3})`;
+        ctx.fillRect(8,ly,3,3);
+        ctx.fillRect(cw-11,ly,3,3);
+      }
+      // Reflet surface eau en haut (ellipse)
+      ctx.strokeStyle='rgba(80,150,200,0.4)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.ellipse(cw/2,8,cw*0.42,8,0,0,Math.PI*2); ctx.stroke();
+      // Graduations horizontales
+      for(let d=1;d<=4;d++){
+        const y=ch*0.12+d*(ch*0.14);
+        ctx.strokeStyle=`rgba(60,100,140,${d%2===0?0.5:0.25})`;
+        ctx.lineWidth=d%2===0?1:0.5;
+        ctx.beginPath();ctx.moveTo(10,y);ctx.lineTo(cw-10,y);ctx.stroke();
+      }
+
+    } else {
+      // === SITES NATURELS ===
+      // Sol
+      ctx.fillStyle=s.floor; ctx.fillRect(0,ch*0.75,cw,ch*0.25);
+
+      if(site==='martinique'){
+        // Coraux colorés
+        const cols=['#cc2200','#ff5500','#ccaa00','#229955'];
+        for(let i=0;i<9;i++){
+          const cx2=i/8*cw;
+          const ch2=8+Math.sin(i*1.3)*6;
+          ctx.strokeStyle=cols[i%4]; ctx.lineWidth=2.5;
+          ctx.beginPath(); ctx.moveTo(cx2,ch*0.75); ctx.lineTo(cx2+Math.sin(i)*4,ch*0.75-ch2); ctx.stroke();
+          // Branches
+          ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx2+Math.sin(i)*2,ch*0.75-ch2*0.6);
+          ctx.lineTo(cx2+4+Math.sin(i)*2,ch*0.75-ch2*0.8); ctx.stroke();
+        }
+        // Visibilité excellente — pas de brume
+      } else {
+        // Rochers
+        for(let i=0;i<5;i++){
+          const rx=i/4*cw;
+          const rw=8+Math.sin(i*1.8)*5;
+          ctx.fillStyle=`rgba(0,0,0,${0.3+i%2*0.15})`;
+          ctx.beginPath(); ctx.ellipse(rx,ch*0.77,Math.max(1,rw),Math.max(1,rw*0.4),0,0,Math.PI*2); ctx.fill();
+        }
+        if(site==='roussay'){
+          // Algues vertes
+          for(let i=0;i<7;i++){
+            ctx.strokeStyle='#1a4a10'; ctx.lineWidth=1.5;
+            const ax=i/6*cw;
+            ctx.beginPath(); ctx.moveTo(ax,ch*0.75);
+            ctx.bezierCurveTo(ax+3,ch*0.65,ax-3,ch*0.58,ax+Math.sin(i)*4,ch*0.52); ctx.stroke();
+          }
+        }
+        // Brume selon visibilité
+        const fogGrad=ctx.createLinearGradient(0,ch*0.3,0,ch*0.75);
+        fogGrad.addColorStop(0,s.fogCol+'0)');
+        fogGrad.addColorStop(1,s.fogCol+s.fogAmt+')');
+        ctx.fillStyle=fogGrad; ctx.fillRect(0,ch*0.3,cw,ch*0.7);
+      }
+
+      // Particules/bulles
+      for(let i=0;i<14;i++){
+        const bx=(Math.sin(i*2.1)*0.5+0.5)*cw;
+        const by=(Math.sin(i*1.7)*0.3+0.3)*ch;
+        ctx.fillStyle=`rgba(180,220,255,${0.06+i%3*0.04})`;
+        ctx.beginPath(); ctx.arc(bx,by,0.8+i%3,0,Math.PI*2); ctx.fill();
+      }
+    }
+
+    // Reflet surface
+    const surfGrad=ctx.createLinearGradient(0,0,0,6);
+    surfGrad.addColorStop(0,'rgba(255,255,255,0.12)');
+    surfGrad.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=surfGrad; ctx.fillRect(0,0,cw,6);
+
+    // Barre de couleur accent en bas
+    ctx.fillStyle=s.accent+'66';
+    ctx.fillRect(0,ch-3,cw,3);
+  });
+}
+// Attendre que le layout soit calculé pour avoir les bonnes dimensions
+requestAnimationFrame(()=>requestAnimationFrame(drawSitePreviews));
+</script>
 </body>
 </html>

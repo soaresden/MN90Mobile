@@ -5,6 +5,9 @@
 let yaw=0,pitch=0,locked=false;
 let moveF=false,moveB=false,moveL=false,moveR=false,moveU=false,moveD=false;
 
+// Exposé pour game.js (détection 360)
+Object.defineProperty(window,'_yaw',{get:()=>yaw});
+
 document.addEventListener('keydown',e=>{
   if(!G.simStarted)return;
   switch(e.code){
@@ -16,6 +19,7 @@ document.addEventListener('keydown',e=>{
     case 'ShiftLeft':case 'ShiftRight':moveD=true;break;
     case 'ControlLeft':case 'ControlRight':moveD=true;e.preventDefault();break;
     case 'KeyE':tryRescue();break;
+    case 'KeyF':toggleTorch();break;
   }
 });
 document.addEventListener('keyup',e=>{
@@ -48,7 +52,8 @@ function applyMovement(dt){
   cam.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
 
   const maxSpd=G.rescued?2.0:5.0;
-  const accel=G.rescued?6.0:12.0;
+  const accel=4.0; // déplacement horizontal uniquement
+  // Pas de contrôle vertical manuel — la flottabilité gère tout
   const friction=G.rescued?0.90:0.85;
 
   const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);fwd.y=0;fwd.normalize();
@@ -57,7 +62,8 @@ function applyMovement(dt){
 
   if(moveF)inp.addScaledVector(fwd,1);if(moveB)inp.addScaledVector(fwd,-1);
   if(moveL)inp.addScaledVector(rgt,-1);if(moveR)inp.addScaledVector(rgt,1);
-  if(moveU)inp.y+=1;if(moveD)inp.y-=1;
+  // Déplacement horizontal uniquement
+  
 
   const jl=joyState.left;
   if(jl.active&&(Math.abs(jl.dx)>0.05||Math.abs(jl.dy)>0.05)){
@@ -69,17 +75,31 @@ function applyMovement(dt){
     pitch=Math.max(-Math.PI/2.2,Math.min(Math.PI/2.2,pitch));
   }
 
+  // Mouvement horizontal uniquement dans velocity
+  velocity.x*=Math.pow(friction,dt*60);
+  velocity.z*=Math.pow(friction,dt*60);
+  velocity.y=0; // Y géré exclusivement par buoyVelocity
+
   if(inp.length()>0){inp.normalize();velocity.addScaledVector(inp,accel*dt);}
-  velocity.multiplyScalar(Math.pow(friction,dt*60));
-  if(velocity.length()>maxSpd)velocity.setLength(maxSpd);
-  velocity.y+=Math.sin(G.gameTime*1.2)*0.008; // ondulation naturelle
+  const hspd=Math.sqrt(velocity.x*velocity.x+velocity.z*velocity.z);
+  if(hspd>maxSpd){const s=maxSpd/hspd;velocity.x*=s;velocity.z*=s;}
+
+  // Ondulation naturelle — seulement XZ
+  const wave=Math.sin(G.gameTime*1.2)*0.006;
+  cam.position.x+=wave*fwd.z*dt;
+  cam.position.z+=wave*fwd.x*dt;
 
   cam.position.add(velocity.clone().multiplyScalar(dt));
-  // Flottabilité Y
+
+  // Flottabilité Y — appliquée séparément, jamais écrasée
   cam.position.y+=G.buoyVelocity*dt;
   const minY=-(G.currentSite.depthMax+0.5);
   cam.position.y=Math.min(0.4,Math.max(minY,cam.position.y));
   if(G.inPalier)cam.position.y=Math.min(cam.position.y,-2.5);
+
+  // Log debug vitesse verticale
+  if(G.simStarted&&Math.random()<0.005)
+    console.log('[controls] buoyV='+G.buoyVelocity.toFixed(3)+' posY='+cam.position.y.toFixed(2));
 }
 
 // ===== JOYSTICKS TACTILES =====
@@ -135,7 +155,7 @@ canvas3dEl.addEventListener('touchmove',e=>{
   if(!G.simStarted)return;
   for(const t of e.changedTouches){
     if(t.identifier!==touchCamId)continue;
-    yaw-=(t.clientX-lastTX)*0.004;pitch-=(t.clientY-lastTY)*0.004;
+    yaw-=(t.clientX-lastTX)*0.0015;pitch-=(t.clientY-lastTY)*0.0015;
     pitch=Math.max(-Math.PI/2.2,Math.min(Math.PI/2.2,pitch));
     lastTX=t.clientX;lastTY=t.clientY;
   }
@@ -145,4 +165,3 @@ canvas3dEl.addEventListener('touchend',e=>{
 },{passive:true});
 
 // Son géré dans sound.js
-
