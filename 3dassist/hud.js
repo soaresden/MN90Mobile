@@ -185,8 +185,9 @@ function updateHUD(depth,dt){
 
   const consumed=1.0-G.gasLevel;
   const alertEl=document.getElementById('hud-alert-bar');
+  if(!alertEl)return;
   if(consumed<0.33){
-    if(alertEl.className==='w-alert')alertEl.textContent='SYS OK · '+bar+' BAR';
+    if(!alertEl.className||alertEl.className==='')alertEl.textContent='SYS OK · '+bar+' BAR';
   } else if(consumed<0.5){
     setAlert('1/3 CONSOMMÉ — RETOUR · '+bar+' BAR','warn');
   } else if(consumed<0.67){
