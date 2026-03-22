@@ -231,8 +231,9 @@ function loadVictimModel(onLoaded){
   );
 }
 
-// ===== FALLBACK BLESSÉ (bonhomme moche mais visible) =====
+// ===== FALLBACK BLESSÉ — debout, vertical, face vers joueur =====
 function buildFallbackVictim(){
+  console.log('[scene] buildFallbackVictim');
   const g=new THREE.Group();
   g.position.copy(VP);
   const M=c=>new THREE.MeshLambertMaterial({color:c});
@@ -242,25 +243,31 @@ function buildFallbackVictim(){
     if(rx!=null)m.rotation.set(rx,ry||0,rz||0);
     g.add(m);return m;
   };
-  // Torse combinaison
-  mk(new THREE.CylinderGeometry(0.22,0.20,0.85,8),0x0a0a14,0,0,0,0,0,Math.PI/2.2);
-  // Tête
-  mk(new THREE.SphereGeometry(0.21,10,10),0xc8845a,-0.58,0,-0.05);
-  // Masque
-  const mask=new THREE.Mesh(new THREE.BoxGeometry(0.30,0.20,0.08),M(0x1a1a1a));
-  mask.position.set(-0.68,0,0);mask.rotation.y=Math.PI/2;g.add(mask);
-  // Bouteille
-  const tank=new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.10,0.65,8),M(0x334455));
-  tank.position.set(0,0,-0.22);tank.rotation.z=Math.PI/2.2;g.add(tank);
-  // Bras ballants
-  mk(new THREE.CylinderGeometry(0.07,0.06,0.5,7),0x0a0a14,-0.12,0.28,-0.05,0,0,Math.PI/2.5);
-  mk(new THREE.CylinderGeometry(0.07,0.06,0.5,7),0x0a0a14,0.12,0.28,0.15,0.3,0,-Math.PI/3);
-  // Jambes
-  mk(new THREE.CylinderGeometry(0.09,0.08,0.65,8),0x0a0a14,-0.12,0.05,0.35,0,0,Math.PI/2.8);
-  mk(new THREE.CylinderGeometry(0.09,0.08,0.65,8),0x0a0a14,0.12,0.05,0.35,0.15,0,-Math.PI/2.8);
+  // Debout : Y = vertical, Z- = face au joueur
+  // Torse
+  mk(new THREE.CylinderGeometry(0.22,0.20,0.85,8),0x0a0a14, 0, 0, 0);
+  // Tête (au-dessus du torse)
+  mk(new THREE.SphereGeometry(0.20,10,10),0xc8845a, 0, 0.62, 0);
+  // Masque (devant la tête, côté Z-)
+  const mask=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.22,0.08),M(0x1a1a1a));
+  mask.position.set(0,0.62,-0.22);g.add(mask);
+  // Bouteille (dans le dos, côté Z+)
+  mk(new THREE.CylinderGeometry(0.10,0.10,0.65,8),0x334455, 0, 0.1, 0.28);
+  // Bras gauche
+  mk(new THREE.CylinderGeometry(0.07,0.06,0.45,7),0x0a0a14, -0.30, 0.15, 0, 0,0,Math.PI/2.2);
+  // Bras droit
+  mk(new THREE.CylinderGeometry(0.07,0.06,0.45,7),0x0a0a14,  0.30, 0.15, 0, 0,0,-Math.PI/2.2);
+  // Jambe gauche
+  mk(new THREE.CylinderGeometry(0.09,0.08,0.60,8),0x0a0a14, -0.12,-0.65, 0);
+  // Jambe droite
+  mk(new THREE.CylinderGeometry(0.09,0.08,0.60,8),0x0a0a14,  0.12,-0.65, 0);
+  // Palmes (pieds)
+  mk(new THREE.BoxGeometry(0.14,0.08,0.50),0x223322, -0.12,-0.98, 0.12);
+  mk(new THREE.BoxGeometry(0.14,0.08,0.50),0x223322,  0.12,-0.98, 0.12);
   // Lumière
-  const vl=new THREE.PointLight(0x3366ff,0.6,10);vl.position.set(0,1.5,0);g.add(vl);
+  const vl=new THREE.PointLight(0x3366ff,0.7,10);vl.position.set(0,1.0,0);g.add(vl);
   scene.add(g);victimModel=g;
+  console.log('[scene] fallback victim créé à VP=',VP.x,VP.y,VP.z);
 }
 
 // ===== BRAS FPS =====
@@ -316,33 +323,44 @@ function updateArmPosition(gameTime){
 function updateVictim(dt,gameTime){
   if(victimMixer)victimMixer.update(dt);
   if(!victimModel)return;
+
+  const cam=window._camera;
+
   if(!G.rescued){
-    // Avant prise en charge : flotte sur place, signe "ça va pas"
+    // Flotte sur place, agite légèrement (signe ça va pas)
     victimModel.position.y=VP.y+Math.sin(gameTime*0.3)*0.05;
-    victimModel.rotation.set(-Math.PI/2, 0, Math.sin(gameTime*2.5)*0.12);
-  } else {
-    // Pris en charge : face au joueur, à bras tendu (~1.5m devant)
-    // On place le blessé devant la caméra, légèrement en dessous (niveau poitrine)
-    const cam=window._camera;
-    const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
-    fwd.y=0; fwd.normalize(); // horizontal seulement
-
-    const targetPos=cam.position.clone()
-      .addScaledVector(fwd, 1.5)   // 1.5m devant
-      .add(new THREE.Vector3(0,-0.3,0)); // légèrement bas (poitrine)
-
-    // Lerp pour effet de masse/inertie
-    victimModel.position.lerp(targetPos, 0.06);
-
-    // Orienter face au joueur (rotation Y vers caméra)
+    // Debout, face vers joueur (Z-)
     const toPlayer=cam.position.clone().sub(victimModel.position);
     const angleY=Math.atan2(toPlayer.x, toPlayer.z);
     victimModel.rotation.set(
-      -Math.PI/2 + Math.sin(gameTime*0.2)*0.02,
-      angleY + Math.PI, // face vers joueur
+      Math.sin(gameTime*2.0)*0.08, // tête qui secoue ça va pas
+      angleY,
+      Math.sin(gameTime*1.5)*0.06
+    );
+  } else {
+    // Pris en charge : caméra sur sa tête = blessé 1.8m devant, même hauteur Y
+    // On vise sa tête : position group = bas du corps, tête = +0.62m
+    // Pour que la caméra soit "sur sa tête" → placer group tel que tête = cam.pos + 1.8m fwd
+    const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);
+    fwd.y=0; fwd.normalize();
+
+    // Centre du group = 1.8m devant, décalé vers le bas de 0.62m (hauteur tête dans group)
+    const targetPos=cam.position.clone()
+      .addScaledVector(fwd, 1.8)
+      .add(new THREE.Vector3(0,-0.6,0));
+
+    victimModel.position.lerp(targetPos, 0.08);
+
+    // Debout, face au joueur
+    const toPlayer=cam.position.clone().sub(victimModel.position);
+    const angleY=Math.atan2(toPlayer.x, toPlayer.z);
+    victimModel.rotation.set(
+      Math.sin(gameTime*0.25)*0.03,
+      angleY,
       Math.sin(gameTime*0.3)*0.04
     );
   }
+
   if(victimModel.userData&&victimModel.userData.equipment){
     const eq=victimModel.userData.equipment;
     eq.position.copy(victimModel.position);

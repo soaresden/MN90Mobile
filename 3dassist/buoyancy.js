@@ -56,10 +56,15 @@ function processBuoyancy(dt,depth){
 
   updateBuoyHUD();
 
-  // Intégration force → vitesse verticale (joueur seul ou avec blessé)
+  // Intégration force → vitesse verticale
+  // f en "newtons gameplay", masse effective ~80kg → accélération = f/80
+  // dt~0.016s, on veut ~0.5 m/s après 2s de gonflage avec f=3
+  // f=3 → a=3/80=0.0375 m/s² → en 2s → 0.075 m/s → trop lent
+  // On simplifie : buoyVelocity += f * 0.15 * dt (calibré pour ~0.3 m/s avec f=3)
   const f=buoyForce();
-  G.buoyVelocity+=f*0.020*dt;
-  G.buoyVelocity*=Math.pow(0.88,dt*60); // friction eau
+  G.buoyVelocity+=f*0.15*dt;
+  // Friction eau légère — pas trop agressive
+  G.buoyVelocity*=(1-0.8*dt);
   G.buoyVelocity=Math.max(-2.5,Math.min(2.5,G.buoyVelocity));
 
   if(G.rescued&&G.buoyVelocity>0.8&&!G.inPalier)

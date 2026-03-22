@@ -85,31 +85,32 @@ function startBreathing(){
 }
 
 // ===== GONFLAGE STAB =====
-// Son continu tant qu'on gonfle : sifflement haute pression
-let _inflateNode=null;
+// Son valve direct system : claquètement rythmique "brrrbrbrbrr"
+let _inflateInterval=null;
 function startInflateSound(){
-  if(!audioCtx||!soundEnabled||_inflateNode)return;
-  _inflateNode=audioCtx.createOscillator();
-  const g=audioCtx.createGain();
-  const hp=audioCtx.createBiquadFilter();
-  hp.type='highpass';hp.frequency.value=2000;
-  _inflateNode.type='sawtooth';
-  _inflateNode.frequency.value=3500;
-  g.gain.setValueAtTime(0,audioCtx.currentTime);
-  g.gain.linearRampToValueAtTime(0.03,audioCtx.currentTime+0.05);
-  _inflateNode.connect(hp);hp.connect(g);g.connect(audioCtx.destination);
-  _inflateNode.start();
-  _inflateNode._gainNode=g;
+  if(!audioCtx||!soundEnabled||_inflateInterval)return;
+  _inflateInterval=setInterval(()=>{
+    if(!soundEnabled){stopInflateSound();return;}
+    const dur=0.04+Math.random()*0.02;
+    const sr=audioCtx.sampleRate;
+    const buf=audioCtx.createBuffer(1,Math.ceil(sr*dur),sr);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){
+      const t=i/sr;
+      const env=t<0.006?t/0.006:Math.max(0,1-(t-0.006)/(dur-0.006));
+      d[i]=(Math.random()*2-1)*env*0.22;
+    }
+    const src=audioCtx.createBufferSource();
+    const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=100;
+    const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;
+    const g=audioCtx.createGain();g.gain.value=1.0;
+    src.buffer=buf;
+    src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(audioCtx.destination);
+    src.start();
+  },52);
 }
 function stopInflateSound(){
-  if(!_inflateNode)return;
-  try{
-    _inflateNode._gainNode.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.05);
-    setTimeout(()=>{
-      try{_inflateNode.stop();}catch(e){}
-      _inflateNode=null;
-    },60);
-  }catch(e){_inflateNode=null;}
+  if(_inflateInterval){clearInterval(_inflateInterval);_inflateInterval=null;}
 }
 
 // ===== PURGE =====
