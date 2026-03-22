@@ -43,7 +43,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 .ch-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,0.35);margin-top:-.5px}
 .ch-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.35);margin-left:-.5px}
 .ch-c{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,0.5);transform:translate(-50%,-50%)}
-#wrist-hud{position:absolute;bottom:90px;left:55px;transform:perspective(400px) rotateY(15deg) rotateX(-7deg) rotate(-6deg);transform-origin:left bottom;pointer-events:none}
+#wrist-hud{position:absolute;bottom:90px;left:140px;transform:perspective(400px) rotateY(15deg) rotateX(-7deg) rotate(-6deg);transform-origin:left bottom;pointer-events:none}
 #suunto-watch{width:190px;height:190px;position:relative}
 #suunto-canvas{position:absolute;top:0;left:0;width:190px;height:190px;border-radius:50%}
 
@@ -192,7 +192,13 @@ canvas{display:block;position:absolute;top:0;left:0}
   padding:5px 12px;
 }
 
-/* Bouton plonger */
+/* Sélecteur profondeur */
+.depth-picker{text-align:center;margin-bottom:4px}
+.depth-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(0,229,204,0.4);display:block;margin-bottom:8px}
+.depth-btns{display:flex;gap:8px;justify-content:center}
+.depth-btn{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;padding:7px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.depth-btn:hover{border-color:rgba(0,229,204,0.4);color:#00e5cc}
+.depth-btn.selected{border-color:#00e5cc;color:#00e5cc;background:rgba(0,229,204,0.08)}
 #start-btn{
   font-family:'Orbitron',sans-serif;font-size:clamp(13px,2vw,16px);
   font-weight:700;letter-spacing:6px;
@@ -252,7 +258,7 @@ canvas{display:block;position:absolute;top:0;left:0}
   </div>
   <div id="palier-banner">Palier 3 m — <span id="palier-countdown">60</span> s</div>
   <div id="interact-prompt" onclick="tryRescue()">[E] Prendre en charge le blessé</div>
-  <div id="sound-btn" onclick="toggleSound()">SON : OFF</div>
+  <div id="sound-btn" onclick="toggleSound()">SON : ON</div>
   <div id="torch-btn" onclick="toggleTorch()">LAMPE : ON</div>
   <div id="loading-bar-wrap"><div id="loading-txt">CHARGEMENT DU MODÈLE</div><div id="loading-bar"><div id="loading-fill"></div></div></div>
   <div class="joystick-zone" id="joy-left"><div class="joy-base"></div><div class="joy-stick" id="joy-left-stick"></div><div class="joy-label">NAGER</div></div>
@@ -349,7 +355,25 @@ canvas{display:block;position:absolute;top:0;left:0}
   <span id="sel-depth" style="display:none">20m</span>
   <span id="hud-temp" style="display:none">—</span>
 
+  <!-- Sélecteur de profondeur -->
+  <div class="depth-picker">
+    <span class="depth-label">PROFONDEUR DE DÉPART</span>
+    <div class="depth-btns" id="depth-btns">
+      <button class="depth-btn selected" data-depth="10" onclick="selectDepth(this)">10 m</button>
+      <button class="depth-btn" data-depth="20" onclick="selectDepth(this)">20 m</button>
+      <button class="depth-btn" data-depth="30" onclick="selectDepth(this)">30 m</button>
+      <button class="depth-btn" data-depth="40" onclick="selectDepth(this)">40 m</button>
+    </div>
+  </div>
+
   <button id="start-btn" onclick="startSim()">PLONGER</button>
+</div>
+
+<!-- Message 360° centré affiché pendant surface_check -->
+<div id="msg-360" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:35;text-align:center;pointer-events:none">
+  <div style="font-family:'Orbitron',sans-serif;font-size:clamp(18px,3vw,32px);font-weight:900;color:#00e5cc;text-shadow:0 0 30px rgba(0,229,204,0.6);letter-spacing:4px;margin-bottom:8px">FAITES UN 360°</div>
+  <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:2px">Cherchez les bateaux — Stabilisez à 5–6 m</div>
+  <div id="spin-progress" style="margin-top:12px;font-family:'Orbitron',sans-serif;font-size:13px;color:rgba(0,229,204,0.5)">0°</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

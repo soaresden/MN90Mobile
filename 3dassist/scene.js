@@ -13,7 +13,19 @@ window._camera=camera; // exposé pour hud.js
 let ambient,caustic,water,armGroup=null;
 let victimModel=null,victimMixer=null;
 let bubbles3D=[];
-const VP=new THREE.Vector3(0,-19.5,-5);
+// VP sera défini dynamiquement quand la caméra est positionnée
+const VP=new THREE.Vector3(0,-19.5,-3);
+
+function _setVictimPos(){
+  const cam=window._camera;
+  if(!cam)return;
+  // Placer le blessé 3m devant la caméra, même profondeur
+  const dir=new THREE.Vector3(0,0,-1).applyEuler(cam.rotation);
+  dir.y=0;dir.normalize();
+  VP.copy(cam.position).addScaledVector(dir,3);
+  // Légèrement plus bas que la caméra (tête à hauteur des yeux)
+  VP.y=cam.position.y-0.5;
+}
 
 window._ambient=null; // exposé pour hud.js applyDepthColor
 
@@ -196,6 +208,7 @@ function _buildNaturalScene(site){
 function loadVictimModel(onLoaded){
   if(window.location.protocol==='file:'){
     console.log('[scene] file:// → fallback victim (pas de GLB en local)');
+    _setVictimPos();
     buildFallbackVictim();
     if(onLoaded)onLoaded();
     return;
@@ -239,6 +252,7 @@ function loadVictimModel(onLoaded){
     err=>{
       console.error('[scene] Erreur GLB:', err);
       document.getElementById('loading-bar-wrap').style.display='none';
+      _setVictimPos();
       buildFallbackVictim();
       if(onLoaded)onLoaded();
     }

@@ -17,14 +17,18 @@ function startSim(){
   document.getElementById('start-screen').style.display='none';
   buildScene(G.currentSite,()=>{
     const cam=window._camera;
-    cam.position.set(0,-G.currentSite.startDepth,5);
+    cam.position.set(0,-G.selectedDepth,5);
+    // Repositionner le blessé 3m devant la caméra maintenant qu'elle est placée
+    _setVictimPos();
+    if(typeof victimModel!=='undefined'&&victimModel)victimModel.position.copy(VP);
     G.lastY=cam.position.y;G.lastYTime=performance.now()/1000;
     G.gasLevel=1.0;G.isDead=false;G.rescued=false;
     G.inPalier=false;G.palierDone=false;G.gameTime=0;
     G.fastAscentTime=0;G.buoyVelocity=0;
-    // Equilibre : base=-1.0, coeff=0.85 → 1.18L ± légère variation
-    G.playerStab=1.18+(Math.random()-0.5)*0.3;
-    G.victimStab=0;G.lung=LUNG_NEUTRAL;
+    // Equilibre exact : base=-1.0 / coeff=0.85 = 1.176L
+    // Pas de variation aléatoire — on part strictement neutre
+    G.playerStab=1.18;
+    G.victimStab=0;G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;
     ascentLog.length=0;ascentLogTimer=0;
     gamePhase='dive';surface360Start=null;surface360TotalYaw=0;
     rescueTime=null;surfaceTime=null;
@@ -53,19 +57,13 @@ function startRescue(){
   G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;
   showBuoyPanels(true);
   updateBuoyHUD();
-  if(soundEnabled)playBreath();
+  // Pas de playBreath() ici — startBreathing() interval tourne déjà
 }
 
-// ===== PHASE SURFACE : 360° + stabilisation =====
-let _spinAlert=0;
 function checkSurfacePhase(depth,dt){
   if(gamePhase!=='surface_check')return;
-  const cam=window._camera;
   const currentYaw=window._yaw||0;
-
-  // Accumuler rotation totale
   let delta=currentYaw-lastYawForSpin;
-  // Normaliser entre -PI et PI
   while(delta>Math.PI)delta-=Math.PI*2;
   while(delta<-Math.PI)delta+=Math.PI*2;
   surface360TotalYaw+=Math.abs(delta);
@@ -75,15 +73,17 @@ function checkSurfacePhase(depth,dt){
   const atSurface=depth<=6&&depth>=3;
   const stable=Math.abs(G.buoyVelocity)<0.15;
 
-  _spinAlert+=dt;
-  if(_spinAlert>3){
-    _spinAlert=0;
-    if(!has360) setAlert('FAITES UN 360° — cherchez les bateaux !','warn');
-    else if(!stable) setAlert('STABILISEZ À 5-6m','warn');
-    else setAlert('EN ATTENTE STABILISATION…','warn');
+  // Afficher message 360° au centre
+  const msg=document.getElementById('msg-360');
+  if(msg){
+    msg.style.display='block';
+    const deg=Math.min(360,Math.round(surface360TotalYaw*180/Math.PI));
+    const prog=document.getElementById('spin-progress');
+    if(prog)prog.textContent=deg+'° / 360°';
   }
 
   if(has360&&atSurface&&stable){
+    if(msg)msg.style.display='none';
     gamePhase='done';
     triggerSuccess();
   }
@@ -226,8 +226,11 @@ function animate(){
   if(gamePhase==='done')return;
 
   if(G.rescued&&G.currentAscentSpeed>11){
-    setAlert('TROP VITE ! MAX 10 m/min','danger');
     G.fastAscentTime+=dt;
+    if(!G._lastSpeedAlert||G.gameTime-G._lastSpeedAlert>2){
+      G._lastSpeedAlert=G.gameTime;
+      setAlert('TROP VITE ! MAX 10 m/min','danger');
+    }
     if(G.fastAscentTime>8&&!G.hadSurpression)triggerSurpressionPulmonaire();
   } else if(gamePhase==='surface_check'){
     checkSurfacePhase(depth,dt);

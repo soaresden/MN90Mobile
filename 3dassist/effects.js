@@ -2,21 +2,23 @@
 'use strict';
 
 // ===== LAMPE TORCHE =====
-let torchEnabled=false;
+let torchEnabled=true; // ON par défaut
 let _torchLight=null;
 
 function buildTorch(){
-  // PointLight intense devant la caméra
   _torchLight=new THREE.PointLight(0xffffff,0,25);
   scene.add(_torchLight);
+  // Allumer immédiatement
+  _torchLight.intensity=2.5;
+  document.getElementById('torch-btn').textContent='LAMPE : ON';
 }
 
 function toggleTorch(){
   torchEnabled=!torchEnabled;
   if(_torchLight)_torchLight.intensity=torchEnabled?2.5:0;
   document.getElementById('torch-btn').textContent='LAMPE : '+(torchEnabled?'ON':'OFF');
-  // La lampe remet les couleurs naturelles localement
-  if(torchEnabled)document.getElementById('c').style.filter='none';
+  if(!torchEnabled) return;
+  if(!G.isDead)document.getElementById('c').style.filter='none';
 }
 
 function updateTorch(){
@@ -134,9 +136,44 @@ function initEffects(siteKey){
 }
 
 function updateEffects(dt,depth,bar){
-  if(!window._camera)return; // pas encore prêt
+  if(!window._camera)return;
   updateTorch();
   updateSway(dt);
   applyDepthColor(depth,bar);
   applyHypoxia(bar);
+  applyNarcose(depth,dt);
+}
+
+// ===== NARCOSE (ivresse des profondeurs) =====
+let _narcoseHalo=null;
+let _narcosePhase=0;
+function applyNarcose(depth,dt){
+  const NARCOSE_START=30;
+  const NARCOSE_FULL=50;
+  if(depth<NARCOSE_START){ 
+    if(_narcoseHalo){_narcoseHalo.style.opacity='0';} 
+    return; 
+  }
+  // Intensité 0→1 entre 30m et 50m
+  const intensity=Math.min(1,(depth-NARCOSE_START)/(NARCOSE_FULL-NARCOSE_START));
+  
+  // Halo coloré vignette (violet/bleu)
+  if(!_narcoseHalo){
+    _narcoseHalo=document.createElement('div');
+    _narcoseHalo.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:15;transition:opacity 2s;background:radial-gradient(ellipse at center,transparent 40%,rgba(80,0,180,0.0) 60%,rgba(40,0,120,0.5) 100%)';
+    document.body.appendChild(_narcoseHalo);
+  }
+  _narcoseHalo.style.opacity=(intensity*0.7).toFixed(2);
+  
+  // Légère distorsion visuelle — balancement amplifié
+  _narcosePhase+=dt*(0.3+intensity*0.5);
+  const wobble=Math.sin(_narcosePhase)*intensity*1.5;
+  if(!G.isDead&&window._camera){
+    window._camera.rotation.z=wobble*Math.PI/180;
+  }
+  
+  // Alerte au joueur
+  if(intensity>0.3&&Math.random()<0.001){
+    setAlert('NARCOSE — Remontez !','warn');
+  }
 }

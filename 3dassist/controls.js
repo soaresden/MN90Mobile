@@ -94,8 +94,13 @@ function applyMovement(dt){
   // Flottabilité Y — appliquée séparément, jamais écrasée
   cam.position.y+=G.buoyVelocity*dt;
   const minY=-(G.currentSite.depthMax+0.5);
+  const floorY=-G.selectedDepth; // plancher = profondeur de départ
+  // Empêcher de descendre plus bas que la profondeur choisie
+  if(cam.position.y<floorY&&G.buoyVelocity<0){
+    G.buoyVelocity=0;
+    cam.position.y=floorY;
+  }
   cam.position.y=Math.min(0.4,Math.max(minY,cam.position.y));
-  if(G.inPalier)cam.position.y=Math.min(cam.position.y,-2.5);
 
   // Log debug vitesse verticale
   if(G.simStarted&&Math.random()<0.005)

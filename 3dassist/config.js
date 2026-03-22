@@ -15,6 +15,7 @@ const STAB_MAX=16,LUNG_MIN=1.5,LUNG_MAX=6.0,LUNG_NEUTRAL=3.5;
 const G={
   currentSite:SITES.roussay,
   selectedSiteKey:'roussay',
+  selectedDepth:10,
   simStarted:false,
   rescued:false,
   inPalier:false,
@@ -49,5 +50,29 @@ function selectSite(btn){
   G.selectedSiteKey=btn.dataset.site;
   G.currentSite=SITES[G.selectedSiteKey];
   document.getElementById('sel-site').textContent=G.currentSite.name;
-  document.getElementById('sel-depth').textContent=G.currentSite.startDepth+'m';
+  // Filtrer les boutons de profondeur selon depthMax
+  _updateDepthBtns();
+}
+
+function selectDepth(btn){
+  document.querySelectorAll('.depth-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  G.selectedDepth=parseInt(btn.dataset.depth);
+}
+
+function _updateDepthBtns(){
+  const max=G.currentSite.depthMax;
+  document.querySelectorAll('.depth-btn').forEach(btn=>{
+    const d=parseInt(btn.dataset.depth);
+    const ok=d<=max;
+    btn.disabled=!ok;
+    btn.style.opacity=ok?'1':'0.25';
+    btn.style.pointerEvents=ok?'all':'none';
+    if(!ok&&btn.classList.contains('selected')){
+      btn.classList.remove('selected');
+      // Sélectionner le max disponible
+      const best=Array.from(document.querySelectorAll('.depth-btn')).filter(b=>parseInt(b.dataset.depth)<=max).pop();
+      if(best){best.classList.add('selected');G.selectedDepth=parseInt(best.dataset.depth);}
+    }
+  });
 }
