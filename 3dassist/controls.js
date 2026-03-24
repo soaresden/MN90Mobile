@@ -5,11 +5,11 @@
 let yaw=0,pitch=0,locked=false;
 let moveF=false,moveB=false,moveL=false,moveR=false,moveU=false,moveD=false;
 
+// Quaternions — initialisés au premier appel de applyMovement (Three.js garanti chargé)
+let _qYaw=null,_qPitch=null,_axisY=null,_axisX=null;
+
 function _applyYaw(delta){ yaw-=delta; while(yaw>Math.PI)yaw-=Math.PI*2; while(yaw<-Math.PI)yaw+=Math.PI*2; }
 function _applyPitch(delta){ pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch-delta)); }
-
-// Exposé pour game.js (détection 360)
-Object.defineProperty(window,'_yaw',{get:()=>yaw});
 
 document.addEventListener('keydown',e=>{
   if(!G.simStarted)return;
@@ -55,8 +55,16 @@ const velocity=new THREE.Vector3();
 
 function applyMovement(dt){
   const cam=window._camera;if(!cam)return;
-  // Rotation caméra robuste
-  cam.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+  // Init lazy — Three.js est garanti chargé ici
+  if(!_qYaw){
+    _qYaw=new THREE.Quaternion();
+    _qPitch=new THREE.Quaternion();
+    _axisY=new THREE.Vector3(0,1,0);
+    _axisX=new THREE.Vector3(1,0,0);
+  }
+  _qYaw.setFromAxisAngle(_axisY,yaw);
+  _qPitch.setFromAxisAngle(_axisX,pitch);
+  cam.quaternion.multiplyQuaternions(_qYaw,_qPitch);
 
   const maxSpd=G.rescued?2.0:5.0;
   const accel=4.0;
