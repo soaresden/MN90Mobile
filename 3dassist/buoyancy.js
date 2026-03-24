@@ -16,8 +16,20 @@ function buoyForce(){
   return force;
 }
 
-function inflatePush(who,on){ G.inflating[who]=on; }
-function purgePush(who,on){ G.purging[who]=on; }
+function inflatePush(who,on){
+  G.inflating[who]=on;
+  if(soundEnabled){
+    if(on)startInflateSound();
+    else stopInflateSound();
+  }
+}
+function purgePush(who,on){
+  G.purging[who]=on;
+  if(soundEnabled){
+    if(on)startPurgeSound();
+    else stopPurgeSound();
+  }
+}
 
 // Poumon ballast : UN clic = 5 secondes automatiques (pas besoin de maintenir)
 function triggerLung(dir){

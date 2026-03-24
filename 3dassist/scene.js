@@ -42,7 +42,7 @@ function buildScene(site,onReady){
   const sun=new THREE.DirectionalLight(site.sunColor,site.sunInt);sun.position.set(5,20,3);scene.add(sun);
   caustic=new THREE.PointLight(site.causticColor,0.5,30);caustic.position.set(0,-5,0);scene.add(caustic);
 
-  if(G.selectedSiteKey==='vlg'){
+  if(G.selectedSiteKey==='vlg'||G.selectedSiteKey==='nemo'){
     _buildPoolScene(site);
   } else {
     _buildNaturalScene(site);
@@ -56,44 +56,54 @@ function buildScene(site,onReady){
   loadVictimModel(onReady);
 }
 
-// ===== FOSSE VLG — piscine cylindrique optimisée =====
+// ===== FOSSE (VLG + NEMO 33) — piscine cylindrique =====
 function _buildPoolScene(site){
-  const depth=site.depthMax;
-  const radius=8;
+  const isNemo=G.selectedSiteKey==='nemo';
+  const depth=site.depthMax; // VLG=20, Nemo=33
+  const radius=isNemo?5:8;   // Nemo plus étroit
 
-  // Sol carrelé
+  // Couleurs
+  const wallCol=isNemo?0x0a2530:0x1e2d3e;
+  const floorCol=isNemo?0x082028:0x1a2535;
+  const ledCol=isNemo?0x44ddcc:0x88ccff;
+  const lightCol=isNemo?0x00bbaa:0x3377cc;
+  const gridCol=isNemo?0x0d3040:0x253545;
+
+  // Sol avec grille
   const floor=new THREE.Mesh(
     new THREE.CircleGeometry(radius,32),
-    new THREE.MeshLambertMaterial({color:0x1a2535})
+    new THREE.MeshLambertMaterial({color:floorCol})
   );
   floor.rotation.set(-Math.PI/2,0,0);floor.position.y=-depth;scene.add(floor);
 
   // Grille sol
-  for(let i=-7;i<=7;i++){
-    const lmat=new THREE.LineBasicMaterial({color:0x253545,transparent:true,opacity:0.35});
+  const step=isNemo?1.25:1;
+  for(let i=Math.ceil(-radius);i<=Math.floor(radius);i++){
+    const lmat=new THREE.LineBasicMaterial({color:gridCol,transparent:true,opacity:0.4});
     const lh=new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-radius,0,i),new THREE.Vector3(radius,0,i)]),lmat);
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-radius,0,i*step),new THREE.Vector3(radius,0,i*step)]),lmat);
     lh.position.y=-depth+0.02;scene.add(lh);
     const lv=new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i,0,-radius),new THREE.Vector3(i,0,radius)]),lmat);
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i*step,0,-radius),new THREE.Vector3(i*step,0,radius)]),lmat);
     lv.position.y=-depth+0.02;scene.add(lv);
   }
 
   // Paroi cylindrique
   const wall=new THREE.Mesh(
     new THREE.CylinderGeometry(radius,radius,depth+1,32,1,true),
-    new THREE.MeshLambertMaterial({color:0x1e2d3e,side:THREE.BackSide})
+    new THREE.MeshLambertMaterial({color:wallCol,side:THREE.BackSide})
   );
   wall.position.y=-depth/2;scene.add(wall);
 
-  // LEDs sur paroi — InstancedMesh pour perf (8 colonnes × depth = 160 instances)
+  // LEDs verticales (InstancedMesh)
+  const cols=isNemo?6:8;
   const ledGeo=new THREE.BoxGeometry(0.10,0.07,0.03);
-  const ledMat=new THREE.MeshBasicMaterial({color:0x88ccff});
-  const ledInst=new THREE.InstancedMesh(ledGeo,ledMat,8*depth);
+  const ledMat=new THREE.MeshBasicMaterial({color:ledCol});
+  const ledInst=new THREE.InstancedMesh(ledGeo,ledMat,cols*depth);
   const dummy=new THREE.Object3D();
   let idx=0;
-  for(let col=0;col<8;col++){
-    const angle=col/8*Math.PI*2;
+  for(let col=0;col<cols;col++){
+    const angle=col/cols*Math.PI*2;
     const wx=Math.cos(angle)*(radius-0.3);
     const wz=Math.sin(angle)*(radius-0.3);
     for(let d=1;d<=depth;d++){
@@ -106,57 +116,183 @@ function _buildPoolScene(site){
   ledInst.instanceMatrix.needsUpdate=true;
   scene.add(ledInst);
 
-  // Seulement 4 PointLights — réparties en croix à mi-profondeur
+  // Lumières
   for(let i=0;i<4;i++){
     const a=i/4*Math.PI*2;
-    const pl=new THREE.PointLight(0x4488bb,1.2,20);
+    const pl=new THREE.PointLight(lightCol,1.2,20);
     pl.position.set(Math.cos(a)*(radius-1),-depth/2,Math.sin(a)*(radius-1));
     scene.add(pl);
   }
-  // Lumière centrale — FIX: .position.set() obligatoire sur Three.js r128
-  const centralLight=new THREE.PointLight(0x3377cc,1.0,28);
-  centralLight.position.set(0,-depth/2,0);
-  scene.add(centralLight);
-  // Lumières près du sol et près de la surface
-  const botLight=new THREE.PointLight(0x2255aa,0.6,15);
+  const centralLight=new THREE.PointLight(lightCol,1.0,28);
+  centralLight.position.set(0,-depth/2,0);scene.add(centralLight);
+  const botLight=new THREE.PointLight(lightCol,0.6,15);
   botLight.position.set(0,-depth+1,0);scene.add(botLight);
-  const topLight=new THREE.PointLight(0x44aadd,0.8,12);
+  const topLight=new THREE.PointLight(lightCol,0.8,12);
   topLight.position.set(0,-2,0);scene.add(topLight);
 
-  // Graduation métrique — lignes horizontales (segments réduits à 16)
-  for(let d=1;d<=depth;d++){
+  // Graduation métrique
+  // Nemo : tous les 5m de 0 à 30, + label 33m au fond
+  // VLG : toutes les 1m
+  const majStep=isNemo?5:5;
+  const minStep=isNemo?5:1;
+  for(let d=minStep;d<=depth;d+=minStep){
     const pts=[];
     for(let s=0;s<=16;s++){
       const a=s/16*Math.PI*2;
       pts.push(new THREE.Vector3(Math.cos(a)*radius,-d,Math.sin(a)*radius));
     }
-    const isMajor=d%5===0;
+    const isMajor=d%majStep===0;
     scene.add(new THREE.Line(
       new THREE.BufferGeometry().setFromPoints(pts),
       new THREE.LineBasicMaterial({color:isMajor?0x6699bb:0x2a3d50,transparent:true,opacity:isMajor?0.65:0.25})
     ));
+    // Marqueurs de profondeur tous les 5m sur la paroi
+    if(isMajor){
+      const markerCol=isNemo?0x44ddcc:0xffcc44;
+      const marker=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.05,0.05),
+        new THREE.MeshBasicMaterial({color:markerCol}));
+      marker.position.set(radius-0.2,-d,0);
+      scene.add(marker);
+      // Deuxième marqueur à 90°
+      const marker2=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.05,0.05),
+        new THREE.MeshBasicMaterial({color:markerCol}));
+      marker2.position.set(0,-d,radius-0.2);
+      scene.add(marker2);
+    }
   }
-
-  // Labels métriques sur la paroi (tous les 5m)
-  // On utilise des petites BoxGeometry colorées comme marqueurs
-  for(let d=5;d<=depth;d+=5){
-    const markerMat=new THREE.MeshBasicMaterial({color:0xffcc44});
-    const marker=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.05,0.05),markerMat);
-    marker.position.set(radius-0.2,-d,0);
-    scene.add(marker);
+  // Ligne fond (33m pour Nemo)
+  if(isNemo){
+    const ptsBot=[];
+    for(let s=0;s<=16;s++){
+      const a=s/16*Math.PI*2;
+      ptsBot.push(new THREE.Vector3(Math.cos(a)*radius,-depth,Math.sin(a)*radius));
+    }
+    scene.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(ptsBot),
+      new THREE.LineBasicMaterial({color:0x44ddcc,transparent:true,opacity:0.8})
+    ));
+    // Marqueur 33m
+    const mBot=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.05,0.05),
+      new THREE.MeshBasicMaterial({color:0xff4444}));
+    mBot.position.set(radius-0.2,-depth,0);scene.add(mBot);
   }
 
   // Surface
   water=new THREE.Mesh(
     new THREE.CircleGeometry(radius,32),
-    new THREE.MeshLambertMaterial({color:0x021c26,transparent:true,opacity:0.6,side:THREE.DoubleSide})
+    new THREE.MeshLambertMaterial({color:site.waterColor,transparent:true,opacity:0.6,side:THREE.DoubleSide})
   );
   water.rotation.set(-Math.PI/2,0,0);water.position.y=0.3;scene.add(water);
 
-  console.log('[scene] Fosse VLG construite OK (optimisée)');
+  console.log('[scene]',isNemo?'Nemo 33':'Fosse VLG','construite — r='+radius+' depth='+depth);
 }
 
-// ===== SITES NATURELS =====
+// ===== CHARGEMENT ANIMAUX GLB =====
+let _catfishMixer=null;
+
+function _loadCatfish(maxDepth){
+  if(window.location.protocol==='file:'){
+    _buildFallbackSilure(maxDepth); return;
+  }
+  const loader=new THREE.GLTFLoader();
+  loader.load('catfish.glb',
+    gltf=>{
+      console.log('[scene] catfish.glb OK');
+      const model=gltf.scene;
+      // Adapter la taille — silure réaliste ~1.5m
+      model.scale.set(0.8,0.8,0.8);
+      model.position.set(12,-maxDepth+3,0);
+      scene.add(model);
+      _silure=model;
+      _silureAngle=0;
+      // Animation si présente
+      if(gltf.animations&&gltf.animations.length>0){
+        _catfishMixer=new THREE.AnimationMixer(model);
+        const clip=gltf.animations[0];
+        _catfishMixer.clipAction(clip).play();
+      }
+    },
+    null,
+    ()=>{ console.warn('[scene] catfish.glb non trouvé — fallback'); _buildFallbackSilure(maxDepth); }
+  );
+}
+
+function _buildFallbackSilure(maxDepth){
+  const sg=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.35,3.2,8),new THREE.MeshLambertMaterial({color:0x3a3020}));
+  body.rotation.z=Math.PI/2; sg.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.38,8,6),new THREE.MeshLambertMaterial({color:0x2e2618}));
+  head.position.set(1.8,0,0); sg.add(head);
+  const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.15,1.4,5),new THREE.MeshLambertMaterial({color:0x2a2214}));
+  tail.rotation.z=Math.PI/2; tail.position.set(-2.1,0,0); sg.add(tail);
+  for(let b=0;b<2;b++){
+    const barb=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.01,0.8,4),new THREE.MeshLambertMaterial({color:0x1a1008}));
+    barb.position.set(1.5,0,b===0?0.35:-0.35); barb.rotation.z=0.4*(b===0?1:-1); sg.add(barb);
+  }
+  sg.position.set(12,-maxDepth+3,0);
+  scene.add(sg); _silure=sg; _silureAngle=0;
+}
+
+let _fishMixers=[];
+
+function _loadFishPack(maxDepth,site){
+  if(window.location.protocol==='file:'){
+    _buildFallbackFish(maxDepth,site); return;
+  }
+  const loader=new THREE.GLTFLoader();
+  loader.load('250_fish_pack.glb',
+    gltf=>{
+      console.log('[scene] 250_fish_pack.glb OK — meshes:',gltf.scene.children.length);
+      _fishMixers=[];
+      // Créer 5 bancs à partir du modèle
+      for(let b=0;b<5;b++){
+        const grp=new THREE.Group();
+        const count=6+Math.floor(Math.random()*5);
+        for(let f=0;f<count;f++){
+          const clone=gltf.scene.clone(true);
+          clone.scale.set(0.3,0.3,0.3);
+          clone.position.set((Math.random()-0.5)*3,(Math.random()-0.5)*1.5,(Math.random()-0.5)*3);
+          grp.add(clone);
+          // Animation
+          if(gltf.animations&&gltf.animations.length>0){
+            const mx=new THREE.AnimationMixer(clone);
+            mx.clipAction(gltf.animations[0]).play();
+            // Offset aléatoire pour désynchroniser
+            mx.setTime(Math.random()*2);
+            _fishMixers.push(mx);
+          }
+        }
+        const startY=-(5+Math.random()*(maxDepth-8));
+        grp.position.set((Math.random()-0.5)*20,startY,(Math.random()-0.5)*20);
+        scene.add(grp);
+        _fish.push({group:grp,speed:0.3+Math.random()*0.3,radius:6+Math.random()*8,angle:Math.random()*Math.PI*2,y:startY,wobble:Math.random()*Math.PI*2});
+      }
+    },
+    null,
+    ()=>{ console.warn('[scene] 250_fish_pack.glb non trouvé — fallback'); _buildFallbackFish(maxDepth,site); }
+  );
+}
+
+function _buildFallbackFish(maxDepth,site){
+  for(let b=0;b<5;b++){
+    const grp=new THREE.Group();
+    const count=8+Math.floor(Math.random()*6);
+    const col=new THREE.Color().setHSL(Math.random(),0.8,0.55);
+    for(let f=0;f<count;f++){
+      const fish=new THREE.Group();
+      const fc=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.25,5),new THREE.MeshLambertMaterial({color:col}));
+      fc.rotation.z=Math.PI/2; fish.add(fc);
+      const fq=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.1,4),new THREE.MeshLambertMaterial({color:col}));
+      fq.rotation.z=-Math.PI/2; fq.position.set(-0.16,0,0); fish.add(fq);
+      fish.position.set((Math.random()-0.5)*2,(Math.random()-0.5)*1,(Math.random()-0.5)*2);
+      grp.add(fish);
+    }
+    const startY=-(5+Math.random()*(maxDepth-8));
+    grp.position.set((Math.random()-0.5)*20,startY,(Math.random()-0.5)*20);
+    scene.add(grp);
+    _fish.push({group:grp,speed:0.4+Math.random()*0.3,radius:6+Math.random()*6,angle:Math.random()*Math.PI*2,y:startY,wobble:Math.random()*Math.PI*2});
+  }
+}
 // Stockage animaux pour updateScene
 const _fish=[];  // [{group, speed, radius, angle, y}]
 let _silure=null;
@@ -208,7 +344,7 @@ function _buildNaturalScene(site){
 }
 
 function _buildSiteVegetation(site,siteKey,maxDepth){
-  _fish.length=0; _silure=null;
+  _fish.length=0; _silure=null; _fishMixers=[]; _catfishMixer=null;
 
   if(siteKey==='roussay'){
     // Algues longues et sombres (eau douce trouble)
@@ -254,10 +390,8 @@ function _buildSiteVegetation(site,siteKey,maxDepth){
       barb.rotation.z=0.4*(b===0?1:-1);
       sg.add(barb);
     }
-    sg.position.set(8,-maxDepth+3,-5);
-    scene.add(sg);
-    _silure=sg;
-    _silureAngle=0;
+    // Silure — charger catfish.glb si dispo, sinon fallback primitif
+    _loadCatfish(maxDepth);
 
   } else if(siteKey==='martinique'){
     // Coraux colorés denses
@@ -272,37 +406,8 @@ function _buildSiteVegetation(site,siteKey,maxDepth){
       m.rotation.set(0,0,(Math.random()-0.5)*0.3);
       scene.add(m);
     }
-    // Petits poissons — 5 bancs
-    for(let b=0;b<5;b++){
-      const grp=new THREE.Group();
-      const count=8+Math.floor(Math.random()*6);
-      const col=new THREE.Color().setHSL(Math.random(),0.8,0.55);
-      for(let f=0;f<count;f++){
-        const fish=new THREE.Group();
-        // Corps
-        const fc=new THREE.Mesh(
-          new THREE.CylinderGeometry(0.04,0.04,0.25,5),
-          new THREE.MeshLambertMaterial({color:col})
-        );
-        fc.rotation.z=Math.PI/2; fish.add(fc);
-        // Queue
-        const fq=new THREE.Mesh(
-          new THREE.ConeGeometry(0.06,0.1,4),
-          new THREE.MeshLambertMaterial({color:col})
-        );
-        fq.rotation.z=-Math.PI/2; fq.position.set(-0.16,0,0); fish.add(fq);
-        fish.position.set(
-          (Math.random()-0.5)*2,
-          (Math.random()-0.5)*1,
-          (Math.random()-0.5)*2
-        );
-        grp.add(fish);
-      }
-      const startY=-(5+Math.random()*(maxDepth-8));
-      grp.position.set((Math.random()-0.5)*20,startY,(Math.random()-0.5)*20);
-      scene.add(grp);
-      _fish.push({group:grp, speed:0.4+Math.random()*0.3, radius:6+Math.random()*6, angle:Math.random()*Math.PI*2, y:startY, wobble:Math.random()*Math.PI*2});
-    }
+    // Poissons — charger 250_fish_pack.glb si dispo, sinon fallback primitifs
+    _loadFishPack(maxDepth,site);
 
   } else if(siteKey==='nemo'){
     // Nemo 33 : rochers blancs calcaires + éponges
@@ -592,6 +697,10 @@ function sceneAnimate(dt,gameTime){
   if(water)water.position.y=0.4+Math.sin(gameTime*0.6)*0.07;
   updateVictim(dt,gameTime);
   updateArmPosition(gameTime);
+
+  // Mixers animations GLB
+  if(_catfishMixer)_catfishMixer.update(dt);
+  for(const mx of _fishMixers)mx.update(dt);
 
   // Animation poissons Martinique
   for(const f of _fish){

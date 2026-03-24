@@ -136,18 +136,71 @@ function startBubbleSoundLoop(){
 }
 function stopBubbleSoundLoop(){ clearInterval(_bubbleLoop);_bubbleLoop=null; }
 
-// ===== GONFLAGE VALVE =====
-function playInflate(){
-  if(!audioCtx)return;
+// ===== GONFLAGE — pschhhht avec bulles =====
+let _inflateInterval=null;
+function startInflateSound(){
+  if(_inflateInterval)return;
+  _playInflateBurst();
+  _inflateInterval=setInterval(_playInflateBurst,90);
+}
+function stopInflateSound(){
+  clearInterval(_inflateInterval);_inflateInterval=null;
+}
+function _playInflateBurst(){
+  if(!audioCtx||!soundEnabled)return;
   const now=audioCtx.currentTime;
-  const dur=0.06+Math.random()*0.04;
-  const n=audioCtx.createBufferSource();
-  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.1,audioCtx.sampleRate);
-  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
-  n.buffer=buf;
-  const f=audioCtx.createBiquadFilter();f.type='bandpass';f.frequency.value=100+Math.random()*800;f.Q.value=1;
-  const g=audioCtx.createGain();g.gain.setValueAtTime(0.12,now);g.gain.exponentialRampToValueAtTime(0.001,now+dur);
-  n.connect(f);f.connect(g);g.connect(audioCtx.destination);n.start(now);
+  const sr=audioCtx.sampleRate;
+  // Bruit blanc court filtré = air comprimé
+  const buf=audioCtx.createBuffer(1,Math.floor(sr*0.07),sr);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+  const src=audioCtx.createBufferSource();src.buffer=buf;
+  // Filtre passe-haut + passe-bas = son pschhhht
+  const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=400;
+  const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.18,now);
+  g.gain.exponentialRampToValueAtTime(0.001,now+0.065);
+  src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(audioCtx.destination);
+  src.start(now);
+  // Petite bulle aiguë aléatoire
+  if(Math.random()<0.4){
+    const o=audioCtx.createOscillator();
+    const og=audioCtx.createGain();
+    o.type='sine';
+    o.frequency.setValueAtTime(600+Math.random()*800,now);
+    o.frequency.exponentialRampToValueAtTime(1200+Math.random()*600,now+0.04);
+    og.gain.setValueAtTime(0.03,now);og.gain.exponentialRampToValueAtTime(0.001,now+0.04);
+    o.connect(og);og.connect(audioCtx.destination);
+    o.start(now);o.stop(now+0.04);
+  }
+}
+
+// ===== PURGE — pfffffff grave =====
+let _purgeInterval=null;
+function startPurgeSound(){
+  if(_purgeInterval)return;
+  _playPurgeBurst();
+  _purgeInterval=setInterval(_playPurgeBurst,60);
+}
+function stopPurgeSound(){
+  clearInterval(_purgeInterval);_purgeInterval=null;
+}
+function _playPurgeBurst(){
+  if(!audioCtx||!soundEnabled)return;
+  const now=audioCtx.currentTime;
+  const sr=audioCtx.sampleRate;
+  const buf=audioCtx.createBuffer(1,Math.floor(sr*0.055),sr);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+  const src=audioCtx.createBufferSource();src.buffer=buf;
+  // Filtre passe-bas = son grave soufflé = purge
+  const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=600;
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.22,now);
+  g.gain.exponentialRampToValueAtTime(0.001,now+0.05);
+  src.connect(lp);lp.connect(g);g.connect(audioCtx.destination);
+  src.start(now);
 }
 
 // ===== AMBIANCE =====
