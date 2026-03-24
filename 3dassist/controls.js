@@ -52,7 +52,13 @@ const velocity=new THREE.Vector3();
 
 function applyMovement(dt){
   const cam=window._camera;if(!cam)return;
-  cam.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+  // Rotation robuste : yaw autour Y global, pitch autour X local
+  // Évite le gimbal lock et le flip
+  const qYaw=new THREE.Quaternion();
+  qYaw.setFromAxisAngle(new THREE.Vector3(0,1,0),yaw);
+  const qPitch=new THREE.Quaternion();
+  qPitch.setFromAxisAngle(new THREE.Vector3(1,0,0),pitch);
+  cam.quaternion.multiplyQuaternions(qYaw,qPitch);
 
   const maxSpd=G.rescued?2.0:5.0;
   const accel=4.0; // déplacement horizontal uniquement

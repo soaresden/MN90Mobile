@@ -271,6 +271,7 @@ canvas{display:block;position:absolute;top:0;left:0}
     <div class="buoy-title">Stab blessé</div>
     <div class="buoy-val" id="v-stab-val">0.0 L</div>
     <div class="buoy-bar-wrap"><div class="buoy-bar" id="v-stab-bar" style="background:#aa44cc;width:0%"></div></div>
+    <div class="buoy-btn btn-inflate" onmousedown="inflatePush('victim',true)" onmouseup="inflatePush('victim',false)" ontouchstart="inflatePush('victim',true);event.preventDefault()" ontouchend="inflatePush('victim',false)">▲ SON GONFLAGE</div>
     <div class="buoy-btn btn-purge" onmousedown="purgePush('victim',true)" onmouseup="purgePush('victim',false)" ontouchstart="purgePush('victim',true);event.preventDefault()" ontouchend="purgePush('victim',false)">▼ SA PURGE</div>
   </div>
   <div class="buoy-panel" id="panel-self">

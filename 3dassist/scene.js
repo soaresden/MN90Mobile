@@ -7,7 +7,7 @@ const renderer=new THREE.WebGLRenderer({canvas:canvas3d,antialias:true});
 renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 
 const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(75,W/H,0.1,200);
+const camera=new THREE.PerspectiveCamera(85,W/H,0.05,300);
 window._camera=camera; // exposé pour hud.js
 
 let ambient,caustic,water,armGroup=null;
@@ -191,29 +191,24 @@ function _buildPoolScene(site){
 let _catfishMixer=null;
 
 function _loadCatfish(maxDepth){
-  if(window.location.protocol==='file:'){
-    _buildFallbackSilure(maxDepth); return;
-  }
   const loader=new THREE.GLTFLoader();
+  console.log('[scene] Chargement catfish.glb...');
   loader.load('catfish.glb',
     gltf=>{
       console.log('[scene] catfish.glb OK');
       const model=gltf.scene;
-      // Adapter la taille — silure réaliste ~1.5m
       model.scale.set(0.8,0.8,0.8);
       model.position.set(12,-maxDepth+3,0);
       scene.add(model);
       _silure=model;
       _silureAngle=0;
-      // Animation si présente
       if(gltf.animations&&gltf.animations.length>0){
         _catfishMixer=new THREE.AnimationMixer(model);
-        const clip=gltf.animations[0];
-        _catfishMixer.clipAction(clip).play();
+        _catfishMixer.clipAction(gltf.animations[0]).play();
       }
     },
     null,
-    ()=>{ console.warn('[scene] catfish.glb non trouvé — fallback'); _buildFallbackSilure(maxDepth); }
+    ()=>{ console.warn('[scene] catfish.glb non trouvé — fallback silure'); _buildFallbackSilure(maxDepth); }
   );
 }
 
@@ -236,10 +231,8 @@ function _buildFallbackSilure(maxDepth){
 let _fishMixers=[];
 
 function _loadFishPack(maxDepth,site){
-  if(window.location.protocol==='file:'){
-    _buildFallbackFish(maxDepth,site); return;
-  }
   const loader=new THREE.GLTFLoader();
+  console.log('[scene] Chargement 250_fish_pack.glb...');
   loader.load('250_fish_pack.glb',
     gltf=>{
       console.log('[scene] 250_fish_pack.glb OK — meshes:',gltf.scene.children.length);
