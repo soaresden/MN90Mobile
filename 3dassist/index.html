@@ -43,7 +43,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 .ch-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,0.35);margin-top:-.5px}
 .ch-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.35);margin-left:-.5px}
 .ch-c{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,0.5);transform:translate(-50%,-50%)}
-#wrist-hud{position:absolute;bottom:90px;left:140px;transform:perspective(400px) rotateY(15deg) rotateX(-7deg) rotate(-6deg);transform-origin:left bottom;pointer-events:none}
+#wrist-hud{position:absolute;bottom:90px;left:175px;transform:perspective(400px) rotateY(15deg) rotateX(-7deg) rotate(-6deg);transform-origin:left bottom;pointer-events:none}
 #suunto-watch{width:190px;height:190px;position:relative}
 #suunto-canvas{position:absolute;top:0;left:0;width:190px;height:190px;border-radius:50%}
 
@@ -76,7 +76,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 #btn-interact{position:absolute;bottom:90px;right:20px;width:60px;height:60px;border-radius:50%;background:rgba(0,150,200,0.2);border:2px solid rgba(80,200,255,0.4);color:rgba(140,215,255,0.9);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;pointer-events:all;cursor:pointer;display:none;align-items:center;justify-content:center;text-align:center}
 
 /* ===== PANNEAUX FLOTTABILITÉ ===== */
-.buoy-panel{position:absolute;display:none;background:rgba(0,8,20,0.82);border:1px solid rgba(80,160,220,0.22);border-radius:10px;padding:10px 12px;font-family:'Rajdhani',sans-serif;pointer-events:all}
+.buoy-panel{position:absolute;display:none;background:rgba(0,8,20,0.92);border:1px solid rgba(80,160,220,0.3);border-radius:10px;padding:10px 12px;font-family:'Rajdhani',sans-serif;pointer-events:all;z-index:60}
 .buoy-title{font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(80,180,255,0.5);text-transform:uppercase;margin-bottom:6px}
 .buoy-bar-wrap{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin:4px 0 8px}
 .buoy-bar{height:100%;border-radius:3px;transition:width .3s}
@@ -89,18 +89,20 @@ canvas{display:block;position:absolute;top:0;left:0}
 .btn-purge{background:rgba(200,80,0,0.14);border-color:rgba(200,80,0,0.35);color:#ff8844}
 .btn-insp{background:rgba(0,180,100,0.16);border-color:rgba(0,180,100,0.35);color:#44dd88}
 .btn-exp{background:rgba(180,60,0,0.14);border-color:rgba(180,60,0,0.3);color:#ff6633}
-#panel-victim{top:310px;left:10px;width:148px}
+#panel-victim{top:12px;left:10px;width:148px}
 #panel-self{bottom:150px;left:10px;width:140px}
 #panel-purge-me{bottom:150px;right:10px;width:140px}
-#panel-victim-ds{bottom:228px;right:10px;width:140px}
-#panel-lung{top:45%;right:160px;transform:translateY(-50%);width:148px}
+#panel-victim-ds{bottom:260px;right:10px;width:140px}
+#panel-lung{top:45%;right:155px;transform:translateY(-50%);width:148px}
 
 /* ===== ÉCRAN TITRE ===== */
 #start-screen{
   position:absolute;inset:0;
   background:linear-gradient(160deg,#000a18 0%,#001428 50%,#000d20 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;pointer-events:all;z-index:200;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:0;pointer-events:all;z-index:200;
+  overflow-y:auto;overflow-x:hidden;
+  padding:16px 12px 20px;
 }
 /* Lignes de scan animées */
 #start-screen::before{
@@ -118,31 +120,31 @@ canvas{display:block;position:absolute;top:0;left:0}
 }
 
 .ss-top-line{
-  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;
-  letter-spacing:6px;color:rgba(0,229,204,0.3);text-transform:uppercase;
-  margin-bottom:16px;
+  font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:5px;color:rgba(0,229,204,0.3);text-transform:uppercase;
+  margin-bottom:8px;
 }
 .ss-title{
-  font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,56px);
+  font-family:'Orbitron',sans-serif;font-size:clamp(22px,4vw,46px);
   font-weight:900;color:#fff;line-height:1;
   text-shadow:0 0 40px rgba(0,229,204,0.3),0 0 80px rgba(0,229,204,0.1);
-  margin-bottom:4px;letter-spacing:2px;
+  margin-bottom:2px;letter-spacing:2px;
 }
 .ss-title span{color:#00e5cc}
 .ss-subtitle{
-  font-family:'Rajdhani',sans-serif;font-size:clamp(16px,2.5vw,22px);
-  font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:8px;
-  text-transform:uppercase;margin-bottom:20px;
+  font-family:'Rajdhani',sans-serif;font-size:clamp(13px,2vw,18px);
+  font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:6px;
+  text-transform:uppercase;margin-bottom:10px;
 }
 .ss-mission{
-  font-family:'Rajdhani',sans-serif;font-size:clamp(14px,2vw,18px);
-  font-weight:700;color:#ff4422;letter-spacing:3px;text-transform:uppercase;
-  margin-bottom:24px;
+  font-family:'Rajdhani',sans-serif;font-size:clamp(12px,1.8vw,15px);
+  font-weight:700;color:#ff4422;letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:12px;
   text-shadow:0 0 20px rgba(255,60,20,0.4);
 }
 
 /* Layout principal deux colonnes */
-.ss-main{display:flex;gap:20px;align-items:flex-start;width:min(860px,96vw);margin-bottom:14px}
+.ss-main{display:flex;gap:20px;align-items:flex-start;width:min(860px,96vw);margin-bottom:10px}
 /* Objectifs — colonne gauche */
 .ss-left{width:230px;flex-shrink:0}
 .ss-obj-title,.ss-sites-title{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(0,229,204,0.4);margin-bottom:8px;text-transform:uppercase;display:block}
@@ -193,24 +195,26 @@ canvas{display:block;position:absolute;top:0;left:0}
 }
 
 /* Sélecteur profondeur */
-.depth-picker{text-align:center;margin-bottom:4px}
+.depth-picker{text-align:center;margin-bottom:10px}
 .depth-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(0,229,204,0.4);display:block;margin-bottom:8px}
 .depth-btns{display:flex;gap:8px;justify-content:center}
 .depth-btn{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;padding:7px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);cursor:pointer;transition:all .2s;letter-spacing:1px}
 .depth-btn:hover{border-color:rgba(0,229,204,0.4);color:#00e5cc}
 .depth-btn.selected{border-color:#00e5cc;color:#00e5cc;background:rgba(0,229,204,0.08)}
 #start-btn{
-  font-family:'Orbitron',sans-serif;font-size:clamp(13px,2vw,16px);
-  font-weight:700;letter-spacing:6px;
+  font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,15px);
+  font-weight:700;letter-spacing:5px;
   color:#00e5cc;
-  background:transparent;
-  border:1px solid rgba(0,229,204,0.35);
-  border-radius:4px;
-  padding:14px 52px;
+  background:rgba(0,229,204,0.05);
+  border:1px solid rgba(0,229,204,0.4);
+  border-radius:6px;
+  padding:12px 44px;
   cursor:pointer;
   text-transform:uppercase;
   transition:all .3s;
   position:relative;overflow:hidden;
+  margin-top:8px;
+  flex-shrink:0;
 }
 #start-btn::before{
   content:'';position:absolute;inset:0;
@@ -273,8 +277,6 @@ canvas{display:block;position:absolute;top:0;left:0}
   </div>
   <div class="buoy-panel" id="panel-self">
     <div class="buoy-title">Mon direct system</div>
-    <div class="buoy-val" id="p-stab-val">0.0 L</div>
-    <div class="buoy-bar-wrap"><div class="buoy-bar" id="p-stab-bar" style="background:#0088dd;width:0%"></div></div>
     <div class="buoy-btn btn-inflate" onmousedown="inflatePush('player',true)" onmouseup="inflatePush('player',false)" ontouchstart="inflatePush('player',true);event.preventDefault()" ontouchend="inflatePush('player',false)">▲ MON GONFLAGE</div>
   </div>
   <div class="buoy-panel" id="panel-victim-ds">

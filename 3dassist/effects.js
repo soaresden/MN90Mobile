@@ -74,34 +74,42 @@ function updateSway(dt){
 // (déplacé depuis hud.js pour centraliser les effets visuels)
 function applyDepthColor(depth,bar){
   if(bar<=100)return; // hypoxie prend le dessus
-  const brightness=Math.max(0.08,1.0-depth*0.018);
-  const redLoss=Math.min(1,Math.max(0,(depth-2)/6));
-  const orangeLoss=Math.min(1,Math.max(0,(depth-8)/10));
-  const yellowLoss=Math.min(1,Math.max(0,(depth-15)/15));
-  const greenLoss=Math.min(1,Math.max(0,(depth-30)/15));
-  const sat=Math.max(0.05,1.0-greenLoss*0.5-yellowLoss*0.3-redLoss*0.1);
-  const hue=depth*0.8;
+  // Luminosité forte variation : à 30m = 0.16, à 0m = 1.0
+  const brightness=Math.max(0.06,1.0-depth*0.030);
+  // Perte couleurs plus marquée
+  const redLoss=Math.min(1,Math.max(0,(depth-2)/5));
+  const orangeLoss=Math.min(1,Math.max(0,(depth-6)/8));
+  const yellowLoss=Math.min(1,Math.max(0,(depth-12)/12));
+  const greenLoss=Math.min(1,Math.max(0,(depth-25)/12));
+  const sat=Math.max(0.04,1.0-greenLoss*0.65-yellowLoss*0.35-redLoss*0.1);
+  const hue=depth*0.9;
+  // Halo lumineux en surface (<8m)
+  const surfaceGlow=Math.max(0,1.0-depth/8);
 
   if(!G.isDead){
     if(!torchEnabled){
-      // Sans lampe : filtre couleur complet
       document.getElementById('c').style.filter=
         `brightness(${brightness.toFixed(2)}) saturate(${sat.toFixed(2)}) hue-rotate(${hue.toFixed(0)}deg)`;
     } else {
-      // Avec lampe : seulement léger assombrissement sur les bords (vignette)
-      // Le centre est éclairé normalement par la torche
-      document.getElementById('c').style.filter=`brightness(${Math.min(1,brightness+0.4).toFixed(2)})`;
+      document.getElementById('c').style.filter=`brightness(${Math.min(1,brightness+0.38).toFixed(2)})`;
     }
     const ov=document.getElementById('depth-color-overlay');
     ov.style.background=`rgba(${Math.round((1-redLoss)*80)},${Math.round((1-orangeLoss)*20)},0,1)`;
-    ov.style.opacity=(redLoss>0.05&&!torchEnabled?(1-redLoss)*0.25:0).toFixed(2);
+    ov.style.opacity=(redLoss>0.05&&!torchEnabled?(1-redLoss)*0.28:0).toFixed(2);
+
+    // Lueur turquoise en approchant la surface
+    const dc=document.getElementById('mask-color');
+    if(surfaceGlow>0.1&&bar>100){
+      dc.style.background=`rgba(30,140,200,1)`;
+      dc.style.opacity=(surfaceGlow*0.12).toFixed(2);
+    }
 
     // Ambient light
     if(window._ambient){
-      const intensity=torchEnabled?G.currentSite.ambientInt:G.currentSite.ambientInt;
+      const intensity=G.currentSite.ambientInt*(torchEnabled?1:brightness+0.1);
       const r=Math.max(0.02,0.14*(torchEnabled?1:1-redLoss));
       const g2=Math.max(0.04,0.18*(torchEnabled?1:1-yellowLoss*0.5));
-      const b=torchEnabled?0.35:0.28;
+      const b=torchEnabled?0.35:Math.max(0.1,0.28*brightness*2);
       window._ambient.color.setRGB(r*intensity,g2*intensity,b*intensity);
     }
   }

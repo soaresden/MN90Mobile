@@ -113,8 +113,15 @@ function _buildPoolScene(site){
     pl.position.set(Math.cos(a)*(radius-1),-depth/2,Math.sin(a)*(radius-1));
     scene.add(pl);
   }
-  // Lumière centrale
-  scene.add(Object.assign(new THREE.PointLight(0x3377cc,0.8,25),{position:{x:0,y:-depth/2,z:0}}));
+  // Lumière centrale — FIX: .position.set() obligatoire sur Three.js r128
+  const centralLight=new THREE.PointLight(0x3377cc,1.0,28);
+  centralLight.position.set(0,-depth/2,0);
+  scene.add(centralLight);
+  // Lumières près du sol et près de la surface
+  const botLight=new THREE.PointLight(0x2255aa,0.6,15);
+  botLight.position.set(0,-depth+1,0);scene.add(botLight);
+  const topLight=new THREE.PointLight(0x44aadd,0.8,12);
+  topLight.position.set(0,-2,0);scene.add(topLight);
 
   // Graduation métrique — lignes horizontales (segments réduits à 16)
   for(let d=1;d<=depth;d++){
@@ -150,6 +157,11 @@ function _buildPoolScene(site){
 }
 
 // ===== SITES NATURELS =====
+// Stockage animaux pour updateScene
+const _fish=[];  // [{group, speed, radius, angle, y}]
+let _silure=null;
+let _silureAngle=0;
+
 function _buildNaturalScene(site){
   const maxDepth=Math.min(site.depthMax,42);
 
@@ -172,18 +184,9 @@ function _buildNaturalScene(site){
     scene.add(r);
   }
 
-  // Végétation / coraux
-  for(let i=0;i<80;i++){
-    const h=0.4+Math.random()*2.5;
-    const col=site.coralColors[Math.floor(Math.random()*site.coralColors.length)];
-    const m=new THREE.Mesh(
-      new THREE.CylinderGeometry(0.03,0.18,h,5),
-      new THREE.MeshLambertMaterial({color:col})
-    );
-    m.position.set((Math.random()-0.5)*60,-maxDepth-2+h/2,(Math.random()-0.5)*60);
-    m.rotation.set(0,0,(Math.random()-0.5)*0.3);
-    scene.add(m);
-  }
+  // Végétation / coraux — selon site
+  const siteKey=Object.keys(SITES).find(k=>SITES[k]===site)||'roussay';
+  _buildSiteVegetation(site,siteKey,maxDepth);
 
   // Particules
   const pg=new THREE.BufferGeometry();
@@ -202,6 +205,141 @@ function _buildNaturalScene(site){
     new THREE.MeshLambertMaterial({color:site.waterColor,transparent:true,opacity:0.5,side:THREE.DoubleSide})
   );
   water.rotation.set(-Math.PI/2,0,0);water.position.y=0.5;scene.add(water);
+}
+
+function _buildSiteVegetation(site,siteKey,maxDepth){
+  _fish.length=0; _silure=null;
+
+  if(siteKey==='roussay'){
+    // Algues longues et sombres (eau douce trouble)
+    for(let i=0;i<120;i++){
+      const h=0.8+Math.random()*3.5;
+      const cols=[0x1a4010,0x254a15,0x1e3a0c,0x2d5218];
+      const col=cols[Math.floor(Math.random()*cols.length)];
+      const m=new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02,0.12,h,4),
+        new THREE.MeshLambertMaterial({color:col})
+      );
+      m.position.set((Math.random()-0.5)*60,-maxDepth-2+h/2,(Math.random()-0.5)*60);
+      m.rotation.set(0,Math.random()*Math.PI,(Math.random()-0.5)*0.5);
+      scene.add(m);
+    }
+    // Silure — grande forme allongée gris-brun
+    const sg=new THREE.Group();
+    // Corps
+    const body=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18,0.35,3.2,8),
+      new THREE.MeshLambertMaterial({color:0x3a3020})
+    );
+    body.rotation.z=Math.PI/2; sg.add(body);
+    // Tête bulbeuse
+    const head=new THREE.Mesh(
+      new THREE.SphereGeometry(0.38,8,6),
+      new THREE.MeshLambertMaterial({color:0x2e2618})
+    );
+    head.position.set(1.8,0,0); sg.add(head);
+    // Queue
+    const tail=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02,0.15,1.4,5),
+      new THREE.MeshLambertMaterial({color:0x2a2214})
+    );
+    tail.rotation.z=Math.PI/2; tail.position.set(-2.1,0,0); sg.add(tail);
+    // Barbillons
+    for(let b=0;b<2;b++){
+      const barb=new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015,0.01,0.8,4),
+        new THREE.MeshLambertMaterial({color:0x1a1008})
+      );
+      barb.position.set(1.5,0,b===0?0.35:-0.35);
+      barb.rotation.z=0.4*(b===0?1:-1);
+      sg.add(barb);
+    }
+    sg.position.set(8,-maxDepth+3,-5);
+    scene.add(sg);
+    _silure=sg;
+    _silureAngle=0;
+
+  } else if(siteKey==='martinique'){
+    // Coraux colorés denses
+    for(let i=0;i<100;i++){
+      const h=0.4+Math.random()*2.5;
+      const col=site.coralColors[Math.floor(Math.random()*site.coralColors.length)];
+      const m=new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03,0.18,h,5),
+        new THREE.MeshLambertMaterial({color:col})
+      );
+      m.position.set((Math.random()-0.5)*60,-maxDepth-2+h/2,(Math.random()-0.5)*60);
+      m.rotation.set(0,0,(Math.random()-0.5)*0.3);
+      scene.add(m);
+    }
+    // Petits poissons — 5 bancs
+    for(let b=0;b<5;b++){
+      const grp=new THREE.Group();
+      const count=8+Math.floor(Math.random()*6);
+      const col=new THREE.Color().setHSL(Math.random(),0.8,0.55);
+      for(let f=0;f<count;f++){
+        const fish=new THREE.Group();
+        // Corps
+        const fc=new THREE.Mesh(
+          new THREE.CylinderGeometry(0.04,0.04,0.25,5),
+          new THREE.MeshLambertMaterial({color:col})
+        );
+        fc.rotation.z=Math.PI/2; fish.add(fc);
+        // Queue
+        const fq=new THREE.Mesh(
+          new THREE.ConeGeometry(0.06,0.1,4),
+          new THREE.MeshLambertMaterial({color:col})
+        );
+        fq.rotation.z=-Math.PI/2; fq.position.set(-0.16,0,0); fish.add(fq);
+        fish.position.set(
+          (Math.random()-0.5)*2,
+          (Math.random()-0.5)*1,
+          (Math.random()-0.5)*2
+        );
+        grp.add(fish);
+      }
+      const startY=-(5+Math.random()*(maxDepth-8));
+      grp.position.set((Math.random()-0.5)*20,startY,(Math.random()-0.5)*20);
+      scene.add(grp);
+      _fish.push({group:grp, speed:0.4+Math.random()*0.3, radius:6+Math.random()*6, angle:Math.random()*Math.PI*2, y:startY, wobble:Math.random()*Math.PI*2});
+    }
+
+  } else if(siteKey==='nemo'){
+    // Nemo 33 : rochers blancs calcaires + éponges
+    for(let i=0;i<40;i++){
+      const g=new THREE.DodecahedronGeometry(0.2+Math.random()*1.5,0);
+      const r=new THREE.Mesh(g,new THREE.MeshLambertMaterial({
+        color:new THREE.Color().setHSL(0.55,0.1,0.3+Math.random()*0.2)
+      }));
+      r.position.set((Math.random()-0.5)*50,-maxDepth-2+Math.random()*0.8,(Math.random()-0.5)*50);
+      r.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);
+      scene.add(r);
+    }
+    // Éponges turquoise
+    for(let i=0;i<60;i++){
+      const h=0.3+Math.random()*1.2;
+      const m=new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05+Math.random()*0.15,0.08+Math.random()*0.12,h,6),
+        new THREE.MeshLambertMaterial({color:new THREE.Color().setHSL(0.52,0.7,0.25+Math.random()*0.15)})
+      );
+      m.position.set((Math.random()-0.5)*50,-maxDepth-2+h/2,(Math.random()-0.5)*50);
+      scene.add(m);
+    }
+
+  } else {
+    // Site générique
+    for(let i=0;i<80;i++){
+      const h=0.4+Math.random()*2.5;
+      const col=site.coralColors[Math.floor(Math.random()*site.coralColors.length)];
+      const m=new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03,0.18,h,5),
+        new THREE.MeshLambertMaterial({color:col})
+      );
+      m.position.set((Math.random()-0.5)*60,-maxDepth-2+h/2,(Math.random()-0.5)*60);
+      m.rotation.set(0,0,(Math.random()-0.5)*0.3);
+      scene.add(m);
+    }
+  }
 }
 
 // ===== BLESSÉ GLB =====
@@ -454,10 +592,32 @@ function sceneAnimate(dt,gameTime){
   if(water)water.position.y=0.4+Math.sin(gameTime*0.6)*0.07;
   updateVictim(dt,gameTime);
   updateArmPosition(gameTime);
+
+  // Animation poissons Martinique
+  for(const f of _fish){
+    f.angle+=f.speed*dt;
+    f.wobble=(f.wobble||0)+dt*1.2;
+    f.group.position.x=Math.cos(f.angle)*f.radius;
+    f.group.position.z=Math.sin(f.angle)*f.radius;
+    f.group.position.y=f.y+Math.sin(f.wobble)*0.8;
+    f.group.rotation.y=-f.angle+Math.PI/2;
+  }
+
+  // Animation silure Roussay
+  if(_silure){
+    _silureAngle+=0.08*dt;
+    const sr=12;
+    _silure.position.x=Math.cos(_silureAngle)*sr;
+    _silure.position.z=Math.sin(_silureAngle)*sr;
+    _silure.rotation.y=-_silureAngle+Math.PI/2;
+    // Ondulation légère
+    _silure.rotation.z=Math.sin(gameTime*0.8)*0.06;
+  }
+
   G.bubbleTimer+=dt;
   if(G.bubbleTimer>0.20){G.bubbleTimer=0;spawnBubble(null,false);}
   G.victimBubbleTimer+=dt;
-  const victimBubbleRate=G.rescued?1.2:2.0; // plus fréquent si pris en charge
+  const victimBubbleRate=G.rescued?1.2:2.0;
   if(G.victimBubbleTimer>victimBubbleRate+Math.random()){
     G.victimBubbleTimer=0;spawnVictimBubbles();
   }
