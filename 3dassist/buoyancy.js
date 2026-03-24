@@ -130,6 +130,8 @@ function updateBuoyHUD(){
   const setW=(id,pct)=>{const e=document.getElementById(id);if(e)e.style.width=pct+'%';};
   set('v-stab-val',G.victimStab.toFixed(1)+' L');
   setW('v-stab-bar',G.victimStab/STAB_MAX*100);
+  set('v-purge-val',G.victimStab.toFixed(1)+' L');
+  setW('v-purge-bar',G.victimStab/STAB_MAX*100);
   set('p-stab-val',G.playerStab.toFixed(1)+' L');
   setW('p-stab-bar',G.playerStab/STAB_MAX*100);
   set('p-purge-val',G.playerStab.toFixed(1)+' L');
@@ -140,7 +142,7 @@ function updateBuoyHUD(){
 }
 
 function showBuoyPanels(show){
-  ['panel-victim','panel-self','panel-purge-me','panel-lung'].forEach(id=>{
+  ['panel-victim','panel-victim-purge','panel-self','panel-purge-me','panel-lung'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.style.setProperty('display',show?'block':'none','important');
   });

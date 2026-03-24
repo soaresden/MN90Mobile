@@ -53,10 +53,6 @@ canvas{display:block;position:absolute;top:0;left:0}
 #hud-alert-bar.danger{color:#ff3333;animation:blink .4s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
 
-#victim-status{position:absolute;top:275px;left:10px;background:rgba(0,8,18,0.75);border:1px solid rgba(80,160,220,0.2);border-radius:8px;padding:9px 13px;color:rgba(140,195,235,0.7);font-size:11px;letter-spacing:1px;display:none;font-family:'Rajdhani',sans-serif}
-.vs-name{color:rgba(140,195,235,0.95);font-size:13px;font-weight:600;margin-bottom:3px}
-.vs-bar-wrap{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin:4px 0;overflow:hidden}
-.vs-bar{height:100%;background:#4fc3f7;border-radius:2px;transition:width 2s}
 
 #palier-banner{position:absolute;top:32px;left:50%;transform:translateX(-50%);background:rgba(25,15,0,0.85);border:1px solid rgba(255,200,0,0.45);border-radius:6px;padding:8px 28px;font-size:13px;font-weight:700;letter-spacing:3px;color:#ffcc00;text-transform:uppercase;display:none;text-align:center;font-family:'Rajdhani',sans-serif}
 #interact-prompt{position:absolute;top:58%;left:50%;transform:translateX(-50%);background:rgba(0,8,20,0.75);border:1px solid rgba(80,200,255,0.3);border-radius:6px;padding:9px 22px;font-size:12px;font-weight:600;color:rgba(140,215,255,0.9);letter-spacing:2px;display:none;pointer-events:all;cursor:pointer;font-family:'Rajdhani',sans-serif}
@@ -91,7 +87,8 @@ canvas{display:block;position:absolute;top:0;left:0}
 .btn-exp{background:rgba(180,60,0,0.14);border-color:rgba(180,60,0,0.3);color:#ff6633}
 #panel-victim{top:12px;right:10px;width:148px}
 #panel-self{bottom:155px;left:10px;width:140px}
-#panel-purge-me{top:185px;left:10px;width:140px}
+#panel-victim-purge{top:12px;left:10px;width:148px}
+#panel-purge-me{top:200px;left:10px;width:140px}
 #panel-lung{top:45%;right:170px;transform:translateY(-50%);width:148px}
 
 /* ===== ÉCRAN TITRE ===== */
@@ -253,10 +250,6 @@ canvas{display:block;position:absolute;top:0;left:0}
     </div>
     <div id="hud-alert-bar">SYS OK</div>
   </div>
-  <div id="victim-status">
-    <div class="vs-name">Blessé · Homme · Norm.</div>
-    <div style="font-size:10px;opacity:.6">Semi-conscient</div>
-    <div class="vs-bar-wrap"><div class="vs-bar" style="width:65%"></div></div>
     <div style="font-size:9px;color:rgba(90,150,190,0.5);margin-top:3px">État : <span id="vs-state">Stable</span></div>
   </div>
   <div id="palier-banner">Palier 3 m — <span id="palier-countdown">60</span> s</div>
@@ -272,7 +265,6 @@ canvas{display:block;position:absolute;top:0;left:0}
     <div class="buoy-val" id="v-stab-val">0.0 L</div>
     <div class="buoy-bar-wrap"><div class="buoy-bar" id="v-stab-bar" style="background:#aa44cc;width:0%"></div></div>
     <div class="buoy-btn btn-inflate" onmousedown="inflatePush('victim',true)" onmouseup="inflatePush('victim',false)" ontouchstart="inflatePush('victim',true);event.preventDefault()" ontouchend="inflatePush('victim',false)">▲ SON GONFLAGE</div>
-    <div class="buoy-btn btn-purge" onmousedown="purgePush('victim',true)" onmouseup="purgePush('victim',false)" ontouchstart="purgePush('victim',true);event.preventDefault()" ontouchend="purgePush('victim',false)">▼ SA PURGE</div>
   </div>
   <div class="buoy-panel" id="panel-self">
     <div class="buoy-title">Mon direct system</div>
@@ -281,6 +273,12 @@ canvas{display:block;position:absolute;top:0;left:0}
     <div class="buoy-btn btn-inflate" onmousedown="inflatePush('player',true)" onmouseup="inflatePush('player',false)" ontouchstart="inflatePush('player',true);event.preventDefault()" ontouchend="inflatePush('player',false)">▲ MON GONFLAGE</div>
   </div>
 
+  <div class="buoy-panel" id="panel-victim-purge">
+    <div class="buoy-title">Stab blessé — purge</div>
+    <div class="buoy-val" id="v-purge-val">0.0 L</div>
+    <div class="buoy-bar-wrap"><div class="buoy-bar" id="v-purge-bar" style="background:#aa44cc;width:0%"></div></div>
+    <div class="buoy-btn btn-purge" onmousedown="purgePush('victim',true)" onmouseup="purgePush('victim',false)" ontouchstart="purgePush('victim',true);event.preventDefault()" ontouchend="purgePush('victim',false)">▼ SA PURGE</div>
+  </div>
   <div class="buoy-panel" id="panel-purge-me">
     <div class="buoy-title">Ma stab</div>
     <div class="buoy-btn btn-purge" onmousedown="purgePush('player',true)" onmouseup="purgePush('player',false)" ontouchstart="purgePush('player',true);event.preventDefault()" ontouchend="purgePush('player',false)">▼ MA PURGE</div>

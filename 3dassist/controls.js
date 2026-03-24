@@ -5,8 +5,14 @@
 let yaw=0,pitch=0,locked=false;
 let moveF=false,moveB=false,moveL=false,moveR=false,moveU=false,moveD=false;
 
-// Exposé pour game.js (détection 360)
-Object.defineProperty(window,'_yaw',{get:()=>yaw});
+// Quaternions réutilisables — pas de new à chaque frame
+const _qYaw=new THREE.Quaternion();
+const _qPitch=new THREE.Quaternion();
+const _axisY=new THREE.Vector3(0,1,0);
+const _axisX=new THREE.Vector3(1,0,0);
+
+function _applyYaw(delta){ yaw-=delta; while(yaw>Math.PI)yaw-=Math.PI*2; while(yaw<-Math.PI)yaw+=Math.PI*2; }
+function _applyPitch(delta){ pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch-delta)); }
 
 document.addEventListener('keydown',e=>{
   if(!G.simStarted)return;
@@ -38,12 +44,12 @@ canvas3dEl.addEventListener('click',()=>{ if(G.simStarted&&!isMobile())canvas3dE
 document.addEventListener('pointerlockchange',()=>{ locked=document.pointerLockElement===canvas3dEl; });
 document.addEventListener('mousemove',e=>{
   if(!locked||!G.simStarted)return;
-  yaw-=e.movementX*0.002;pitch-=e.movementY*0.002;
-  pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch));
-  // Normaliser yaw pour éviter l'accumulation infinie
-  while(yaw>Math.PI)yaw-=Math.PI*2;
-  while(yaw<-Math.PI)yaw+=Math.PI*2;
+  _applyYaw(e.movementX*0.002);
+  _applyPitch(e.movementY*0.002);
 });
+
+// Exposé pour game.js (détection 360)
+Object.defineProperty(window,'_yaw',{get:()=>yaw});
 
 function isMobile(){ return 'ontouchstart' in window||navigator.maxTouchPoints>0; }
 
@@ -52,17 +58,13 @@ const velocity=new THREE.Vector3();
 
 function applyMovement(dt){
   const cam=window._camera;if(!cam)return;
-  // Rotation robuste : yaw autour Y global, pitch autour X local
-  // Évite le gimbal lock et le flip
-  const qYaw=new THREE.Quaternion();
-  qYaw.setFromAxisAngle(new THREE.Vector3(0,1,0),yaw);
-  const qPitch=new THREE.Quaternion();
-  qPitch.setFromAxisAngle(new THREE.Vector3(1,0,0),pitch);
-  cam.quaternion.multiplyQuaternions(qYaw,qPitch);
+  // Quaternions statiques réutilisés — pas de new à chaque frame
+  _qYaw.setFromAxisAngle(_axisY,yaw);
+  _qPitch.setFromAxisAngle(_axisX,pitch);
+  cam.quaternion.multiplyQuaternions(_qYaw,_qPitch);
 
   const maxSpd=G.rescued?2.0:5.0;
-  const accel=4.0; // déplacement horizontal uniquement
-  // Pas de contrôle vertical manuel — la flottabilité gère tout
+  const accel=4.0;
   const friction=G.rescued?0.90:0.85;
 
   const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);fwd.y=0;fwd.normalize();
@@ -71,8 +73,6 @@ function applyMovement(dt){
 
   if(moveF)inp.addScaledVector(fwd,1);if(moveB)inp.addScaledVector(fwd,-1);
   if(moveL)inp.addScaledVector(rgt,-1);if(moveR)inp.addScaledVector(rgt,1);
-  // Déplacement horizontal uniquement
-  
 
   const jl=joyState.left;
   if(jl.active&&(Math.abs(jl.dx)>0.05||Math.abs(jl.dy)>0.05)){
@@ -80,10 +80,8 @@ function applyMovement(dt){
   }
   const jr=joyState.right;
   if(jr.active&&(Math.abs(jr.dx)>0.05||Math.abs(jr.dy)>0.05)){
-    yaw-=jr.dx*2.5*dt;pitch-=jr.dy*2.0*dt;
-    pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch));
-    while(yaw>Math.PI)yaw-=Math.PI*2;
-    while(yaw<-Math.PI)yaw+=Math.PI*2;
+    _applyYaw(jr.dx*2.5*dt);
+    _applyPitch(jr.dy*2.0*dt);
   }
 
   // Mouvement horizontal uniquement dans velocity
@@ -171,10 +169,8 @@ canvas3dEl.addEventListener('touchmove',e=>{
   if(!G.simStarted)return;
   for(const t of e.changedTouches){
     if(t.identifier!==touchCamId)continue;
-    yaw-=(t.clientX-lastTX)*0.0015;pitch-=(t.clientY-lastTY)*0.0015;
-    pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch));
-    while(yaw>Math.PI)yaw-=Math.PI*2;
-    while(yaw<-Math.PI)yaw+=Math.PI*2;
+    _applyYaw((t.clientX-lastTX)*0.0015);
+    _applyPitch((t.clientY-lastTY)*0.0015);
     lastTX=t.clientX;lastTY=t.clientY;
   }
 },{passive:true});

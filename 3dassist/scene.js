@@ -334,6 +334,44 @@ function _buildNaturalScene(site){
     new THREE.MeshLambertMaterial({color:site.waterColor,transparent:true,opacity:0.5,side:THREE.DoubleSide})
   );
   water.rotation.set(-Math.PI/2,0,0);water.position.y=0.5;scene.add(water);
+
+  // Bateaux en surface
+  _buildBoats(siteKey);
+}
+
+function _buildBoats(siteKey){
+  const mk=(geo,col)=>new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:col}));
+  const positions=siteKey==='martinique'
+    ? [{x:25,z:-30},{x:-20,z:35},{x:40,z:10}]
+    : [{x:20,z:-25},{x:-15,z:30}]; // roussay moins de bateaux
+
+  positions.forEach(({x,z})=>{
+    const boat=new THREE.Group();
+    // Coque
+    const hull=mk(new THREE.BoxGeometry(6,1.2,2.2),siteKey==='martinique'?0x8b4513:0x5a3010);
+    hull.position.y=0.6; boat.add(hull);
+    // Pont
+    const deck=mk(new THREE.BoxGeometry(5.5,0.15,2),0xc8a878);
+    deck.position.y=1.28; boat.add(deck);
+    // Cabine
+    const cabin=mk(new THREE.BoxGeometry(2,1.2,1.8),0xddccaa);
+    cabin.position.set(0.5,2.0,0); boat.add(cabin);
+    // Fenêtres cabine
+    for(let w=0;w<2;w++){
+      const win=mk(new THREE.BoxGeometry(0.4,0.3,0.05),0x88ccff);
+      win.position.set(0.3+w*0.8,2.1,0.93); boat.add(win);
+    }
+    // Mât
+    const mast=mk(new THREE.CylinderGeometry(0.04,0.04,3,6),0x8b7355);
+    mast.position.set(-1.5,2.8,0); boat.add(mast);
+    // Bouée côté
+    const buoy=mk(new THREE.TorusGeometry(0.25,0.08,6,8),0xff4400);
+    buoy.rotation.z=Math.PI/2; buoy.position.set(3.1,0.8,0.8); boat.add(buoy);
+
+    boat.position.set(x,0.5,z);
+    boat.rotation.y=Math.random()*Math.PI*2;
+    scene.add(boat);
+  });
 }
 
 function _buildSiteVegetation(site,siteKey,maxDepth){

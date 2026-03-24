@@ -33,7 +33,6 @@ function startSim(){
     gamePhase='dive';surface360Start=null;surface360TotalYaw=0;
     rescueTime=null;surfaceTime=null;
     document.getElementById('c').style.filter='none';
-    document.getElementById('victim-status').style.display='block';
     document.getElementById('btn-interact').style.display='flex';
     G.simStarted=true;
     initEffects(G.selectedSiteKey);
@@ -49,9 +48,7 @@ function startRescue(){
   G.rescueTime=G.gameTime;
   document.getElementById('interact-prompt').style.display='none';
   document.getElementById('btn-interact').style.display='none';
-  document.querySelector('.vs-name').textContent='Blessé — En charge';
-  document.getElementById('vs-state').textContent='Pris en charge';
-  setAlert('BLESSÉ EN CHARGE — GÉREZ LA FLOTTABILITÉ','warn');
+  setAlert('BLESSÉ EN CHARGE','warn');
   G.victimStab=0.5+Math.random()*1.5;
   G.playerStab=Math.max(0.5,(4.12-G.victimStab));
   G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;
