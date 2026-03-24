@@ -39,7 +39,10 @@ document.addEventListener('pointerlockchange',()=>{ locked=document.pointerLockE
 document.addEventListener('mousemove',e=>{
   if(!locked||!G.simStarted)return;
   yaw-=e.movementX*0.002;pitch-=e.movementY*0.002;
-  pitch=Math.max(-Math.PI/2.2,Math.min(Math.PI/2.2,pitch));
+  pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch));
+  // Normaliser yaw pour éviter l'accumulation infinie
+  while(yaw>Math.PI)yaw-=Math.PI*2;
+  while(yaw<-Math.PI)yaw+=Math.PI*2;
 });
 
 function isMobile(){ return 'ontouchstart' in window||navigator.maxTouchPoints>0; }
@@ -72,7 +75,9 @@ function applyMovement(dt){
   const jr=joyState.right;
   if(jr.active&&(Math.abs(jr.dx)>0.05||Math.abs(jr.dy)>0.05)){
     yaw-=jr.dx*2.5*dt;pitch-=jr.dy*2.0*dt;
-    pitch=Math.max(-Math.PI/2.2,Math.min(Math.PI/2.2,pitch));
+    pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch));
+    while(yaw>Math.PI)yaw-=Math.PI*2;
+    while(yaw<-Math.PI)yaw+=Math.PI*2;
   }
 
   // Mouvement horizontal uniquement dans velocity
@@ -161,7 +166,9 @@ canvas3dEl.addEventListener('touchmove',e=>{
   for(const t of e.changedTouches){
     if(t.identifier!==touchCamId)continue;
     yaw-=(t.clientX-lastTX)*0.0015;pitch-=(t.clientY-lastTY)*0.0015;
-    pitch=Math.max(-Math.PI/2.2,Math.min(Math.PI/2.2,pitch));
+    pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch));
+    while(yaw>Math.PI)yaw-=Math.PI*2;
+    while(yaw<-Math.PI)yaw+=Math.PI*2;
     lastTX=t.clientX;lastTY=t.clientY;
   }
 },{passive:true});

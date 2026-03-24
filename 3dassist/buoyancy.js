@@ -128,7 +128,7 @@ function updateBuoyHUD(){
 }
 
 function showBuoyPanels(show){
-  ['panel-victim','panel-self','panel-victim-ds','panel-purge-me','panel-lung'].forEach(id=>{
+  ['panel-victim','panel-self','panel-purge-me','panel-lung'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.style.setProperty('display',show?'block':'none','important');
   });
