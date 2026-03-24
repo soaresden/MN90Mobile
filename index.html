@@ -1,1544 +1,524 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤿 MN90 Mobile Planner</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%); overflow-x: hidden; color: #a8dadc; }
-        .page-title { background: linear-gradient(135deg, #0f3d44 0%, #1a2332 100%); color: #a8dadc; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.6); border-bottom: 2px solid #2d8b8b; }
-        .container { display: flex; flex-direction: column; gap: 12px; padding: 12px; height: calc(100vh - 80px); overflow-y: auto; background: linear-gradient(135deg, #0f1419 0%, #151e2b 100%); }
-        .tab-buttons { display: flex; gap: 8px; background: rgba(26, 35, 50, 0.8); padding: 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); border: 1px solid #2d8b8b; backdrop-filter: blur(10px); }
-        .tab-btn { flex: 1; padding: 12px; background: rgba(45, 139, 139, 0.1); border: 1px solid #2d8b8b; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; color: #a8dadc; }
-        .tab-btn:hover { background: rgba(45, 139, 139, 0.2); }
-        .tab-btn.active { background: linear-gradient(135deg, #2d8b8b 0%, #1f5d5d 100%); color: #f1faee; border-color: #45b5b5; box-shadow: 0 0 12px rgba(45, 139, 139, 0.5); }
-        .workspace { display: none; flex: 1; overflow: hidden; flex-direction: column; }
-        .workspace.active { display: flex; }
-        .workspace-inner { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-        .top-row { display: flex; flex: 1; overflow: hidden; gap: 8px; }
-        .menu-left { display: flex; flex-direction: column; min-width: 280px; background: rgba(26, 35, 50, 0.9); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #2d8b8b; }
-        .menu-sections { display: flex; flex-direction: column; height: 100%; overflow-y: auto; }
-        .menu-section { padding: 14px; background: rgba(15, 20, 25, 0.6); margin: 6px; border-radius: 6px; border: 1px solid rgba(45, 139, 139, 0.3); flex-shrink: 0; overflow-y: auto; max-height: none; display: flex; flex-direction: column; flex: 1; }
-        .menu-section-header { font-weight: 700; color: #2d8b8b; margin-bottom: 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-group { margin: 8px 0; }
-        .input-label { display: flex; justify-content: space-between; align-items: center; font-size: 10px; margin-bottom: 6px; font-weight: 600; color: #a8dadc; }
-        input[type="range"] { width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(to right, #2d8b8b 0%, #00d4d4 100%); outline: none; -webkit-appearance: none; cursor: pointer; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #00d4d4 0%, #2d8b8b 100%); cursor: pointer; box-shadow: 0 0 8px rgba(0, 212, 212, 0.6); }
-        input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #00d4d4 0%, #2d8b8b 100%); cursor: pointer; border: none; box-shadow: 0 0 8px rgba(0, 212, 212, 0.6); }
-        input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #00d4d4; }
-        .result-card { display: inline-block; }
-        .gas-result { padding: 12px; border-radius: 6px; text-align: center; font-size: 10px; min-width: 120px; color: #a8dadc; }
-        .gas-result.air { background: rgba(0, 212, 212, 0.15); border-left: 4px solid #00d4d4; }
-        .gas-result.nitrox { background: rgba(45, 139, 139, 0.15); border-left: 4px solid #2d8b8b; }
-        .gas-result.trimix { background: rgba(168, 218, 220, 0.1); border-left: 4px solid #a8dadc; }
-        
-        .center-right { display: flex; flex-direction: column; flex: 1; overflow: hidden; gap: 8px; }
-        .graph-zone { background: rgba(15, 20, 25, 0.8); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); overflow: auto; height: 100%; position: relative; border: 1px solid rgba(45, 139, 139, 0.3); }
-        table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 0; flex: 1; overflow-y: auto; background: rgba(26, 35, 50, 0.6); table-layout: fixed; }
-        table th { background: linear-gradient(135deg, #0f3d44 0%, #1a2332 100%); color: #a8dadc; padding: 8px; text-align: center; font-weight: 700; position: sticky; top: 0; border-bottom: 2px solid #2d8b8b; display: none; }
-        table td { padding: 6px; border-bottom: 1px solid rgba(45, 139, 139, 0.2); text-align: center; color: #a8dadc; }
-        table tbody tr:nth-child(even) { background: rgba(45, 139, 139, 0.05); }
-        table tbody tr.highlight { background: rgba(0, 212, 212, 0.3) !important; font-weight: 700; border: 2px solid #00d4d4 !important; box-shadow: 0 0 8px rgba(0, 212, 212, 0.4) !important; }
-        .results-zone { padding: 16px; background: rgba(26, 35, 50, 0.8); overflow-y: auto; flex-shrink: 0; min-height: 160px; display: flex; gap: 12px; border-top: 1px solid rgba(45, 139, 139, 0.3); }
-        .results-zone.horizontal { flex-direction: row; overflow-x: auto; }
-        .results-zone.vertical { flex-direction: column; }
-        .result-box { padding: 12px; background: rgba(26, 35, 50, 0.9); border-radius: 6px; border-left: 4px solid #00d4d4; flex-shrink: 0; min-width: 180px; box-shadow: 0 2px 8px rgba(0, 212, 212, 0.2); color: #a8dadc; }
-        .result-box-title { font-weight: 700; color: #2d8b8b; font-size: 11px; margin-bottom: 6px; }
-        .result-value { font-size: 18px; font-weight: 700; color: #00d4d4; }
-        .result-value.success { color: #2d8b8b; }
-        .result-value.warning { color: #ff8a80; }
-        .result-detail { font-size: 9px; color: #a8dadc; margin-top: 6px; line-height: 1.4; }
-        .resizer-menu-v { width: 6px; background: rgba(45, 139, 139, 0.5); cursor: col-resize; transition: all 0.2s; touch-action: none; }
-        .resizer-menu-v:hover { background: rgba(6, 182, 212, 0.8); width: 8px; box-shadow: 0 0 10px rgba(6, 182, 212, 0.5); }
-        
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(45, 139, 139, 0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(45, 139, 139, 0.5); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(45, 139, 139, 0.8); }
-        
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            .container { padding: 8px; gap: 4px; }
-            .tab-btn { padding: 12px 8px; font-size: 13px; border-radius: 4px; }
-            .top-row { flex-direction: column; height: auto; }
-            .menu-left { min-width: 100%; max-width: 100%; min-height: 200px; max-height: 50%; }
-            .center-right { min-width: 100%; max-width: 100%; height: auto; min-height: 150px; }
-            .graph-zone { min-height: 180px; }
-            #graph0-zone { min-height: 140px; }
-            #graph1-zone { min-height: 160px; }
-            .graph-zone canvas { max-width: 100%; }
-            .menu-section { padding: 6px; margin: 2px; }
-            .menu-section-header { font-size: 12px; padding: 4px; }
-            .input-group { margin: 3px 0; }
-            .input-label { font-size: 10px; gap: 4px; }
-            .input-label span { padding: 2px 0; }
-            input[type="range"] { height: 28px; }
-            input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; }
-            input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; }
-            table { font-size: 9px; }
-            table td, table th { padding: 5px 3px; }
-            .result-box { width: 100%; margin: 4px 0; min-width: unset; }
-            .result-box-title { font-size: 10px; }
-            .result-value { font-size: 14px; }
-            .resizer-menu-v { width: 8px; background: rgba(45, 139, 139, 0.8); }
-            .results-zone { flex-direction: column !important; min-height: 100px; }
-        }
-        
-        @media (max-width: 480px) {
-            .container { padding: 4px; gap: 2px; }
-            .page-title { font-size: 14px; padding: 8px; }
-            .tab-btn { padding: 10px 6px; font-size: 11px; }
-            .menu-left { min-height: 180px; }
-            .center-right { min-height: 120px; }
-            table { font-size: 8px; }
-            table td, table th { padding: 4px 2px; }
-            .input-label { font-size: 9px; }
-            .input-group { margin: 2px 0; }
-            .result-box { padding: 8px; }
-            .result-value { font-size: 12px; }
-            .menu-section { padding: 4px; margin: 1px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="screen-orientation" content="landscape">
+<title>Remontée Assistée — Simulateur de Sauvetage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif;touch-action:none}
+canvas{display:block;position:absolute;top:0;left:0}
+
+/* PORTRAIT MOBILE → message */
+@media screen and (orientation:portrait) and (max-width:768px){
+  body>*{display:none!important}
+  body::after{content:'↻  Tournez votre appareil';display:flex!important;position:fixed;inset:0;z-index:9999;background:#000;color:#00e5cc;font-family:'Rajdhani',sans-serif;font-size:18px;letter-spacing:3px;align-items:center;justify-content:center}
+}
+
+/* ===== EFFETS VISUELS ===== */
+#overlay{position:absolute;inset:0;pointer-events:none;z-index:10}
+#mask-vignette{position:absolute;inset:0;pointer-events:none;transition:box-shadow .8s}
+#mask-color{position:absolute;inset:0;pointer-events:none;opacity:0.14;transition:background 1.5s,opacity .8s}
+#depth-color-overlay{position:absolute;inset:0;pointer-events:none;transition:background .5s,opacity .5s;opacity:0;mix-blend-mode:multiply}
+
+/* ===== MASQUE MONOVERRE ===== */
+#mask-frame{position:fixed;inset:0;pointer-events:none;z-index:20}
+#mask-top   {position:absolute;top:0;    left:0;right:0;    height:12%;  background:#000}
+#mask-bottom{position:absolute;bottom:0; left:0;right:0;    height:10%;  background:#000}
+#mask-left  {position:absolute;top:12%;  left:0;            width:6%;   height:78%; background:#000}
+#mask-right {position:absolute;top:12%;  right:0;           width:6%;   height:78%; background:#000}
+#mask-tl{position:absolute;top:12%;left:6%;  width:60px;height:60px;background:#000;border-radius:0 0 100% 0}
+#mask-tr{position:absolute;top:12%;right:6%; width:60px;height:60px;background:#000;border-radius:0 0 0 100%}
+#mask-bl{position:absolute;bottom:10%;left:6%;  width:60px;height:60px;background:#000;border-radius:0 100% 0 0}
+#mask-br{position:absolute;bottom:10%;right:6%; width:60px;height:60px;background:#000;border-radius:100% 0 0 0}
+#mask-nose{position:absolute;bottom:10%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:28px solid #000}
+#mask-glass-border{position:absolute;top:12%;left:6%;right:6%;bottom:10%;border:1.5px solid rgba(90,95,105,0.3);pointer-events:none}
+
+/* ===== HUD LAYER ===== */
+#hud-layer{position:fixed;inset:0;pointer-events:none;z-index:30}
+#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px}
+.ch-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,0.35);margin-top:-.5px}
+.ch-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.35);margin-left:-.5px}
+.ch-c{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,0.5);transform:translate(-50%,-50%)}
+#wrist-hud{position:absolute;bottom:90px;left:175px;transform:perspective(400px) rotateY(15deg) rotateX(-7deg) rotate(-6deg);transform-origin:left bottom;pointer-events:none}
+#suunto-watch{width:190px;height:190px;position:relative}
+#suunto-canvas{position:absolute;top:0;left:0;width:190px;height:190px;border-radius:50%}
+
+/* Alerte sous la montre */
+#hud-alert-bar{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(0,229,204,0.5);transition:color .2s;white-space:nowrap}
+#hud-alert-bar.warn{color:#ffcc00;animation:blink .8s infinite}
+#hud-alert-bar.danger{color:#ff3333;animation:blink .4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
+
+#victim-status{position:absolute;top:24px;right:24px;background:rgba(0,8,18,0.75);border:1px solid rgba(80,160,220,0.2);border-radius:8px;padding:9px 13px;color:rgba(140,195,235,0.7);font-size:11px;letter-spacing:1px;display:none;font-family:'Rajdhani',sans-serif}
+.vs-name{color:rgba(140,195,235,0.95);font-size:13px;font-weight:600;margin-bottom:3px}
+.vs-bar-wrap{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin:4px 0;overflow:hidden}
+.vs-bar{height:100%;background:#4fc3f7;border-radius:2px;transition:width 2s}
+
+#palier-banner{position:absolute;top:32px;left:50%;transform:translateX(-50%);background:rgba(25,15,0,0.85);border:1px solid rgba(255,200,0,0.45);border-radius:6px;padding:8px 28px;font-size:13px;font-weight:700;letter-spacing:3px;color:#ffcc00;text-transform:uppercase;display:none;text-align:center;font-family:'Rajdhani',sans-serif}
+#interact-prompt{position:absolute;top:58%;left:50%;transform:translateX(-50%);background:rgba(0,8,20,0.75);border:1px solid rgba(80,200,255,0.3);border-radius:6px;padding:9px 22px;font-size:12px;font-weight:600;color:rgba(140,215,255,0.9);letter-spacing:2px;display:none;pointer-events:all;cursor:pointer;font-family:'Rajdhani',sans-serif}
+#sound-btn{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,8,20,0.7);border:1px solid rgba(80,200,255,0.18);border-radius:6px;padding:5px 16px;font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(100,200,255,0.55);cursor:pointer;pointer-events:all;font-family:'Rajdhani',sans-serif}
+#torch-btn{position:absolute;top:12px;left:calc(50% + 90px);background:rgba(20,15,0,0.7);border:1px solid rgba(255,200,80,0.18);border-radius:6px;padding:5px 14px;font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(255,200,80,0.55);cursor:pointer;pointer-events:all;font-family:'Rajdhani',sans-serif}
+#loading-bar-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;display:none}
+#loading-txt{color:rgba(0,229,204,0.7);font-size:12px;font-weight:600;letter-spacing:3px;margin-bottom:10px;font-family:'Rajdhani',sans-serif}
+#loading-bar{width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
+#loading-fill{height:100%;background:#00e5cc;width:0%;transition:width .3s}
+
+.joystick-zone{position:absolute;bottom:20px;width:120px;height:120px;pointer-events:all;touch-action:none;z-index:50}
+#joy-left{left:10px}
+#joy-right{right:10px}
+.joy-base{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3)}
+.joy-stick{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);top:50%;left:50%;transform:translate(-50%,-50%)}
+.joy-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:rgba(255,255,255,0.2);letter-spacing:1px;white-space:nowrap;font-family:'Rajdhani',sans-serif}
+#btn-interact{position:absolute;bottom:90px;right:20px;width:60px;height:60px;border-radius:50%;background:rgba(0,150,200,0.2);border:2px solid rgba(80,200,255,0.4);color:rgba(140,215,255,0.9);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;pointer-events:all;cursor:pointer;display:none;align-items:center;justify-content:center;text-align:center}
+
+/* ===== PANNEAUX FLOTTABILITÉ ===== */
+.buoy-panel{position:absolute;display:none;background:rgba(0,8,20,0.92);border:1px solid rgba(80,160,220,0.3);border-radius:10px;padding:10px 12px;font-family:'Rajdhani',sans-serif;pointer-events:all;z-index:60}
+.buoy-title{font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(80,180,255,0.5);text-transform:uppercase;margin-bottom:6px}
+.buoy-bar-wrap{height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin:4px 0 8px}
+.buoy-bar{height:100%;border-radius:3px;transition:width .3s}
+.buoy-val{font-size:14px;font-weight:700;color:#fff;margin-bottom:2px}
+.buoy-sub{font-size:9px;color:rgba(120,180,220,0.5);letter-spacing:1px;margin-bottom:6px}
+.buoy-btn{width:100%;padding:7px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;letter-spacing:1.5px;cursor:pointer;border:1px solid;margin-bottom:4px;text-align:center;transition:opacity .15s;user-select:none}
+.buoy-btn:last-child{margin-bottom:0}
+.buoy-btn:active{opacity:.7}
+.btn-inflate{background:rgba(0,120,220,0.18);border-color:rgba(0,120,220,0.4);color:#4499ff}
+.btn-purge{background:rgba(200,80,0,0.14);border-color:rgba(200,80,0,0.35);color:#ff8844}
+.btn-insp{background:rgba(0,180,100,0.16);border-color:rgba(0,180,100,0.35);color:#44dd88}
+.btn-exp{background:rgba(180,60,0,0.14);border-color:rgba(180,60,0,0.3);color:#ff6633}
+#panel-victim{top:310px;left:10px;width:148px}
+#panel-self{bottom:185px;left:10px;width:140px}
+#panel-purge-me{bottom:185px;right:10px;width:140px}
+#panel-victim-ds{bottom:265px;right:10px;width:140px}
+#panel-lung{top:45%;right:155px;transform:translateY(-50%);width:148px}
+
+/* ===== ÉCRAN TITRE ===== */
+#start-screen{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg,#000a18 0%,#001428 50%,#000d20 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:0;pointer-events:all;z-index:200;
+  overflow-y:auto;overflow-x:hidden;
+  padding:16px 12px 20px;
+}
+/* Lignes de scan animées */
+#start-screen::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,180,160,0.015) 2px,rgba(0,180,160,0.015) 4px);
+  pointer-events:none;
+}
+/* Halo central */
+#start-screen::after{
+  content:'';position:absolute;top:35%;left:50%;
+  transform:translate(-50%,-50%);
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,180,160,0.08) 0%,transparent 65%);
+  pointer-events:none;
+}
+
+.ss-top-line{
+  font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:5px;color:rgba(0,229,204,0.3);text-transform:uppercase;
+  margin-bottom:8px;
+}
+.ss-title{
+  font-family:'Orbitron',sans-serif;font-size:clamp(22px,4vw,46px);
+  font-weight:900;color:#fff;line-height:1;
+  text-shadow:0 0 40px rgba(0,229,204,0.3),0 0 80px rgba(0,229,204,0.1);
+  margin-bottom:2px;letter-spacing:2px;
+}
+.ss-title span{color:#00e5cc}
+.ss-subtitle{
+  font-family:'Rajdhani',sans-serif;font-size:clamp(13px,2vw,18px);
+  font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:6px;
+  text-transform:uppercase;margin-bottom:10px;
+}
+.ss-mission{
+  font-family:'Rajdhani',sans-serif;font-size:clamp(12px,1.8vw,15px);
+  font-weight:700;color:#ff4422;letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:12px;
+  text-shadow:0 0 20px rgba(255,60,20,0.4);
+}
+
+/* Layout principal deux colonnes */
+.ss-main{display:flex;gap:20px;align-items:flex-start;width:min(860px,96vw);margin-bottom:10px}
+/* Objectifs — colonne gauche */
+.ss-left{width:230px;flex-shrink:0}
+.ss-obj-title,.ss-sites-title{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(0,229,204,0.4);margin-bottom:8px;text-transform:uppercase;display:block}
+.ss-objectives{display:flex;flex-direction:column;gap:5px}
+.ss-obj{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);border-radius:5px}
+.ss-obj-n{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#00e5cc;min-width:16px;margin-top:1px}
+.ss-obj-t{display:block;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:rgba(255,255,255,0.85);line-height:1.2}
+.ss-obj-d{display:block;font-family:'Rajdhani',sans-serif;font-size:9px;color:rgba(255,255,255,0.3)}
+/* Sites — colonne droite */
+.ss-sites{flex:1}
+.site-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.site-btn{
+  border-radius:8px;
+  border:2px solid rgba(255,255,255,0.1);
+  background:rgba(5,12,25,0.95);
+  cursor:pointer;text-align:left;
+  transition:border-color .2s,box-shadow .2s;
+  position:relative;padding:0;
+}
+.site-btn:hover{border-color:rgba(0,229,204,0.5)}
+.site-btn.selected{border-color:#00e5cc;box-shadow:0 0 14px rgba(0,229,204,0.3)}
+.site-btn.selected::after{content:'\2713';position:absolute;top:4px;right:6px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e5cc;}
+/* Ligne 1 : thumbnail avec canvas dedans */
+.site-thumb{height:60px;border-radius:6px 6px 0 0;overflow:hidden;position:relative;}
+.site-preview{position:absolute;inset:0;width:100%;height:100%;}
+/* Ligne 2 : nom */
+.site-name{
+  display:block;
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  color:#fff;letter-spacing:1px;
+  padding:6px 8px 3px;
+  border-top:1px solid rgba(255,255,255,0.1);
+}
+.site-btn.selected .site-name{color:#00e5cc}
+/* Ligne 3 : description */
+.site-meta{
+  display:block;
+  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;
+  color:rgba(180,200,220,0.65);
+  padding:0 8px 8px;
+  line-height:1.4;
+}
+.ss-rule{
+  font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:1.5px;color:rgba(0,229,204,0.5);
+  border:1px solid rgba(0,229,204,0.15);border-radius:4px;
+  padding:5px 12px;
+}
+
+/* Sélecteur profondeur */
+.depth-picker{text-align:center;margin-bottom:10px}
+.depth-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(0,229,204,0.4);display:block;margin-bottom:8px}
+.depth-btns{display:flex;gap:8px;justify-content:center}
+.depth-btn{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;padding:7px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);cursor:pointer;transition:all .2s;letter-spacing:1px}
+.depth-btn:hover{border-color:rgba(0,229,204,0.4);color:#00e5cc}
+.depth-btn.selected{border-color:#00e5cc;color:#00e5cc;background:rgba(0,229,204,0.08)}
+#start-btn{
+  font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,15px);
+  font-weight:700;letter-spacing:5px;
+  color:#00e5cc;
+  background:rgba(0,229,204,0.05);
+  border:1px solid rgba(0,229,204,0.4);
+  border-radius:6px;
+  padding:12px 44px;
+  cursor:pointer;
+  text-transform:uppercase;
+  transition:all .3s;
+  position:relative;overflow:hidden;
+  margin-top:8px;
+  flex-shrink:0;
+}
+#start-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(0,229,204,0.08),transparent);
+  transform:translateX(-100%);transition:transform .4s;
+}
+#start-btn:hover::before{transform:translateX(100%)}
+#start-btn:hover{
+  background:rgba(0,229,204,0.1);
+  border-color:rgba(0,229,204,0.8);
+  text-shadow:0 0 20px rgba(0,229,204,0.8);
+  letter-spacing:8px;
+}
+</style>
 </head>
 <body>
-    <div class="page-title">🤿 MN90 Mobile Planner</div>
-    
-    <div class="container">
-        <div class="tab-buttons">
-            <button class="tab-btn active" onclick="switchTab(0)">📋 Planificateur</button>
-            <button class="tab-btn" onclick="switchTab(1)">💨 Autonomie</button>
-            <button class="tab-btn" onclick="switchTab(2)">📊 Tables</button>
-        </div>
-        
-        <!-- TAB 0: PLANIFICATEUR -->
-        <div id="workspace0" class="workspace active">
-            <div class="workspace-inner">
-                <div class="top-row">
-                    <div class="menu-left">
-                        <div class="menu-sections">
-                            <div class="menu-section" style="flex: 0 0 auto; max-height: none;">
-                                <div class="menu-section-header">Paramètres</div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Profondeur</span><span id="depth0-info">20 m</span></div>
-                                    <input type="range" id="depth0" min="6" max="65" value="20" onmouseup="updateVal('depth0', ' m'); calculateTab0()" onchange="updateVal('depth0', ' m'); calculateTab0()">
-                                </div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Temps au fond</span><span id="time0-val">20 min</span></div>
-                                    <input type="range" id="time0" min="1" max="300" value="20" onmouseup="updateVal('time0', ' min'); calculateTab0()" onchange="updateVal('time0', ' min'); calculateTab0()">
-                                </div>
-                            </div>
-                            <div class="menu-section">
-                                <div class="menu-section-header">Mélange</div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>AIR</span></div>
-                                </div>
-                                <div class="input-group" style="margin-bottom: 12px;">
-                                    <div class="result-card"><div class="gas-result air">
-                                        <strong>🫁 AIR</strong><br>PPO₂: <strong id="ppo2-air">0.42</strong> bar
-                                    </div></div>
-                                </div>
-                                <div class="input-group">
-                                    <input type="checkbox" id="show-nitrox" onchange="calculateTab0()"> 
-                                    <label style="font-size: 10px; margin-left: 4px;">NITROX</label>
-                                </div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>% O₂</span><span id="nitrox-val">32</span></div>
-                                    <input type="range" id="nitrox-o2" min="32" max="50" value="32" onmouseup="updateVal('nitrox-o2', ''); calculateTab0()" onchange="updateVal('nitrox-o2', ''); calculateTab0()" style="display: none;">
-                                </div>
-                                <div class="input-group" style="display: none;">
-                                    <div class="result-card"><div class="gas-result nitrox">
-                                        <strong>🟢 NITROX</strong><br>PPO₂: <strong id="ppo2-nitrox">0.84</strong> bar
-                                    </div></div>
-                                </div>
-                                <div class="input-group" style="margin-top: 12px;">
-                                    <input type="checkbox" id="show-trimix" onchange="calculateTab0()"> 
-                                    <label style="font-size: 10px; margin-left: 4px;">TRIMIX</label>
-                                </div>
-                                <div class="input-group" style="display: none;">
-                                    <div class="input-label"><span>% O₂</span><span>18</span> <span>% He</span><span>35</span></div>
-                                </div>
-                                <div class="input-group" style="display: none;">
-                                    <div class="result-card"><div class="gas-result trimix">
-                                        <strong>🌀 TRIMIX</strong><br>PPO₂: <strong id="ppo2-trimix">0.54</strong> bar
-                                    </div></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="resizer-menu-v"></div>
-                    <div class="center-right">
-                        <div class="graph-zone" id="graph0-zone" style="background: #1a3a52;"><canvas id="chart0"></canvas></div>
-                        <div class="results-zone" id="results0"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- TAB 1: AUTONOMIE -->
-        <div id="workspace1" class="workspace">
-            <div class="workspace-inner">
-                <div class="top-row">
-                    <div class="menu-left">
-                        <div class="menu-sections">
-                            <div class="menu-section" style="flex: 0 0 auto; max-height: none;">
-                                <div class="menu-section-header">Paramètres</div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Profondeur</span><span id="depth1-info">20 m</span></div>
-                                    <input type="range" id="depth1" min="6" max="65" value="20" oninput="updateVal('depth1', ' m'); calculateTab1()" onmouseup="calculateTab1()" onchange="calculateTab1()">
-                                </div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Temps au fond</span><span id="time1-val">20 min</span></div>
-                                    <input type="range" id="time1" min="1" max="300" value="20" oninput="updateVal('time1', ' min'); calculateTab1()" onmouseup="calculateTab1()" onchange="calculateTab1()">
-                                </div>
-                            </div>
+<canvas id="c"></canvas>
+<div id="overlay">
+  <div id="mask-vignette"></div>
+  <div id="mask-color"></div>
+  <div id="depth-color-overlay"></div>
+</div>
 
-                            <div class="menu-section" style="flex: 0 0 auto; max-height: none;">
-                                <div class="menu-section-header">Bouteille</div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Volume (L)</span><span id="vol1-val">12 L</span></div>
-                                    <input type="range" id="vol1" min="6" max="18" value="12" oninput="updateVal('vol1', ' L'); calculateTab1()" onmouseup="calculateTab1()" onchange="calculateTab1()">
-                                </div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Pression init</span><span id="press1-val">210 bar</span></div>
-                                    <input type="range" id="press1" min="100" max="300" value="210" oninput="updateVal('press1', ' bar'); calculateTab1()" onmouseup="calculateTab1()" onchange="calculateTab1()">
-                                </div>
-                            </div>
+<div id="mask-frame">
+  <div id="mask-top"></div><div id="mask-bottom"></div>
+  <div id="mask-left"></div><div id="mask-right"></div>
+  <div id="mask-tl"></div><div id="mask-tr"></div>
+  <div id="mask-bl"></div><div id="mask-br"></div>
+  <div id="mask-nose"></div><div id="mask-glass-border"></div>
+</div>
 
-                            <div class="menu-section" style="flex: 0 0 auto; max-height: none;">
-                                <div class="menu-section-header">Conso</div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Pression sécu</span><span id="safety1-val">50 bar</span></div>
-                                    <input type="range" id="safety1" min="20" max="100" value="50" oninput="updateVal('safety1', ' bar'); calculateTab1()" onmouseup="calculateTab1()" onchange="calculateTab1()">
-                                </div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>L/min</span><span id="conso1-val">15</span></div>
-                                    <input type="range" id="conso1" min="8" max="30" value="15" step="0.5" oninput="updateVal('conso1', ''); calculateTab1();" onmouseup="calculateTab1();" onchange="calculateTab1();">
-                                </div>
-                            </div>
-
-                            <div class="menu-section" style="flex: 0 0 auto; max-height: none;">
-                                <div class="menu-section-header">Itineraire</div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Temps descente</span><span id="desc-time-val">1 min</span></div>
-                                    <input type="range" id="desc-time" min="1" max="15" value="1" oninput="updateVal('desc-time', ' min'); calculateTab1()" onmouseup="calculateTab1()" onchange="calculateTab1()">
-                                </div>
-                            </div>
-
-                            <div class="menu-section" style="flex: 1;">
-                                <div class="menu-section-header">Paliers MN90</div>
-                                <div id="paliers-info" style="font-size: 10px; line-height: 1.6; color: #a8dadc;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="resizer-menu-v"></div>
-                    <div class="center-right">
-                        <div class="graph-zone" id="graph1-zone" style="background: #1a3a52;"><canvas id="chart1"></canvas></div>
-                        <div class="results-zone horizontal" id="results1"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- TAB 2: TABLES -->
-        <div id="workspace2" class="workspace">
-            <div class="workspace-inner">
-                <div class="top-row">
-                    <div class="menu-left">
-                        <div class="menu-sections">
-                            <div class="menu-section" style="flex: 0 0 auto; max-height: none;">
-                                <div class="menu-section-header">Recherche</div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Profondeur</span><span id="table-depth-val">20 m</span></div>
-                                    <input type="range" id="table-depth" min="6" max="65" value="20" oninput="updateVal('table-depth', ' m'); drawTableGraph()" onchange="updateVal('table-depth', ' m'); drawTableGraph()">
-                                </div>
-                                <div class="input-group">
-                                    <div class="input-label"><span>Temps</span><span id="table-time-val">00:20:00</span></div>
-                                    <input type="range" id="table-time" min="1" max="300" value="20" oninput="updateVal('table-time', ''); drawTableGraph()" onchange="updateVal('table-time', ''); drawTableGraph()">
-                                </div>
-                            </div>
-                            
-                            <div class="menu-section" style="flex: 1; overflow-y: auto;">
-                                <div class="menu-section-header">Tableau MN90</div>
-                                <table style="width: 100%; border-collapse: collapse; table-layout: auto;">
-                                    <tbody id="table-rows"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="resizer-menu-v"></div>
-                    <div class="center-right">
-                        <div class="graph-zone" id="graph2-zone" style="background: #1a3a52;"><canvas id="chart2"></canvas></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div id="hud-layer">
+  <div id="crosshair"><div class="ch-h"></div><div class="ch-v"></div><div class="ch-c"></div></div>
+  <div id="wrist-hud">
+    <div id="suunto-watch">
+      <canvas id="suunto-canvas" width="190" height="190"></canvas>
     </div>
-    
-    <script>
-        const mn90Tables = [
-{prof:6,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'A'},{prof:6,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:6,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:6,time:75.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:6,time:105.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:6,time:135.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:6,time:180.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:6,time:240.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:6,time:315.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'I'},{prof:6,time:360.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'J'},{prof:8,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:8,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:8,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:8,time:60.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:8,time:90.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:8,time:105.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:8,time:135.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:8,time:165.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'I'},{prof:8,time:195.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'J'},{prof:8,time:255.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'K'},{prof:8,time:300.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'L'},{prof:8,time:360.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'M'},{prof:10,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:10,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:10,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:10,time:60.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:10,time:75.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:10,time:105.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:10,time:120.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'I'},{prof:10,time:135.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'J'},{prof:10,time:165.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'K'},{prof:10,time:180.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'L'},{prof:10,time:240.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'M'},{prof:10,time:255.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'N'},{prof:10,time:315.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'O'},{prof:10,time:330.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'P'},{prof:10,time:360.00,p15:0,p12:0,p9:0,p6:0,p3:1,gps:'P'},{prof:12,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'A'},{prof:12,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:12,time:25.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:12,time:35.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:12,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:12,time:55.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:12,time:65.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:12,time:80.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:12,time:90.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'I'},{prof:12,time:105.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'J'},{prof:12,time:120.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'K'},{prof:12,time:135.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'L'},{prof:12,time:140.00,p15:0,p12:0,p9:0,p6:0,p3:2,gps:'L'},{prof:12,time:150.00,p15:0,p12:0,p9:0,p6:0,p3:4,gps:'M'},{prof:12,time:160.00,p15:0,p12:0,p9:0,p6:0,p3:6,gps:'M'},{prof:12,time:170.00,p15:0,p12:0,p9:0,p6:0,p3:7,gps:'N'},{prof:12,time:180.00,p15:0,p12:0,p9:0,p6:0,p3:9,gps:'N'},{prof:12,time:190.00,p15:0,p12:0,p9:0,p6:0,p3:11,gps:'N'},{prof:12,time:200.00,p15:0,p12:0,p9:0,p6:0,p3:13,gps:'O'},{prof:12,time:210.00,p15:0,p12:0,p9:0,p6:0,p3:14,gps:'O'},{prof:12,time:220.00,p15:0,p12:0,p9:0,p6:0,p3:15,gps:'O'},{prof:12,time:230.00,p15:0,p12:0,p9:0,p6:0,p3:16,gps:'O'},{prof:12,time:240.00,p15:0,p12:0,p9:0,p6:0,p3:17,gps:'O'},{prof:12,time:250.00,p15:0,p12:0,p9:0,p6:0,p3:18,gps:'P'},{prof:12,time:255.00,p15:0,p12:0,p9:0,p6:0,p3:19,gps:'P'},{prof:12,time:270.00,p15:0,p12:0,p9:0,p6:0,p3:22,gps:'P'},{prof:12,time:285.00,p15:0,p12:0,p9:0,p6:0,p3:24,gps:'P'},{prof:12,time:300.00,p15:0,p12:0,p9:0,p6:0,p3:26,gps:'P'},{prof:12,time:315.00,p15:0,p12:0,p9:0,p6:0,p3:27,gps:'*'},{prof:12,time:330.00,p15:0,p12:0,p9:0,p6:0,p3:29,gps:'*'},{prof:12,time:345.00,p15:0,p12:0,p9:0,p6:0,p3:31,gps:'*'},{prof:12,time:360.00,p15:0,p12:0,p9:0,p6:0,p3:33,gps:'*'},{prof:15,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'A'},{prof:15,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:15,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:15,time:20.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:15,time:25.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:15,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:15,time:35.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:15,time:40.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:15,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:15,time:50.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:15,time:55.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:15,time:60.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:15,time:65.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'I'},{prof:15,time:70.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'I'},{prof:15,time:75.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'J'},{prof:15,time:80.00,p15:0,p12:0,p9:0,p6:0,p3:2,gps:'J'},{prof:15,time:85.00,p15:0,p12:0,p9:0,p6:0,p3:4,gps:'K'},{prof:15,time:90.00,p15:0,p12:0,p9:0,p6:0,p3:6,gps:'K'},{prof:15,time:95.00,p15:0,p12:0,p9:0,p6:0,p3:8,gps:'L'},{prof:15,time:100.00,p15:0,p12:0,p9:0,p6:0,p3:11,gps:'L'},{prof:15,time:105.00,p15:0,p12:0,p9:0,p6:0,p3:13,gps:'L'},{prof:15,time:110.00,p15:0,p12:0,p9:0,p6:0,p3:15,gps:'M'},{prof:15,time:115.00,p15:0,p12:0,p9:0,p6:0,p3:17,gps:'M'},{prof:15,time:120.00,p15:0,p12:0,p9:0,p6:0,p3:18,gps:'M'},{prof:15,time:130.00,p15:0,p12:0,p9:0,p6:0,p3:22,gps:'*'},{prof:15,time:140.00,p15:0,p12:0,p9:0,p6:0,p3:25,gps:'*'},{prof:18,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:18,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:18,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:18,time:20.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:18,time:25.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:18,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:18,time:35.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:18,time:40.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:18,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:18,time:50.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:18,time:55.00,p15:0,p12:0,p9:0,p6:0,p3:1,gps:'I'},{prof:18,time:60.00,p15:0,p12:0,p9:0,p6:0,p3:5,gps:'J'},{prof:18,time:65.00,p15:0,p12:0,p9:0,p6:0,p3:8,gps:'J'},{prof:18,time:70.00,p15:0,p12:0,p9:0,p6:0,p3:11,gps:'K'},{prof:18,time:75.00,p15:0,p12:0,p9:0,p6:0,p3:14,gps:'K'},{prof:18,time:80.00,p15:0,p12:0,p9:0,p6:0,p3:17,gps:'L'},{prof:18,time:85.00,p15:0,p12:0,p9:0,p6:0,p3:21,gps:'L'},{prof:18,time:90.00,p15:0,p12:0,p9:0,p6:0,p3:23,gps:'M'},{prof:18,time:95.00,p15:0,p12:0,p9:0,p6:0,p3:26,gps:'M'},{prof:18,time:100.00,p15:0,p12:0,p9:0,p6:0,p3:28,gps:'M'},{prof:18,time:105.00,p15:0,p12:0,p9:0,p6:0,p3:31,gps:'N'},{prof:18,time:110.00,p15:0,p12:0,p9:0,p6:0,p3:34,gps:'N'},{prof:18,time:115.00,p15:0,p12:0,p9:0,p6:0,p3:36,gps:'N'},{prof:18,time:120.00,p15:0,p12:0,p9:0,p6:0,p3:38,gps:'O'},{prof:18,time:130.00,p15:0,p12:0,p9:0,p6:0,p3:42,gps:'*'},{prof:18,time:140.00,p15:0,p12:0,p9:0,p6:0,p3:46,gps:'*'},{prof:18,time:150.00,p15:0,p12:0,p9:0,p6:0,p3:51,gps:'*'},{prof:20,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:20,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:20,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:20,time:20.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:20,time:25.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:20,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'F'},{prof:20,time:35.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'G'},{prof:20,time:40.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'H'},{prof:20,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:1,gps:'I'},{prof:20,time:50.00,p15:0,p12:0,p9:0,p6:0,p3:4,gps:'I'},{prof:20,time:55.00,p15:0,p12:0,p9:0,p6:0,p3:9,gps:'J'},{prof:20,time:60.00,p15:0,p12:0,p9:0,p6:0,p3:13,gps:'K'},{prof:20,time:65.00,p15:0,p12:0,p9:0,p6:0,p3:16,gps:'K'},{prof:20,time:70.00,p15:0,p12:0,p9:0,p6:0,p3:20,gps:'L'},{prof:20,time:75.00,p15:0,p12:0,p9:0,p6:0,p3:24,gps:'L'},{prof:20,time:80.00,p15:0,p12:0,p9:0,p6:0,p3:27,gps:'M'},{prof:20,time:85.00,p15:0,p12:0,p9:0,p6:0,p3:30,gps:'M'},{prof:20,time:90.00,p15:0,p12:0,p9:0,p6:0,p3:34,gps:'M'},{prof:20,time:95.00,p15:0,p12:0,p9:0,p6:0,p3:37,gps:'*'},{prof:20,time:100.00,p15:0,p12:0,p9:0,p6:0,p3:40,gps:'*'},{prof:20,time:105.00,p15:0,p12:0,p9:0,p6:0,p3:43,gps:'*'},{prof:20,time:110.00,p15:0,p12:0,p9:0,p6:0,p3:45,gps:'*'},{prof:20,time:115.00,p15:0,p12:0,p9:0,p6:0,p3:48,gps:'*'},{prof:20,time:120.00,p15:0,p12:0,p9:0,p6:1,p3:49,gps:'*'},{prof:25,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'B'},{prof:25,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:25,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'D'},{prof:25,time:20.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:25,time:25.00,p15:0,p12:0,p9:0,p6:0,p3:1,gps:'F'},{prof:25,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:2,gps:'H'},{prof:25,time:35.00,p15:0,p12:0,p9:0,p6:0,p3:5,gps:'I'},{prof:25,time:40.00,p15:0,p12:0,p9:0,p6:0,p3:10,gps:'J'},{prof:25,time:45.00,p15:0,p12:0,p9:0,p6:0,p3:16,gps:'J'},{prof:25,time:50.00,p15:0,p12:0,p9:0,p6:0,p3:21,gps:'K'},{prof:25,time:55.00,p15:0,p12:0,p9:0,p6:0,p3:27,gps:'L'},{prof:25,time:60.00,p15:0,p12:0,p9:0,p6:0,p3:32,gps:'L'},{prof:25,time:65.00,p15:0,p12:0,p9:0,p6:0,p3:37,gps:'M'},{prof:25,time:70.00,p15:0,p12:0,p9:0,p6:1,p3:41,gps:'M'},{prof:25,time:75.00,p15:0,p12:0,p9:0,p6:4,p3:43,gps:'N'},{prof:25,time:80.00,p15:0,p12:0,p9:0,p6:7,p3:45,gps:'N'},{prof:25,time:85.00,p15:0,p12:0,p9:0,p6:9,p3:48,gps:'O'},{prof:25,time:90.00,p15:0,p12:0,p9:0,p6:11,p3:50,gps:'O'},{prof:25,time:95.00,p15:0,p12:0,p9:0,p6:14,p3:51,gps:'*'},{prof:25,time:100.00,p15:0,p12:0,p9:0,p6:16,p3:54,gps:'*'},{prof:25,time:105.00,p15:0,p12:0,p9:0,p6:19,p3:56,gps:'*'},{prof:25,time:110.00,p15:0,p12:0,p9:0,p6:21,p3:59,gps:'*'},{prof:25,time:115.00,p15:0,p12:0,p9:0,p6:23,p3:61,gps:'*'},{prof:25,time:120.00,p15:0,p12:0,p9:0,p6:24,p3:63,gps:'*'},{prof:30,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:30,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:30,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:1,gps:'E'},{prof:30,time:20.00,p15:0,p12:0,p9:0,p6:0,p3:2,gps:'F'},{prof:30,time:25.00,p15:0,p12:0,p9:0,p6:0,p3:4,gps:'H'},{prof:30,time:30.00,p15:0,p12:0,p9:0,p6:0,p3:9,gps:'I'},{prof:30,time:35.00,p15:0,p12:0,p9:0,p6:0,p3:17,gps:'J'},{prof:30,time:40.00,p15:0,p12:0,p9:0,p6:0,p3:24,gps:'K'},{prof:30,time:45.00,p15:0,p12:0,p9:0,p6:1,p3:31,gps:'L'},{prof:30,time:50.00,p15:0,p12:0,p9:0,p6:3,p3:36,gps:'M'},{prof:30,time:55.00,p15:0,p12:0,p9:0,p6:6,p3:39,gps:'M'},{prof:30,time:60.00,p15:0,p12:0,p9:0,p6:10,p3:43,gps:'N'},{prof:30,time:65.00,p15:0,p12:0,p9:0,p6:14,p3:46,gps:'N'},{prof:30,time:70.00,p15:0,p12:0,p9:0,p6:17,p3:48,gps:'O'},{prof:30,time:75.00,p15:0,p12:0,p9:0,p6:20,p3:50,gps:'*'},{prof:30,time:80.00,p15:0,p12:0,p9:0,p6:24,p3:54,gps:'*'},{prof:30,time:85.00,p15:0,p12:0,p9:0,p6:27,p3:57,gps:'*'},{prof:30,time:90.00,p15:0,p12:0,p9:0,p6:30,p3:60,gps:'*'},{prof:35,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:35,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'E'},{prof:35,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:2,gps:'F'},{prof:35,time:20.00,p15:0,p12:0,p9:0,p6:0,p3:5,gps:'H'},{prof:35,time:25.00,p15:0,p12:0,p9:0,p6:0,p3:11,gps:'I'},{prof:35,time:30.00,p15:0,p12:0,p9:0,p6:1,p3:20,gps:'J'},{prof:35,time:35.00,p15:0,p12:0,p9:0,p6:2,p3:27,gps:'K'},{prof:35,time:40.00,p15:0,p12:0,p9:0,p6:5,p3:34,gps:'L'},{prof:35,time:45.00,p15:0,p12:0,p9:0,p6:9,p3:39,gps:'M'},{prof:35,time:50.00,p15:0,p12:0,p9:0,p6:14,p3:43,gps:'N'},{prof:35,time:55.00,p15:0,p12:0,p9:0,p6:18,p3:47,gps:'N'},{prof:35,time:60.00,p15:0,p12:0,p9:0,p6:22,p3:50,gps:'O'},{prof:35,time:65.00,p15:0,p12:0,p9:2,p6:26,p3:52,gps:'*'},{prof:35,time:70.00,p15:0,p12:0,p9:4,p6:28,p3:57,gps:'*'},{prof:35,time:75.00,p15:0,p12:0,p9:7,p6:30,p3:60,gps:'*'},{prof:35,time:80.00,p15:0,p12:0,p9:10,p6:31,p3:64,gps:'*'},{prof:35,time:85.00,p15:0,p12:0,p9:12,p6:33,p3:69,gps:'*'},{prof:35,time:90.00,p15:0,p12:0,p9:14,p6:36,p3:72,gps:'*'},{prof:40,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:0,gps:'C'},{prof:40,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:2,gps:'E'},{prof:40,time:15.00,p15:0,p12:0,p9:0,p6:0,p3:4,gps:'G'},{prof:40,time:20.00,p15:0,p12:0,p9:0,p6:1,p3:9,gps:'H'},{prof:40,time:25.00,p15:0,p12:0,p9:0,p6:2,p3:19,gps:'J'},{prof:40,time:30.00,p15:0,p12:0,p9:0,p6:4,p3:28,gps:'K'},{prof:40,time:35.00,p15:0,p12:0,p9:0,p6:8,p3:35,gps:'L'},{prof:40,time:40.00,p15:0,p12:0,p9:0,p6:13,p3:40,gps:'M'},{prof:40,time:45.00,p15:0,p12:0,p9:1,p6:18,p3:45,gps:'N'},{prof:40,time:50.00,p15:0,p12:0,p9:2,p6:23,p3:48,gps:'O'},{prof:40,time:55.00,p15:0,p12:0,p9:5,p6:26,p3:52,gps:'O'},{prof:40,time:60.00,p15:0,p12:0,p9:8,p6:29,p3:57,gps:'P'},{prof:40,time:65.00,p15:0,p12:0,p9:12,p6:31,p3:61,gps:'*'},{prof:40,time:70.00,p15:0,p12:0,p9:15,p6:33,p3:66,gps:'*'},{prof:40,time:75.00,p15:0,p12:0,p9:18,p6:35,p3:71,gps:'*'},{prof:40,time:80.00,p15:0,p12:1,p9:21,p6:37,p3:75,gps:'*'},{prof:40,time:85.00,p15:0,p12:3,p9:23,p6:38,p3:82,gps:'*'},{prof:40,time:90.00,p15:0,p12:5,p9:24,p6:39,p3:88,gps:'*'},{prof:50,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:1,gps:'D'},{prof:50,time:10.00,p15:0,p12:0,p9:0,p6:0,p3:4,gps:'F'},{prof:50,time:15.00,p15:0,p12:0,p9:0,p6:2,p3:9,gps:'H'},{prof:50,time:20.00,p15:0,p12:0,p9:0,p6:4,p3:22,gps:'J'},{prof:50,time:25.00,p15:0,p12:0,p9:1,p6:8,p3:32,gps:'L'},{prof:50,time:30.00,p15:0,p12:0,p9:2,p6:14,p3:39,gps:'M'},{prof:50,time:35.00,p15:0,p12:0,p9:5,p6:20,p3:45,gps:'N'},{prof:50,time:40.00,p15:0,p12:0,p9:9,p6:24,p3:50,gps:'O'},{prof:50,time:45.00,p15:0,p12:1,p9:12,p6:29,p3:55,gps:'*'},{prof:50,time:50.00,p15:0,p12:2,p9:17,p6:30,p3:62,gps:'*'},{prof:50,time:55.00,p15:0,p12:5,p9:19,p6:34,p3:67,gps:'*'},{prof:50,time:60.00,p15:0,p12:8,p9:21,p6:37,p3:74,gps:'*'},{prof:60,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:2,gps:'D'},{prof:60,time:10.00,p15:0,p12:0,p9:0,p6:2,p3:6,gps:'G'},{prof:60,time:15.00,p15:0,p12:0,p9:1,p6:4,p3:19,gps:'J'},{prof:60,time:20.00,p15:0,p12:0,p9:3,p6:8,p3:32,gps:'L'},{prof:60,time:25.00,p15:0,p12:0,p9:5,p6:15,p3:41,gps:'M'},{prof:60,time:30.00,p15:0,p12:1,p9:8,p6:22,p3:48,gps:'O'},{prof:60,time:35.00,p15:0,p12:4,p9:11,p6:28,p3:54,gps:'P'},{prof:60,time:40.00,p15:0,p12:6,p9:17,p6:30,p3:62,gps:'P'},{prof:60,time:45.00,p15:1,p12:9,p9:19,p6:35,p3:69,gps:'*'},{prof:60,time:50.00,p15:2,p12:13,p9:22,p6:37,p3:78,gps:'*'},{prof:60,time:55.00,p15:5,p12:15,p9:24,p6:40,p3:88,gps:'*'},{prof:60,time:60.00,p15:7,p12:17,p9:26,p6:44,p3:96,gps:'*'},{prof:65,time:5.00,p15:0,p12:0,p9:0,p6:0,p3:3,gps:'*'},{prof:65,time:10.00,p15:0,p12:0,p9:0,p6:3,p3:8,gps:'*'},{prof:65,time:15.00,p15:0,p12:0,p9:2,p6:5,p3:24,gps:'*'},
-        ];
-        // ===== COULEURS ET VARIABLES GLOBALES =====
-        const colors = ['#00d4d4', '#00b8d4', '#009ccc', '#0080c4', '#0066bc', '#45b5b5', '#2d8b8b', '#1f5d5d', '#00d4d4', '#00c4c4', '#00b0b0', '#008a8a', '#006464', '#004a4a'];
-        let charts = {};
-        let calculateTab1Timeout = null;
-        
-        // ===== GESTION DES RESIZERS (REDIMENSIONNEMENT) =====
-        document.addEventListener('DOMContentLoaded', function() {
-            const resizers = document.querySelectorAll('.resizer-menu-v');
-            
-            resizers.forEach(resizer => {
-                let isResizing = false;
-                let startX = 0;
-                let prevPanel = null;
-                let nextPanel = null;
-                
-                function initResize(e) {
-                    isResizing = true;
-                    startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                    
-                    prevPanel = resizer.previousElementSibling;
-                    nextPanel = resizer.nextElementSibling;
-                    
-                    document.addEventListener('mousemove', doResize);
-                    document.addEventListener('touchmove', doResize, {passive: false});
-                    document.addEventListener('mouseup', stopResize);
-                    document.addEventListener('touchend', stopResize);
-                }
-                
-                function doResize(e) {
-                    if (!isResizing) return;
-                    e.preventDefault();
-                    
-                    const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-                    const diff = currentX - startX;
-                    
-                    if (prevPanel && nextPanel) {
-                        const prevRect = prevPanel.getBoundingClientRect();
-                        const nextRect = nextPanel.getBoundingClientRect();
-                        
-                        const newPrevWidth = prevRect.width + diff;
-                        const newNextWidth = nextRect.width - diff;
-                        
-                        if (newPrevWidth > 100 && newNextWidth > 100) {
-                            prevPanel.style.width = newPrevWidth + 'px';
-                            nextPanel.style.width = newNextWidth + 'px';
-                            startX = currentX;
-                        }
-                    }
-                }
-                
-                function stopResize() {
-                    isResizing = false;
-                    document.removeEventListener('mousemove', doResize);
-                    document.removeEventListener('touchmove', doResize);
-                    document.removeEventListener('mouseup', stopResize);
-                    document.removeEventListener('touchend', stopResize);
-                    
-                    // Redessiner les graphiques
-                    if (charts[1]) charts[1].resize();
-                    if (charts[2]) charts[2].resize();
-                }
-                
-                resizer.addEventListener('mousedown', initResize);
-                resizer.addEventListener('touchstart', initResize, {passive: false});
-            });
-        });
-        
-        // ===== OPTIMISATION MOBILE =====
-        function isMobile() {
-            return window.innerWidth < 768;
+    <div id="hud-alert-bar">SYS OK</div>
+  </div>
+  <div id="victim-status">
+    <div class="vs-name">Blessé · Homme · Norm.</div>
+    <div style="font-size:10px;opacity:.6">Semi-conscient</div>
+    <div class="vs-bar-wrap"><div class="vs-bar" style="width:65%"></div></div>
+    <div style="font-size:9px;color:rgba(90,150,190,0.5);margin-top:3px">État : <span id="vs-state">Stable</span></div>
+  </div>
+  <div id="palier-banner">Palier 3 m — <span id="palier-countdown">60</span> s</div>
+  <div id="interact-prompt" onclick="tryRescue()">[E] Prendre en charge le blessé</div>
+  <div id="sound-btn" onclick="toggleSound()">SON : ON</div>
+  <div id="torch-btn" onclick="toggleTorch()">LAMPE : ON</div>
+  <div id="loading-bar-wrap"><div id="loading-txt">CHARGEMENT DU MODÈLE</div><div id="loading-bar"><div id="loading-fill"></div></div></div>
+  <div class="joystick-zone" id="joy-left"><div class="joy-base"></div><div class="joy-stick" id="joy-left-stick"></div><div class="joy-label">NAGER</div></div>
+  <div class="joystick-zone" id="joy-right"><div class="joy-base"></div><div class="joy-stick" id="joy-right-stick"></div><div class="joy-label">CAMÉRA</div></div>
+  <div id="btn-interact" onclick="tryRescue()">AIDER</div>
+  <div class="buoy-panel" id="panel-victim">
+    <div class="buoy-title">Stab blessé</div>
+    <div class="buoy-val" id="v-stab-val">0.0 L</div>
+    <div class="buoy-bar-wrap"><div class="buoy-bar" id="v-stab-bar" style="background:#aa44cc;width:0%"></div></div>
+    <div class="buoy-btn btn-inflate" onmousedown="inflatePush('victim',true)" onmouseup="inflatePush('victim',false)" ontouchstart="inflatePush('victim',true);event.preventDefault()" ontouchend="inflatePush('victim',false)">▲ SON GONFLAGE</div>
+    <div class="buoy-btn btn-purge" onmousedown="purgePush('victim',true)" onmouseup="purgePush('victim',false)" ontouchstart="purgePush('victim',true);event.preventDefault()" ontouchend="purgePush('victim',false)">▼ SA PURGE</div>
+  </div>
+  <div class="buoy-panel" id="panel-self">
+    <div class="buoy-title">Mon direct system</div>
+    <div class="buoy-val" id="p-stab-val">0.0 L</div>
+    <div class="buoy-bar-wrap"><div class="buoy-bar" id="p-stab-bar" style="background:#0088dd;width:0%"></div></div>
+    <div class="buoy-btn btn-inflate" onmousedown="inflatePush('player',true)" onmouseup="inflatePush('player',false)" ontouchstart="inflatePush('player',true);event.preventDefault()" ontouchend="inflatePush('player',false)">▲ MON GONFLAGE</div>
+  </div>
+  <div class="buoy-panel" id="panel-victim-ds">
+    <div class="buoy-title">Direct system blessé</div>
+    <div class="buoy-btn btn-inflate" style="margin-top:0" onmousedown="inflatePush('victim',true)" onmouseup="inflatePush('victim',false)" ontouchstart="inflatePush('victim',true);event.preventDefault()" ontouchend="inflatePush('victim',false)">▲ SON GONFLAGE DS</div>
+  </div>
+  <div class="buoy-panel" id="panel-purge-me">
+    <div class="buoy-title">Ma stab</div>
+    <div class="buoy-val" id="p-purge-val">0.0 L</div>
+    <div class="buoy-bar-wrap"><div class="buoy-bar" id="p-purge-bar" style="background:#ff8844;width:0%"></div></div>
+    <div class="buoy-btn btn-purge" onmousedown="purgePush('player',true)" onmouseup="purgePush('player',false)" ontouchstart="purgePush('player',true);event.preventDefault()" ontouchend="purgePush('player',false)">▼ MA PURGE</div>
+  </div>
+  <div class="buoy-panel" id="panel-lung">
+    <div class="buoy-title">Poumon ballast</div>
+    <div class="buoy-val" id="lung-val">3.5 L</div>
+    <div class="buoy-sub" id="lung-sub">NEUTRE</div>
+    <div class="buoy-bar-wrap"><div class="buoy-bar" id="lung-bar" style="background:#00cc88;width:55%"></div></div>
+    <canvas id="lung-wave" width="126" height="28" style="display:block;width:100%;margin:4px 0 6px;opacity:0.8"></canvas>
+    <div class="buoy-btn btn-insp" onclick="triggerLung('in')">↑ INSPIRER 5s</div>
+    <div class="buoy-btn btn-exp" onclick="triggerLung('out')">↓ EXPIRER 5s</div>
+  </div>
+</div>
+
+<!-- ÉCRAN TITRE -->
+<div id="start-screen">
+  <div class="ss-top-line">Formation · Sécurité · Plongée</div>
+  <div class="ss-title">Remontée<span> Assistée</span></div>
+  <div class="ss-subtitle">Simulateur N3</div>
+  <div class="ss-mission">⚠ Sauvez votre binôme d'une mort certaine</div>
+
+  <div class="ss-main">
+    <div class="ss-left">
+      <div class="ss-obj-title">Objectifs</div>
+      <div class="ss-objectives">
+        <div class="ss-obj"><span class="ss-obj-n">1</span><div><span class="ss-obj-t">Trouvez le blessé</span><span class="ss-obj-d">Approchez-vous · touche E</span></div></div>
+        <div class="ss-obj"><span class="ss-obj-n">2</span><div><span class="ss-obj-t">Gérez la flottabilité</span><span class="ss-obj-d">Stabs + poumon · max 10 m/min</span></div></div>
+        <div class="ss-obj"><span class="ss-obj-n">3</span><div><span class="ss-obj-t">Palier 3 m · 60 s</span><span class="ss-obj-d">Stop obligatoire avant surface</span></div></div>
+        <div class="ss-obj"><span class="ss-obj-n">4</span><div><span class="ss-obj-t">360° en surface</span><span class="ss-obj-d">Stabilisez à 5–6 m · guettez bateaux</span></div></div>
+      </div>
+    </div>
+    <div class="ss-sites">
+      <div class="ss-sites-title">Choisissez votre site</div>
+      <div class="site-grid">
+        <button class="site-btn selected" data-site="roussay" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#0d2a0d,#030a02)">
+            <canvas class="site-preview" data-site="roussay"></canvas>
+          </div>
+          <div class="site-name">ROUSSAY</div>
+          <div class="site-meta">Lac · 40 m · 11°C · Eau verte trouble</div>
+        </button>
+        <button class="site-btn" data-site="martinique" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#041830,#010c1a)">
+            <canvas class="site-preview" data-site="martinique"></canvas>
+          </div>
+          <div class="site-name">ST-PIERRE</div>
+          <div class="site-meta">Martinique · ∞ · 28°C · Bleu cristal</div>
+        </button>
+        <button class="site-btn" data-site="vlg" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#080f1a,#030710)">
+            <canvas class="site-preview" data-site="vlg"></canvas>
+          </div>
+          <div class="site-name">FOSSE VLG</div>
+          <div class="site-meta">Piscine · 20 m · 13°C · Cylindre LEDs</div>
+        </button>
+        <button class="site-btn" data-site="nemo" onclick="selectSite(this)">
+          <div class="site-thumb" style="background:linear-gradient(180deg,#021520,#010810)">
+            <canvas class="site-preview" data-site="nemo"></canvas>
+          </div>
+          <div class="site-name">NEMO 33</div>
+          <div class="site-meta">Bruxelles · 33 m · 33°C · Turquoise</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IDs requis -->
+  <span id="sel-site" style="display:none">Roussay</span>
+  <span id="sel-depth" style="display:none">20m</span>
+  <span id="hud-temp" style="display:none">—</span>
+
+  <!-- Sélecteur de profondeur -->
+  <div class="depth-picker">
+    <span class="depth-label">PROFONDEUR DE DÉPART</span>
+    <div class="depth-btns" id="depth-btns">
+      <button class="depth-btn selected" data-depth="10" onclick="selectDepth(this)">10 m</button>
+      <button class="depth-btn" data-depth="20" onclick="selectDepth(this)">20 m</button>
+      <button class="depth-btn" data-depth="30" onclick="selectDepth(this)">30 m</button>
+      <button class="depth-btn" data-depth="40" onclick="selectDepth(this)">40 m</button>
+    </div>
+  </div>
+
+  <button id="start-btn" onclick="startSim()">PLONGER</button>
+</div>
+
+<!-- Message 360° centré affiché pendant surface_check -->
+<div id="msg-360" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:35;text-align:center;pointer-events:none">
+  <div style="font-family:'Orbitron',sans-serif;font-size:clamp(18px,3vw,32px);font-weight:900;color:#00e5cc;text-shadow:0 0 30px rgba(0,229,204,0.6);letter-spacing:4px;margin-bottom:8px">FAITES UN 360°</div>
+  <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:2px">Cherchez les bateaux — Stabilisez à 5–6 m</div>
+  <div id="spin-progress" style="margin-top:12px;font-family:'Orbitron',sans-serif;font-size:13px;color:rgba(0,229,204,0.5)">0°</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="config.js?v=1774199920"></script>
+<script src="hud.js?v=1774199920"></script>
+<script src="scene.js?v=1774199920"></script>
+<script src="buoyancy.js?v=1774199920"></script>
+<script src="sound.js?v=1774199920"></script>
+<script src="lowair.js?v=1774199920"></script>
+<script src="effects.js?v=1774199920"></script>
+<script src="controls.js?v=1774199920"></script>
+<script src="game.js?v=1774199920"></script>
+
+<script>
+// Previews sites — après chargement de tous les scripts
+function drawSitePreviews(){
+  document.querySelectorAll('.site-preview').forEach(cv=>{
+    const site=cv.dataset.site;
+    // Adapter la résolution canvas à la taille CSS réelle
+    const rect=cv.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    const W=Math.round(rect.width||160)*dpr;
+    const H=Math.round(rect.height||90)*dpr;
+    cv.width=W; cv.height=H;
+    const ctx=cv.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const cw=W/dpr, ch=H/dpr; // dimensions CSS
+
+    const s={
+      roussay:{top:'#0a1a08',bot:'#030a02',floor:'#1a2a10',fogCol:'rgba(20,50,10,',fogAmt:0.55,accent:'#2a6a20'},
+      martinique:{top:'#041830',bot:'#010c1a',floor:'#0a2818',fogCol:'rgba(0,20,60,',fogAmt:0.1,accent:'#0066cc'},
+      vlg:{top:'#080f1a',bot:'#030710',floor:'#151f2a',fogCol:'rgba(5,10,20,',fogAmt:0.05,accent:'#4488cc'},
+      nemo:{top:'#021520',bot:'#010810',floor:'#082030',fogCol:'rgba(0,15,30,',fogAmt:0.08,accent:'#00aacc'},
+    }[site]||{top:'#0a1a08',bot:'#030a02',floor:'#1a2a10',fogCol:'rgba(0,0,0,',fogAmt:0.3,accent:'#226622'};
+
+    // Fond dégradé eau
+    const grad=ctx.createLinearGradient(0,0,0,ch);
+    grad.addColorStop(0,s.top); grad.addColorStop(1,s.bot);
+    ctx.fillStyle=grad; ctx.fillRect(0,0,cw,ch);
+
+    if(site==='vlg'){
+      // === FOSSE VLG — vue cylindrique depuis le fond ===
+      // Sol carrelé
+      ctx.fillStyle='#151f28'; ctx.fillRect(0,ch*0.75,cw,ch*0.25);
+      // Lignes de carrelage
+      ctx.strokeStyle='rgba(30,50,70,0.6)'; ctx.lineWidth=0.5;
+      for(let i=0;i<6;i++){
+        const lx=i/5*cw;
+        ctx.beginPath();ctx.moveTo(lx,ch*0.75);ctx.lineTo(cw/2,ch);ctx.stroke();
+      }
+      // Parois gauche et droite
+      const wallGrad=ctx.createLinearGradient(0,0,cw,0);
+      wallGrad.addColorStop(0,'rgba(20,40,65,0.95)');
+      wallGrad.addColorStop(0.15,'rgba(10,20,35,0.4)');
+      wallGrad.addColorStop(0.85,'rgba(10,20,35,0.4)');
+      wallGrad.addColorStop(1,'rgba(20,40,65,0.95)');
+      ctx.fillStyle=wallGrad; ctx.fillRect(0,0,cw,ch*0.75);
+      // LEDs verticales gauche
+      for(let i=0;i<7;i++){
+        const ly=i/6*ch*0.72+2;
+        ctx.fillStyle=`rgba(100,180,255,${0.5+i%2*0.3})`;
+        ctx.fillRect(8,ly,3,3);
+        ctx.fillRect(cw-11,ly,3,3);
+      }
+      // Reflet surface eau en haut (ellipse)
+      ctx.strokeStyle='rgba(80,150,200,0.4)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.ellipse(cw/2,8,cw*0.42,8,0,0,Math.PI*2); ctx.stroke();
+      // Graduations horizontales
+      for(let d=1;d<=4;d++){
+        const y=ch*0.12+d*(ch*0.14);
+        ctx.strokeStyle=`rgba(60,100,140,${d%2===0?0.5:0.25})`;
+        ctx.lineWidth=d%2===0?1:0.5;
+        ctx.beginPath();ctx.moveTo(10,y);ctx.lineTo(cw-10,y);ctx.stroke();
+      }
+
+    } else {
+      // === SITES NATURELS ===
+      // Sol
+      ctx.fillStyle=s.floor; ctx.fillRect(0,ch*0.75,cw,ch*0.25);
+
+      if(site==='martinique'){
+        // Coraux colorés
+        const cols=['#cc2200','#ff5500','#ccaa00','#229955'];
+        for(let i=0;i<9;i++){
+          const cx2=i/8*cw;
+          const ch2=8+Math.sin(i*1.3)*6;
+          ctx.strokeStyle=cols[i%4]; ctx.lineWidth=2.5;
+          ctx.beginPath(); ctx.moveTo(cx2,ch*0.75); ctx.lineTo(cx2+Math.sin(i)*4,ch*0.75-ch2); ctx.stroke();
+          // Branches
+          ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(cx2+Math.sin(i)*2,ch*0.75-ch2*0.6);
+          ctx.lineTo(cx2+4+Math.sin(i)*2,ch*0.75-ch2*0.8); ctx.stroke();
         }
-        
-        window.addEventListener('resize', function() {
-            if (charts[1]) charts[1].resize();
-            if (charts[2]) charts[2].resize();
-        });
-        
-        // ===== VALIDATION ET LIMITATION DE PLONGEE =====
-        
-        function calculateFinalPressure(depthMax, timeBottom, pressInit, vol, conso, descTime) {
-            const tableDepth = getTableDepth(depthMax);
-            const row = findBestRow(tableDepth, timeBottom);
-            const remountTime = Math.ceil(depthMax / 6);
-            
-            let pressLoss = 0;
-            const avgPressDescent = 1 + depthMax / 20;
-            pressLoss += conso * avgPressDescent * descTime / vol;
-            
-            const pressFond = 1 + depthMax / 10;
-            pressLoss += conso * pressFond * timeBottom / vol;
-            
-            const avgPressRemount = (pressFond + 1.6) / 2;
-            pressLoss += conso * avgPressRemount * remountTime / vol;
-            
-            if (row.p15 > 0) pressLoss += conso * 2.5 * row.p15 / vol;
-            if (row.p12 > 0) pressLoss += conso * 2.2 * row.p12 / vol;
-            if (row.p9 > 0) pressLoss += conso * 1.9 * row.p9 / vol;
-            if (row.p6 > 0) pressLoss += conso * 1.6 * row.p6 / vol;
-            if (row.p3 > 0) pressLoss += conso * 1.3 * row.p3 / vol;
-            
-            return pressInit - pressLoss;
+        // Visibilité excellente — pas de brume
+      } else {
+        // Rochers
+        for(let i=0;i<5;i++){
+          const rx=i/4*cw;
+          const rw=8+Math.sin(i*1.8)*5;
+          ctx.fillStyle=`rgba(0,0,0,${0.3+i%2*0.15})`;
+          ctx.beginPath(); ctx.ellipse(rx,ch*0.77,Math.max(1,rw),Math.max(1,rw*0.4),0,0,Math.PI*2); ctx.fill();
         }
-        
-        function validateAndAdjustDive(depthMax, timeBottom, pressInit, pressSafety, vol, conso, descTime, finalPress) {
-            // Validation POST-CALCUL: on vérifie la vraie pression finale
-            // avec les vrais paliers des tables MN90
-            
-            const sliderTime = document.getElementById('time1');
-            
-            // Si c'est OK, rien à faire
-            if (finalPress >= pressSafety) {
-                sliderTime.style.opacity = '1';
-                return {possible: true, warning: false, message: ''};
-            }
-            
-            // Sinon, trouver le temps max réel
-            let maxSafeTime = 1;
-            for (let t = Math.max(1, timeBottom); t >= 1; t--) {
-                const testFinal = calculateFinalPressure(depthMax, t, pressInit, vol, conso, descTime);
-                if (testFinal >= pressSafety) {
-                    maxSafeTime = t;
-                    break;
-                }
-            }
-            
-            // Si on a trouvé un temps safe mais c'est moins que le temps actuel
-            if (maxSafeTime < timeBottom) {
-                document.getElementById('time1').value = maxSafeTime;
-                updateVal('time1', ' min');
-                sliderTime.style.opacity = '0.7';
-                return {possible: true, warning: true, message: `⚠️ Temps limité à ${maxSafeTime}'`};
-            }
-            
-            return {possible: true, warning: false, message: ''};
+        if(site==='roussay'){
+          // Algues vertes
+          for(let i=0;i<7;i++){
+            ctx.strokeStyle='#1a4a10'; ctx.lineWidth=1.5;
+            const ax=i/6*cw;
+            ctx.beginPath(); ctx.moveTo(ax,ch*0.75);
+            ctx.bezierCurveTo(ax+3,ch*0.65,ax-3,ch*0.58,ax+Math.sin(i)*4,ch*0.52); ctx.stroke();
+          }
         }
-        
-        function formatTime(minutes) {
-            const totalSeconds = Math.round(minutes * 60);
-            const hh = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const mm = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const ss = String(totalSeconds % 60).padStart(2, '0');
-            return `${hh}:${mm}:${ss}`;
-        }
-        
-        function updateVal(id, unit) {
-            const elem = document.getElementById(id);
-            const valElem = document.getElementById(id + '-val');
-            if (valElem) {
-                if (id === 'table-time') {
-                    valElem.textContent = formatTime(parseFloat(elem.value));
-                } else if (id === 'conso1') {
-                    const val = parseFloat(elem.value);
-                    valElem.textContent = val % 1 === 0 ? val : val.toFixed(1);
-                } else if (id === 'table-depth') {
-                    valElem.textContent = elem.value + unit;
-                } else {
-                    valElem.textContent = elem.value + unit;
-                }
-            }
-            if (id === 'depth0') document.getElementById('depth0-info').textContent = elem.value + 'm';
-            if (id === 'depth1') document.getElementById('depth1-info').textContent = elem.value + 'm';
-        }
-        
-        function getTableDepth(depth) {
-            const depths = [6, 8, 10, 12, 15, 18, 20, 25, 30, 35, 40, 50, 60, 65];
-            return depths.reduce((prev, curr) => (Math.abs(curr - depth) < Math.abs(prev - depth) ? curr : prev));
-        }
-        
-        // ===== MEILLEURE LOGIQUE DE PALIER =====
-        function findBestRow(tableDepth, time) {
-            const rows = mn90Tables.filter(r => r.prof === tableDepth);
-            
-            // Chercher toutes les rangées valides (time <= requested time)
-            const validRows = rows.filter(r => r.time <= time);
-            
-            if (validRows.length === 0) return rows[0]; // Si aucune valide, prendre la première
-            
-            // Stratégie: pousser le bout du palier
-            let best = validRows[validRows.length - 1]; // Le plus proche du temps demandé
-            
-            // Vérifier si on peut "pousser" un peu plus sans augmenter les paliers
-            for (let i = validRows.length - 1; i >= 0; i--) {
-                const currentRow = validRows[i];
-                const nextRow = validRows[i + 1];
-                
-                if (nextRow) {
-                    const currentLoad = currentRow.p6 + currentRow.p3 + (currentRow.p15 || 0) + (currentRow.p12 || 0) + (currentRow.p9 || 0);
-                    const nextLoad = nextRow.p6 + nextRow.p3 + (nextRow.p15 || 0) + (nextRow.p12 || 0) + (nextRow.p9 || 0);
-                    
-                    // Si la prochaine ligne a des paliers plus exigeants, rester sur celle-ci
-                    if (nextLoad > currentLoad) {
-                        best = currentRow;
-                        break;
-                    }
-                } else {
-                    best = currentRow;
-                    break;
-                }
-            }
-            
-            return best;
-        }
-        
-        function calculateTab0() {
-            const depth = parseInt(document.getElementById('depth0').value);
-            const time = parseInt(document.getElementById('time0').value);
-            const nitroxO2 = parseInt(document.getElementById('nitrox-o2').value) || 32;
-            const trimixO2 = 18;
-            const absPress = 1 + depth / 10;
-            
-            const ppo2Air = (21 / 100) * absPress;
-            document.getElementById('ppo2-air').textContent = ppo2Air.toFixed(2);
-            
-            // Afficher/cacher NITROX
-            const showNitrox = document.getElementById('show-nitrox').checked;
-            document.getElementById('nitrox-o2').parentElement.style.display = showNitrox ? 'block' : 'none';
-            document.getElementById('nitrox-o2').parentElement.nextElementSibling.style.display = showNitrox ? 'block' : 'none';
-            
-            if (showNitrox) {
-                const ppo2Nitrox = (nitroxO2 / 100) * absPress;
-                document.getElementById('ppo2-nitrox').textContent = ppo2Nitrox.toFixed(2);
-            }
-            
-            // Afficher/cacher TRIMIX
-            const showTrimix = document.getElementById('show-trimix').checked;
-            document.getElementById('show-trimix').parentElement.nextElementSibling.style.display = showTrimix ? 'block' : 'none';
-            document.getElementById('show-trimix').parentElement.nextElementSibling.nextElementSibling.style.display = showTrimix ? 'block' : 'none';
-            
-            if (showTrimix) {
-                const ppo2Trimix = (trimixO2 / 100) * absPress;
-                document.getElementById('ppo2-trimix').textContent = ppo2Trimix.toFixed(2);
-            }
-            
-            let html = '';
-            
-            html += `<div class="result-card"><div class="gas-result air">
-                <strong>🫁 AIR</strong><br>21% O₂<br>
-                PPO₂: <strong>${ppo2Air.toFixed(2)}</strong> bar
-            </div></div>`;
-            
-            if (showNitrox) {
-                const ppo2Nitrox = (nitroxO2 / 100) * absPress;
-                const o2For1_4 = (1.4 / absPress) * 100;
-                const o2For1_6 = (1.6 / absPress) * 100;
-                html += `<div class="result-card"><div class="gas-result nitrox">
-                    <strong>🟢 NITROX</strong><br>${nitroxO2}% O₂<br>
-                    PPO₂: <strong>${ppo2Nitrox.toFixed(2)}</strong> bar<br>
-                    <span style="font-size: 8px; margin-top: 8px; display: block; line-height: 1.5;">
-                    À ${depth}m:<br>
-                    1.4 bar → ${o2For1_4.toFixed(1)}%<br>
-                    1.6 bar → ${o2For1_6.toFixed(1)}%
-                    </span>
-                </div></div>`;
-            }
-            
-            if (showTrimix) {
-                html += `<div class="result-card"><div class="gas-result trimix">
-                    <strong>🌀 TRIMIX</strong><br>18% O₂ | 35% He | 47% N₂<br>
-                    PPO₂: <strong>${((trimixO2 / 100) * absPress).toFixed(2)}</strong> bar
-                </div></div>`;
-            }
-            
-            const timeBottom = parseInt(document.getElementById('time0').value);
-            const descTime = Math.ceil(depth / 15);
-            const remountTime = Math.ceil(depth / 6);
-            const totalTime = descTime + timeBottom + remountTime;
-            
-            html += `
-                <div style="background: rgba(26, 35, 50, 0.9); border-left: 4px solid #00d4d4; padding: 12px; border-radius: 6px; font-size: 10px; line-height: 1.7; width: 100%; margin-top: 10px; color: #a8dadc;">
-                    <strong>📋 Profil à ${depth}m</strong><br>
-                    Descente: ~${descTime}' | Fond: ${timeBottom}' | Remontée: ~${remountTime}'<br>
-                    <strong>Total: ~${totalTime} min</strong>
-                </div>
-            `;
-            
-            document.getElementById('results0').innerHTML = html;
-            drawDiveProfile(depth, timeBottom, nitroxO2, trimixO2, absPress);
-        }
-        
-        function drawDiveProfile(depth, time, nitroxO2, trimixO2, absPress) {
-            const canvas = document.getElementById('chart0');
-            const ctx = canvas.getContext('2d');
-            if (charts[0]) charts[0].destroy();
-            
-            const desc = depth / 15;
-            const remount = depth / 6;
-            const totalTime = desc + time + remount;
-            
-            let timePoints = [0];
-            let depthPoints = [0];
-            
-            for (let i = 1; i <= 5; i++) {
-                const pct = i / 5;
-                timePoints.push(pct * desc);
-                depthPoints.push(pct * depth);
-            }
-            
-            timePoints.push(desc + time);
-            depthPoints.push(depth);
-            
-            for (let i = 1; i <= 5; i++) {
-                const pct = i / 5;
-                timePoints.push(desc + time + pct * remount);
-                depthPoints.push(depth - pct * depth);
-            }
-            
-            charts[0] = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Profondeur',
-                        data: depthPoints.map((d, i) => ({x: timePoints[i], y: d})),
-                        borderColor: '#00d4d4',
-                        backgroundColor: 'rgba(0, 212, 212, 0.1)',
-                        borderWidth: 3,
-                        tension: 0,
-                        fill: true,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#00d4d4',
-                        pointBorderColor: '#a8dadc',
-                        pointBorderWidth: 2,
-                        showLine: true
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: true, position: 'right', labels: { color: '#a8dadc', font: {size: 11} } } },
-                    scales: {
-                        y: { reverse: true, max: depth + 5, min: -depth * 0.1, ticks: {color: '#a8dadc'}, grid: {color: 'rgba(45, 139, 139, 0.2)'} },
-                        x: { min: 0, max: Math.ceil(totalTime), ticks: {color: '#a8dadc'}, grid: {color: 'rgba(45, 139, 139, 0.2)'}, title: {display: true, text: 'Temps (min)', color: '#a8dadc'} }
-                    }
-                }
-            });
-        }
-        
-        function calculateTab1() {
-            const depthMax = parseInt(document.getElementById('depth1').value);
-            const tableDepth = getTableDepth(depthMax);
-            const timeBottom = parseInt(document.getElementById('time1').value);
-            const row = findBestRow(tableDepth, timeBottom);
-            
-            const vol = parseInt(document.getElementById('vol1').value);
-            const pressInit = parseInt(document.getElementById('press1').value);
-            const pressSafety = parseInt(document.getElementById('safety1').value);
-            const conso = parseFloat(document.getElementById('conso1').value);
-            const descTime = parseInt(document.getElementById('desc-time').value);
-            const remountTime = Math.ceil(depthMax / 6);
-            
-            let pressLoss = 0;
-            const avgPressDescent = 1 + depthMax / 20;
-            pressLoss += conso * avgPressDescent * descTime / vol;
-            
-            const pressFond = 1 + depthMax / 10;
-            pressLoss += conso * pressFond * timeBottom / vol;
-            
-            const avgPressRemount = (pressFond + 1.6) / 2;
-            pressLoss += conso * avgPressRemount * remountTime / vol;
-            
-            if (row.p15 > 0) pressLoss += conso * 2.5 * row.p15 / vol;
-            if (row.p12 > 0) pressLoss += conso * 2.2 * row.p12 / vol;
-            if (row.p9 > 0) pressLoss += conso * 1.9 * row.p9 / vol;
-            if (row.p6 > 0) pressLoss += conso * 1.6 * row.p6 / vol;
-            if (row.p3 > 0) pressLoss += conso * 1.3 * row.p3 / vol;
-            
-            const finalPress = pressInit - pressLoss;
-            
-            // 🔴 BLOCAGE STRICT: si pression < sécu, on réduit le temps automatiquement
-            let timeToUse = timeBottom;
-            let needsReduction = false;
-            
-            if (finalPress < pressSafety) {
-                // Trouver le temps max réel qui respecte la sécu
-                for (let t = Math.max(1, timeBottom); t >= 1; t--) {
-                    const testFinal = calculateFinalPressure(depthMax, t, pressInit, vol, conso, descTime);
-                    if (testFinal >= pressSafety) {
-                        timeToUse = t;
-                        needsReduction = true;
-                        break;
-                    }
-                }
-                
-                // Force la valeur du slider
-                if (needsReduction) {
-                    document.getElementById('time1').value = timeToUse;
-                    updateVal('time1', ' min');
-                }
-            }
-            
-            // Recalculer avec le temps corrigé
-            const row2 = findBestRow(tableDepth, timeToUse);
-            let pressLoss2 = 0;
-            pressLoss2 += conso * avgPressDescent * descTime / vol;
-            pressLoss2 += conso * pressFond * timeToUse / vol;
-            pressLoss2 += conso * avgPressRemount * remountTime / vol;
-            if (row2.p15 > 0) pressLoss2 += conso * 2.5 * row2.p15 / vol;
-            if (row2.p12 > 0) pressLoss2 += conso * 2.2 * row2.p12 / vol;
-            if (row2.p9 > 0) pressLoss2 += conso * 1.9 * row2.p9 / vol;
-            if (row2.p6 > 0) pressLoss2 += conso * 1.6 * row2.p6 / vol;
-            if (row2.p3 > 0) pressLoss2 += conso * 1.3 * row2.p3 / vol;
-            
-            const finalPress2 = pressInit - pressLoss2;
-            const isValid = finalPress2 >= pressSafety;
-            
-            // Affichage des paliers
-            let paliersHTML = '';
-            if (row2.p15 > 0 || row2.p12 > 0 || row2.p9 > 0 || row2.p6 > 0 || row2.p3 > 0) {
-                paliersHTML += '📋 <strong>Paliers:</strong><br>';
-                if (row2.p15 > 0) paliersHTML += `• 15m: ${row2.p15}min<br>`;
-                if (row2.p12 > 0) paliersHTML += `• 12m: ${row2.p12}min<br>`;
-                if (row2.p9 > 0) paliersHTML += `• 9m: ${row2.p9}min<br>`;
-                if (row2.p6 > 0) paliersHTML += `• 6m: ${row2.p6}min<br>`;
-                if (row2.p3 > 0) paliersHTML += `• 3m: ${row2.p3}min<br>`;
-            } else {
-                paliersHTML += '✅ Aucun palier';
-            }
-            
-            if (needsReduction) {
-                paliersHTML += `<br><span style="color: #ff8a80; font-weight: 700;">⚠️ Temps limité à ${timeToUse}'</span>`;
-                document.getElementById('time1').style.opacity = '0.7';
-            } else {
-                document.getElementById('time1').style.opacity = '1';
-            }
-            
-            document.getElementById('paliers-info').innerHTML = paliersHTML;
-            
-            let resultsHTML = `
-                <div class="result-box">
-                    <div class="result-box-title">🫁 Pression réelle</div>
-                    <div class="result-value ${isValid ? 'success' : 'warning'}">${finalPress2.toFixed(1)} bar</div>
-                    <div class="result-detail">Temps fond: ${timeToUse}'<br>Groupe: ${row2.gps}</div>
-                </div>
-            `;
-            
-            const totalTime = descTime + timeToUse + remountTime;
-            const pressAtDescent = pressFond;
-            const palierText = row2.p15 > 0 || row2.p12 > 0 || row2.p9 > 0 || row2.p6 > 0 || row2.p3 > 0 
-                ? `Paliers: ${row2.p15 > 0 ? `15m x${row2.p15}' ` : ''}${row2.p12 > 0 ? `12m x${row2.p12}' ` : ''}${row2.p9 > 0 ? `9m x${row2.p9}' ` : ''}${row2.p6 > 0 ? `6m x${row2.p6}' ` : ''}${row2.p3 > 0 ? `3m x${row2.p3}'` : ''}`
-                : 'Aucun palier';
-            
-            resultsHTML += `
-                <div style="background: rgba(26, 35, 50, 0.9); border-left: 4px solid #00d4d4; padding: 12px; border-radius: 6px; font-size: 11px; line-height: 1.8; width: 100%; margin-top: 10px; color: #a8dadc;">
-                    <strong>📋 Profil</strong><br>
-                    🚀 ${depthMax}m – Descente à <strong>${pressAtDescent.toFixed(1)} bar</strong><br>
-                    ⏱️ Fond ${timeToUse}' – Pression <strong>${pressFond.toFixed(1)} bar</strong><br>
-                    📤 Remontée : <strong>${palierText}</strong><br>
-                    ✅ Sortie <strong>${finalPress2.toFixed(1)} bar</strong> (min: ${pressSafety}b)<br>
-                    ⏳ <strong>Total: ${Math.round(totalTime)} min</strong>
-                </div>
-            `;
-            
-            document.getElementById('results1').innerHTML = resultsHTML;
-            
-            // === BOÎTE D'INFO: MARGE D'OPTIMISATION ===
-            // Calculer le temps optimal
-            let optimalTime = timeToUse;
-            for (let t = 300; t >= 1; t--) {
-                const testFinal = calculateFinalPressure(depthMax, t, pressInit, vol, conso, descTime);
-                if (testFinal >= pressSafety) {
-                    optimalTime = t;
-                    break;
-                }
-            }
-            
-            if (optimalTime > timeToUse) {
-                const optimalRow = findBestRow(tableDepth, optimalTime);
-                const optimalFinal = calculateFinalPressure(depthMax, optimalTime, pressInit, vol, conso, descTime);
-                
-                // Paliers optimaux
-                let palierOptimal = '';
-                if (optimalRow.p15 > 0 || optimalRow.p12 > 0 || optimalRow.p9 > 0 || optimalRow.p6 > 0 || optimalRow.p3 > 0) {
-                    const paliers = [];
-                    if (optimalRow.p15 > 0) paliers.push(`15m x${optimalRow.p15}'`);
-                    if (optimalRow.p12 > 0) paliers.push(`12m x${optimalRow.p12}'`);
-                    if (optimalRow.p9 > 0) paliers.push(`9m x${optimalRow.p9}'`);
-                    if (optimalRow.p6 > 0) paliers.push(`6m x${optimalRow.p6}'`);
-                    if (optimalRow.p3 > 0) paliers.push(`3m x${optimalRow.p3}'`);
-                    palierOptimal = paliers.join(' + ');
-                } else {
-                    palierOptimal = 'Aucun';
-                }
-                
-                const optimalBox = `
-                    <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 12px; border-radius: 6px; margin-top: 10px; color: #a8dadc; font-size: 10px; line-height: 1.6;">
-                        <strong style="color: #10b981;">💡 MARGE D'OPTIMISATION</strong><br>
-                        Tu fais <strong>${timeToUse}'</strong> mais tu pourrais faire <strong style="color: #10b981;">${optimalTime}'</strong> (${optimalTime - timeToUse}' de plus!)<br>
-                        Pression finale: <strong style="color: #10b981;">${optimalFinal.toFixed(1)} bar</strong><br>
-                        Paliers: ${palierOptimal} | Groupe: <strong>${optimalRow.gps}</strong>
-                    </div>
-                `;
-                document.getElementById('results1').innerHTML += optimalBox;
-            }
-            
-            calculateTab1Graph(depthMax, timeToUse, pressFond, pressInit, pressSafety, row2);
-        }
-        
-        function calculateTab1Graph(depthMax, timeBottom, pressFond, pressInit, pressSafety, row) {
-            const canvas = document.getElementById('chart1');
-            const ctx = canvas.getContext('2d');
-            if (charts[1]) charts[1].destroy();
-            
-            const descTime = parseInt(document.getElementById('desc-time').value);
-            const remountTime = Math.ceil(depthMax / 6);
-            const vol = parseInt(document.getElementById('vol1').value);
-            const conso = parseFloat(document.getElementById('conso1').value);
-            
-            // === TROUVER LE TEMPS OPTIMAL (max possible) ===
-            let optimalTime = timeBottom;
-            for (let t = 300; t >= 1; t--) {
-                const testFinal = calculateFinalPressure(depthMax, t, pressInit, vol, conso, descTime);
-                if (testFinal >= pressSafety) {
-                    optimalTime = t;
-                    break;
-                }
-            }
-            
-            const maxTime = Math.max(descTime + timeBottom + remountTime, descTime + optimalTime + remountTime) + 5;
-            
-            // === COURBES USER: plongée actuelle ===
-            const profileData = [];
-            const userBottleData = [];
-            
-            let currentPressure = pressInit;
-            const dt = 0.1;
-            
-            for (let t = 0; t <= maxTime; t += dt) {
-                let d = 0;
-                if (t <= descTime) {
-                    d = (t / descTime) * depthMax;
-                } else if (t <= descTime + timeBottom) {
-                    d = depthMax;
-                } else if (t <= descTime + timeBottom + remountTime) {
-                    const remountElapsed = t - (descTime + timeBottom);
-                    d = depthMax - (remountElapsed / remountTime) * depthMax;
-                }
-                
-                profileData.push({x: parseFloat(t.toFixed(1)), y: d});
-                
-                const absPress = 1 + d / 10;
-                const airConsumed = conso * absPress * dt;
-                const pressureLost = airConsumed / vol;
-                currentPressure -= pressureLost;
-                
-                userBottleData.push({x: parseFloat(t.toFixed(1)), y: currentPressure});
-            }
-            
-            // === COURBES OPTIMALES: temps max au fond ===
-            const optimalProfileData = [];
-            const optimalBottleData = [];
-            
-            let optimalPressure = pressInit;
-            
-            for (let t = 0; t <= maxTime; t += dt) {
-                let d = 0;
-                if (t <= descTime) {
-                    d = (t / descTime) * depthMax;
-                } else if (t <= descTime + optimalTime) {
-                    d = depthMax;
-                } else if (t <= descTime + optimalTime + remountTime) {
-                    const remountElapsed = t - (descTime + optimalTime);
-                    d = depthMax - (remountElapsed / remountTime) * depthMax;
-                }
-                
-                optimalProfileData.push({x: parseFloat(t.toFixed(1)), y: d});
-                
-                const absPress = 1 + d / 10;
-                const airConsumed = conso * absPress * dt;
-                const pressureLost = airConsumed / vol;
-                optimalPressure -= pressureLost;
-                
-                optimalBottleData.push({x: parseFloat(t.toFixed(1)), y: optimalPressure});
-            }
-            
-            charts[1] = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [
-                        {
-                            label: `Profil optimal (${optimalTime}')`,
-                            data: optimalProfileData,
-                            borderColor: '#10b981',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            tension: 0,
-                            yAxisID: 'y',
-                            pointRadius: 0,
-                            showLine: true
-                        },
-                        {
-                            label: `Bouteille optimale (${optimalPressure.toFixed(1)}b)`,
-                            data: optimalBottleData,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            tension: 0,
-                            yAxisID: 'y1',
-                            pointRadius: 0,
-                            showLine: true
-                        },
-                        {
-                            label: 'Profil',
-                            data: profileData,
-                            borderColor: '#06b6d4',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2.5,
-                            tension: 0,
-                            yAxisID: 'y',
-                            pointRadius: 0,
-                            showLine: true
-                        },
-                        {
-                            label: 'Bouteille',
-                            data: userBottleData,
-                            borderColor: '#facc15',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2.5,
-                            tension: 0,
-                            yAxisID: 'y1',
-                            pointRadius: 0,
-                            showLine: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { 
-                            display: true, 
-                            position: 'top', 
-                            labels: { 
-                                color: '#a8dadc', 
-                                font: {size: 10}
-                            } 
-                        }
-                    },
-                    scales: {
-                        y: { position: 'left', reverse: true, max: depthMax + 5, min: -depthMax * 0.1, title: {display: true, text: 'Profondeur (m)', font: {weight: 'bold', color: '#06b6d4'}, color: '#06b6d4'}, ticks: {color: '#06b6d4'}, grid: {color: 'rgba(45, 139, 139, 0.2)'} },
-                        y1: { position: 'right', min: 0, max: pressInit + 10, title: {display: true, text: 'Pression (bar)', font: {weight: 'bold', color: '#facc15'}, color: '#facc15'}, ticks: {color: '#facc15'}, grid: {drawOnChartArea: false} },
-                        x: { min: 0, max: maxTime, title: {display: true, text: 'Temps (min)', font: {weight: 'bold', color: '#a8dadc'}, color: '#a8dadc'}, ticks: {color: '#a8dadc'}, grid: {color: 'rgba(45, 139, 139, 0.2)'} }
-                    }
-                }
-            });
-        }
-        
-        function drawTableGraph() {
-            const depth = parseInt(document.getElementById('table-depth').value);
-            const tableDepth = getTableDepth(depth);
-            const searchTime = parseInt(document.getElementById('table-time').value);
-            const searchRow = findBestRow(tableDepth, searchTime);
-            
-            const canvas = document.getElementById('chart2');
-            const ctx = canvas.getContext('2d');
-            if (charts[2]) charts[2].destroy();
-            
-            // === COURBE USER AVEC PALIERS MN90 ===
-            const userRow = searchRow;
-            const rateRemountSlowly = 6; // m/min (remontée lente)
-            const ratePalier = 6; // vitesse entre paliers
-            
-            const points = [];
-            let currentTime = 0;
-            let currentDepth = tableDepth;
-            
-            // === PHASE 1: AU FOND ===
-            points.push({x: currentTime, y: currentDepth});
-            currentTime = userRow.time;
-            points.push({x: currentTime, y: currentDepth});
-            
-            // === PHASE 2: REMONTÉE AVEC PALIERS MN90 ===
-            // Déterminer les paliers à faire
-            const paliers = [];
-            if (userRow.p15 > 0) paliers.push({depth: 15, time: userRow.p15});
-            if (userRow.p12 > 0) paliers.push({depth: 12, time: userRow.p12});
-            if (userRow.p9 > 0) paliers.push({depth: 9, time: userRow.p9});
-            if (userRow.p6 > 0) paliers.push({depth: 6, time: userRow.p6});
-            if (userRow.p3 > 0) paliers.push({depth: 3, time: userRow.p3});
-            
-            // Remonter jusqu'au premier palier
-            if (paliers.length > 0) {
-                const firstPalierDepth = paliers[0].depth;
-                const distToFirst = tableDepth - firstPalierDepth;
-                const timeToFirst = distToFirst / rateRemountSlowly;
-                
-                for (let t = 0; t <= timeToFirst; t += 0.1) {
-                    const d = tableDepth - (t / timeToFirst) * distToFirst;
-                    points.push({x: currentTime + t, y: d});
-                }
-                currentTime += timeToFirst;
-                currentDepth = firstPalierDepth;
-                
-                // Faire tous les paliers
-                for (let i = 0; i < paliers.length; i++) {
-                    const palier = paliers[i];
-                    const palierStart = currentTime;
-                    
-                    // Rester au palier
-                    points.push({x: currentTime, y: palier.depth});
-                    currentTime += palier.time;
-                    points.push({x: currentTime, y: palier.depth});
-                    
-                    // Remonter au prochain palier ou à la surface
-                    if (i < paliers.length - 1) {
-                        const nextDepth = paliers[i + 1].depth;
-                        const dist = palier.depth - nextDepth;
-                        const timeToNext = dist / ratePalier;
-                        
-                        for (let t = 0.1; t <= timeToNext; t += 0.1) {
-                            const d = palier.depth - (t / timeToNext) * dist;
-                            points.push({x: currentTime + t, y: d});
-                        }
-                        currentTime += timeToNext;
-                    } else {
-                        // Remontée finale à la surface
-                        const timeToSurface = palier.depth / ratePalier;
-                        for (let t = 0.1; t <= timeToSurface; t += 0.1) {
-                            const d = palier.depth - (t / timeToSurface) * palier.depth;
-                            points.push({x: currentTime + t, y: Math.max(0, d)});
-                        }
-                        currentTime += timeToSurface;
-                        points.push({x: currentTime, y: 0});
-                    }
-                }
-            } else {
-                // Pas de paliers, remontée directe
-                const timeToSurface = tableDepth / rateRemountSlowly;
-                for (let t = 0.1; t <= timeToSurface; t += 0.1) {
-                    const d = tableDepth - (t / timeToSurface) * tableDepth;
-                    points.push({x: currentTime + t, y: Math.max(0, d)});
-                }
-                currentTime += timeToSurface;
-                points.push({x: currentTime, y: 0});
-            }
-            
-            const datasets = [];
-            let currentPointIndex = 0;
-            
-            // Séparer la courbe par phase avec ses couleurs
-            const phasesFond = [];
-            const phases = [];
-            
-            // Phase au fond
-            let fondEndIdx = 0;
-            for (let i = 0; i < points.length; i++) {
-                if (points[i].x >= userRow.time) {
-                    fondEndIdx = i;
-                    break;
-                }
-            }
-            
-            if (fondEndIdx > 0) {
-                datasets.push({
-                    label: `Au fond`,
-                    data: points.slice(0, fondEndIdx + 1),
-                    borderColor: '#fbbf24',
-                    backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                    borderWidth: 3,
-                    tension: 0,
-                    fill: false,
-                    pointRadius: 0,
-                    spanGaps: true,
-                    showLine: true
-                });
-                currentPointIndex = fondEndIdx;
-            }
-            
-            // Phase palier 15m
-            if (userRow.p15 > 0) {
-                let p15EndIdx = currentPointIndex;
-                const timeToP15 = (tableDepth - 15) / 6;
-                const p15EndTime = userRow.time + timeToP15 + userRow.p15;
-                for (let i = currentPointIndex; i < points.length; i++) {
-                    if (points[i].x >= p15EndTime) {
-                        p15EndIdx = i;
-                        break;
-                    }
-                }
-                if (p15EndIdx > currentPointIndex) {
-                    datasets.push({
-                        label: `Palier 15m`,
-                        data: points.slice(currentPointIndex, p15EndIdx + 1),
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'transparent',
-                        borderWidth: 3,
-                        tension: 0,
-                        pointRadius: 0,
-                        spanGaps: true,
-                        showLine: true
-                    });
-                    currentPointIndex = p15EndIdx;
-                }
-            }
-            
-            // Phase palier 12m
-            if (userRow.p12 > 0) {
-                let p12EndIdx = currentPointIndex;
-                const timeToP12 = userRow.time + (tableDepth - 15) / 6 + userRow.p15 + (15 - 12) / 6 + userRow.p12;
-                for (let i = currentPointIndex; i < points.length; i++) {
-                    if (points[i].x >= timeToP12) {
-                        p12EndIdx = i;
-                        break;
-                    }
-                }
-                if (p12EndIdx > currentPointIndex) {
-                    datasets.push({
-                        label: `Palier 12m`,
-                        data: points.slice(currentPointIndex, p12EndIdx + 1),
-                        borderColor: '#22c55e',
-                        backgroundColor: 'transparent',
-                        borderWidth: 3,
-                        tension: 0,
-                        pointRadius: 0,
-                        spanGaps: true,
-                        showLine: true
-                    });
-                    currentPointIndex = p12EndIdx;
-                }
-            }
-            
-            // Phase palier 9m
-            if (userRow.p9 > 0) {
-                let p9EndIdx = currentPointIndex;
-                let time9 = userRow.time + (tableDepth - 15) / 6;
-                if (userRow.p15 > 0) time9 += userRow.p15 + (15 - 12) / 6;
-                if (userRow.p12 > 0) time9 += userRow.p12 + (12 - 9) / 6;
-                time9 += userRow.p9;
-                for (let i = currentPointIndex; i < points.length; i++) {
-                    if (points[i].x >= time9) {
-                        p9EndIdx = i;
-                        break;
-                    }
-                }
-                if (p9EndIdx > currentPointIndex) {
-                    datasets.push({
-                        label: `Palier 9m`,
-                        data: points.slice(currentPointIndex, p9EndIdx + 1),
-                        borderColor: '#a855f7',
-                        backgroundColor: 'transparent',
-                        borderWidth: 3,
-                        tension: 0,
-                        pointRadius: 0,
-                        spanGaps: true,
-                        showLine: true
-                    });
-                    currentPointIndex = p9EndIdx;
-                }
-            }
-            
-            // Phase palier 6m
-            if (userRow.p6 > 0) {
-                let p6EndIdx = currentPointIndex;
-                let time6 = userRow.time + (tableDepth - 15) / 6;
-                if (userRow.p15 > 0) time6 += userRow.p15 + (15 - 12) / 6;
-                if (userRow.p12 > 0) time6 += userRow.p12 + (12 - 9) / 6;
-                if (userRow.p9 > 0) time6 += userRow.p9 + (9 - 6) / 6;
-                time6 += userRow.p6;
-                for (let i = currentPointIndex; i < points.length; i++) {
-                    if (points[i].x >= time6) {
-                        p6EndIdx = i;
-                        break;
-                    }
-                }
-                if (p6EndIdx > currentPointIndex) {
-                    datasets.push({
-                        label: `Palier 6m`,
-                        data: points.slice(currentPointIndex, p6EndIdx + 1),
-                        borderColor: '#f43f5e',
-                        backgroundColor: 'transparent',
-                        borderWidth: 3,
-                        tension: 0,
-                        pointRadius: 0,
-                        spanGaps: true,
-                        showLine: true
-                    });
-                    currentPointIndex = p6EndIdx;
-                }
-            }
-            
-            // Phase palier 3m
-            if (userRow.p3 > 0) {
-                let p3EndIdx = currentPointIndex;
-                let time3 = userRow.time + (tableDepth - 15) / 6;
-                if (userRow.p15 > 0) time3 += userRow.p15 + (15 - 12) / 6;
-                if (userRow.p12 > 0) time3 += userRow.p12 + (12 - 9) / 6;
-                if (userRow.p9 > 0) time3 += userRow.p9 + (9 - 6) / 6;
-                if (userRow.p6 > 0) time3 += userRow.p6 + (6 - 3) / 6;
-                time3 += userRow.p3;
-                for (let i = currentPointIndex; i < points.length; i++) {
-                    if (points[i].x >= time3) {
-                        p3EndIdx = i;
-                        break;
-                    }
-                }
-                if (p3EndIdx > currentPointIndex) {
-                    datasets.push({
-                        label: `Palier 3m`,
-                        data: points.slice(currentPointIndex, p3EndIdx + 1),
-                        borderColor: '#fbbf24',
-                        backgroundColor: 'transparent',
-                        borderWidth: 3,
-                        tension: 0,
-                        pointRadius: 0,
-                        spanGaps: true,
-                        showLine: true
-                    });
-                    currentPointIndex = p3EndIdx;
-                }
-            }
-            
-            // Phase finale vers surface
-            if (currentPointIndex < points.length - 1) {
-                datasets.push({
-                    label: `Surface`,
-                    data: points.slice(currentPointIndex),
-                    borderColor: '#ec4899',
-                    backgroundColor: 'transparent',
-                    borderWidth: 3,
-                    tension: 0,
-                    pointRadius: 0,
-                    spanGaps: true,
-                    showLine: true
-                });
-            }
-            
-            const maxTime = currentTime + 2;
-            
-            charts[2] = new Chart(ctx, {
-                type: 'scatter',
-                data: { datasets: datasets },
-                plugins: [{
-                    id: 'paliersBackground',
-                    afterDatasetsDraw(chart) {
-                        const ctx = chart.ctx;
-                        const xScale = chart.scales.x;
-                        const yScale = chart.scales.y;
-                        
-                        // Calculer les phases de paliers et les colorier
-                        let currentTime = userRow.time;
-                        
-                        if (userRow.p15 > 0) {
-                            const timeToP15 = (tableDepth - 15) / 6;
-                            const startX = xScale.getPixelForValue(currentTime + timeToP15);
-                            const endX = xScale.getPixelForValue(currentTime + timeToP15 + userRow.p15);
-                            const y1 = yScale.getPixelForValue(12);
-                            const y2 = yScale.getPixelForValue(18);
-                            const topY = Math.min(y1, y2);
-                            const bottomY = Math.max(y1, y2);
-                            
-                            ctx.fillStyle = 'rgba(6, 182, 212, 0.5)';
-                            ctx.fillRect(startX, topY, endX - startX, bottomY - topY);
-                            
-                            currentTime += timeToP15 + userRow.p15;
-                        }
-                        
-                        if (userRow.p12 > 0) {
-                            const timeToP12 = (15 - 12) / 6;
-                            const startX = xScale.getPixelForValue(currentTime + timeToP12);
-                            const endX = xScale.getPixelForValue(currentTime + timeToP12 + userRow.p12);
-                            const y1 = yScale.getPixelForValue(9);
-                            const y2 = yScale.getPixelForValue(15);
-                            const topY = Math.min(y1, y2);
-                            const bottomY = Math.max(y1, y2);
-                            
-                            ctx.fillStyle = 'rgba(34, 197, 94, 0.5)';
-                            ctx.fillRect(startX, topY, endX - startX, bottomY - topY);
-                            
-                            currentTime += timeToP12 + userRow.p12;
-                        }
-                        
-                        if (userRow.p9 > 0) {
-                            const timeToP9 = (12 - 9) / 6;
-                            const startX = xScale.getPixelForValue(currentTime + timeToP9);
-                            const endX = xScale.getPixelForValue(currentTime + timeToP9 + userRow.p9);
-                            const y1 = yScale.getPixelForValue(6);
-                            const y2 = yScale.getPixelForValue(12);
-                            const topY = Math.min(y1, y2);
-                            const bottomY = Math.max(y1, y2);
-                            
-                            ctx.fillStyle = 'rgba(168, 85, 247, 0.5)';
-                            ctx.fillRect(startX, topY, endX - startX, bottomY - topY);
-                            
-                            currentTime += timeToP9 + userRow.p9;
-                        }
-                        
-                        if (userRow.p6 > 0) {
-                            const timeToP6 = (9 - 6) / 6;
-                            const startX = xScale.getPixelForValue(currentTime + timeToP6);
-                            const endX = xScale.getPixelForValue(currentTime + timeToP6 + userRow.p6);
-                            const y1 = yScale.getPixelForValue(3);
-                            const y2 = yScale.getPixelForValue(9);
-                            const topY = Math.min(y1, y2);
-                            const bottomY = Math.max(y1, y2);
-                            
-                            ctx.fillStyle = 'rgba(244, 63, 94, 0.5)';
-                            ctx.fillRect(startX, topY, endX - startX, bottomY - topY);
-                            
-                            currentTime += timeToP6 + userRow.p6;
-                        }
-                        
-                        if (userRow.p3 > 0) {
-                            const timeToP3 = (6 - 3) / 6;
-                            const startX = xScale.getPixelForValue(currentTime + timeToP3);
-                            const endX = xScale.getPixelForValue(currentTime + timeToP3 + userRow.p3);
-                            const y1 = yScale.getPixelForValue(0);
-                            const y2 = yScale.getPixelForValue(6);
-                            const topY = Math.min(y1, y2);
-                            const bottomY = Math.max(y1, y2);
-                            
-                            ctx.fillStyle = 'rgba(251, 191, 36, 0.5)';
-                            ctx.fillRect(startX, topY, endX - startX, bottomY - topY);
-                        }
-                    }
-                },
-                {
-                    id: 'labelsPlugin',
-                    afterDatasetsDraw(chart) {
-                        const ctx = chart.ctx;
-                        const xScale = chart.scales.x;
-                        const yScale = chart.scales.y;
-                        
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-                        ctx.shadowBlur = 5;
-                        
-                        // Label au fond
-                        const bottomX = xScale.getPixelForValue(userRow.time * 0.5);
-                        const bottomY = yScale.getPixelForValue(tableDepth);
-                        ctx.fillStyle = '#fbbf24';
-                        ctx.font = 'bold 13px sans-serif';
-                        ctx.fillText(`Au fond ${userRow.time.toFixed(0)}'`, bottomX, bottomY + 20);
-                        
-                        // Labels des paliers avec leurs couleurs
-                        let currentTime = userRow.time;
-                        
-                        if (userRow.p15 > 0) {
-                            const timeToP15 = (tableDepth - 15) / 6;
-                            const p15X = xScale.getPixelForValue(currentTime + timeToP15 + userRow.p15 * 0.5);
-                            const p15Y = yScale.getPixelForValue(15);
-                            ctx.fillStyle = '#06b6d4';
-                            ctx.font = 'bold 12px sans-serif';
-                            ctx.fillText(`15m x${userRow.p15}'`, p15X, p15Y - 12);
-                            currentTime += timeToP15 + userRow.p15;
-                        }
-                        
-                        if (userRow.p12 > 0) {
-                            const timeToP12 = (15 - 12) / 6;
-                            const p12X = xScale.getPixelForValue(currentTime + timeToP12 + userRow.p12 * 0.5);
-                            const p12Y = yScale.getPixelForValue(12);
-                            ctx.fillStyle = '#22c55e';
-                            ctx.font = 'bold 12px sans-serif';
-                            ctx.fillText(`12m x${userRow.p12}'`, p12X, p12Y - 12);
-                            currentTime += timeToP12 + userRow.p12;
-                        }
-                        
-                        if (userRow.p9 > 0) {
-                            const timeToP9 = (12 - 9) / 6;
-                            const p9X = xScale.getPixelForValue(currentTime + timeToP9 + userRow.p9 * 0.5);
-                            const p9Y = yScale.getPixelForValue(9);
-                            ctx.fillStyle = '#a855f7';
-                            ctx.font = 'bold 12px sans-serif';
-                            ctx.fillText(`9m x${userRow.p9}'`, p9X, p9Y - 12);
-                            currentTime += timeToP9 + userRow.p9;
-                        }
-                        
-                        if (userRow.p6 > 0) {
-                            const timeToP6 = (9 - 6) / 6;
-                            const p6X = xScale.getPixelForValue(currentTime + timeToP6 + userRow.p6 * 0.5);
-                            const p6Y = yScale.getPixelForValue(6);
-                            ctx.fillStyle = '#f43f5e';
-                            ctx.font = 'bold 12px sans-serif';
-                            ctx.fillText(`6m x${userRow.p6}'`, p6X, p6Y - 12);
-                            currentTime += timeToP6 + userRow.p6;
-                        }
-                        
-                        if (userRow.p3 > 0) {
-                            const timeToP3 = (6 - 3) / 6;
-                            const p3X = xScale.getPixelForValue(currentTime + timeToP3 + userRow.p3 * 0.5);
-                            const p3Y = yScale.getPixelForValue(3);
-                            ctx.fillStyle = '#fbbf24';
-                            ctx.font = 'bold 12px sans-serif';
-                            ctx.fillText(`3m x${userRow.p3}'`, p3X, p3Y - 12);
-                        }
-                        
-                        ctx.shadowColor = 'transparent';
-                    }
-                }],
-                options: {
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'nearest'
-                    },
-                    plugins: { 
-                        legend: { 
-                            display: true, 
-                            position: 'top', 
-                            labels: { 
-                                color: '#a8dadc',
-                                font: {size: 12, weight: 'bold'}, 
-                                padding: 15,
-                                boxWidth: 15,
-                                boxHeight: 3
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { 
-                            reverse: true, 
-                            max: tableDepth + 2, 
-                            min: -2,
-                            title: {
-                                display: true, 
-                                text: `Profondeur (m)`,
-                                font: {weight: 'bold', size: 13, color: '#06b6d4'},
-                                color: '#06b6d4'
-                            },
-                            ticks: {color: '#a8dadc', font: {size: 11}},
-                            grid: {color: 'rgba(6, 182, 212, 0.15)', lineWidth: 1}
-                        },
-                        x: { 
-                            min: 0, 
-                            max: maxTime,
-                            title: {
-                                display: true, 
-                                text: 'Temps (min)',
-                                font: {weight: 'bold', size: 13, color: '#06b6d4'},
-                                color: '#06b6d4'
-                            },
-                            ticks: {color: '#a8dadc', font: {size: 11}},
-                            grid: {color: 'rgba(6, 182, 212, 0.15)', lineWidth: 1}
-                        }
-                    }
-                }
-            });
-            
-            let tableHtml = '';
-            const relevantRows = mn90Tables.filter(r => r.prof === tableDepth).sort((a, b) => a.time - b.time);
-            
-            // Déterminer les colonnes de palier à afficher
-            const hasPalier15 = relevantRows.some(r => r.p15 > 0);
-            const hasPalier12 = relevantRows.some(r => r.p12 > 0);
-            const hasPalier9 = relevantRows.some(r => r.p9 > 0);
-            const hasPalier6 = relevantRows.some(r => r.p6 > 0);
-            const hasPalier3 = relevantRows.some(r => r.p3 > 0);
-            
-            // Créer en-têtes dynamiques compact
-            let headerHtml = `<tr style="background: rgba(6, 182, 212, 0.15); font-weight: bold; color: #a8dadc; font-size: 10px;">
-                <td>Prof</td>
-                <td>Temps</td>`;
-            if (hasPalier15) headerHtml += `<td style="color: #06b6d4; font-weight: bold;">15m</td>`;
-            if (hasPalier12) headerHtml += `<td style="color: #22c55e; font-weight: bold;">12m</td>`;
-            if (hasPalier9) headerHtml += `<td style="color: #a855f7; font-weight: bold;">9m</td>`;
-            if (hasPalier6) headerHtml += `<td style="color: #f43f5e; font-weight: bold;">6m</td>`;
-            if (hasPalier3) headerHtml += `<td style="color: #fbbf24; font-weight: bold;">3m</td>`;
-            headerHtml += `<td>Groupe</td></tr>`;
-            
-            for (let row of relevantRows) {
-                const isHighlighted = Math.abs(row.time - searchRow.time) < 0.5 && row.prof === searchRow.prof;
-                const timeStr = formatTime(row.time);
-                let rowHtml = `<tr class="${isHighlighted ? 'highlight' : ''}" style="font-size: 10px;">
-                    <td><strong>${row.prof}m</strong></td>
-                    <td><strong>${timeStr}</strong></td>`;
-                if (hasPalier15) rowHtml += `<td>${row.p15 || '-'}</td>`;
-                if (hasPalier12) rowHtml += `<td>${row.p12 || '-'}</td>`;
-                if (hasPalier9) rowHtml += `<td>${row.p9 || '-'}</td>`;
-                if (hasPalier6) rowHtml += `<td>${row.p6 || '-'}</td>`;
-                if (hasPalier3) rowHtml += `<td>${row.p3 || '-'}</td>`;
-                rowHtml += `<td><strong>${row.gps}</strong></td></tr>`;
-                tableHtml += rowHtml;
-            }
-            
-            const selectedRow = searchRow;
-            const palierDetails = [];
-            let dtrTime = 0; // Decompression Time Remaining
-            
-            // Compter les colonnes
-            let numCols = 2; // Prof + Temps
-            if (hasPalier15) numCols++;
-            if (hasPalier12) numCols++;
-            if (hasPalier9) numCols++;
-            if (hasPalier6) numCols++;
-            if (hasPalier3) numCols++;
-            numCols++; // Groupe
-            
-            if (selectedRow.p15 > 0) palierDetails.push(`15m x${selectedRow.p15}'`);
-            if (selectedRow.p12 > 0) palierDetails.push(`12m x${selectedRow.p12}'`);
-            if (selectedRow.p9 > 0) palierDetails.push(`9m x${selectedRow.p9}'`);
-            if (selectedRow.p6 > 0) palierDetails.push(`6m x${selectedRow.p6}'`);
-            if (selectedRow.p3 > 0) palierDetails.push(`3m x${selectedRow.p3}'`);
-            
-            // Calculer le DTR
-            if (palierDetails.length > 0) {
-                // Remontée du fond au premier palier
-                if (selectedRow.p15 > 0) {
-                    dtrTime += (tableDepth - 15) / 6;
-                    dtrTime += selectedRow.p15;
-                    if (selectedRow.p12 > 0) {
-                        dtrTime += (15 - 12) / 6;
-                        dtrTime += selectedRow.p12;
-                        if (selectedRow.p9 > 0) {
-                            dtrTime += (12 - 9) / 6;
-                            dtrTime += selectedRow.p9;
-                            if (selectedRow.p6 > 0) {
-                                dtrTime += (9 - 6) / 6;
-                                dtrTime += selectedRow.p6;
-                                if (selectedRow.p3 > 0) {
-                                    dtrTime += (6 - 3) / 6;
-                                    dtrTime += selectedRow.p3;
-                                    dtrTime += 3 / 6; // Remontée surface
-                                } else {
-                                    dtrTime += 6 / 6;
-                                }
-                            } else {
-                                dtrTime += 9 / 6;
-                            }
-                        } else {
-                            dtrTime += 12 / 6;
-                        }
-                    } else {
-                        dtrTime += 15 / 6;
-                    }
-                }
-            } else {
-                dtrTime = tableDepth / 6; // Remontée directe
-            }
-            
-            const palierText = palierDetails.length > 0 ? palierDetails.join(' + ') : 'aucun palier';
-            
-            tableHtml = `<tr><td colspan="${numCols}" style="background: rgba(26, 35, 50, 0.9); border-left: 4px solid #fbbf24; padding: 8px; text-align: left; font-size: 9px; color: #a8dadc; line-height: 1.5;">
-                <strong>📋 ${tableDepth}m pendant ${formatTime(selectedRow.time)}:</strong> Groupe ${selectedRow.gps}<br>
-                <strong>🔺 DTR:</strong> ${dtrTime.toFixed(1)} min | <strong>Paliers:</strong> ${palierText}
-            </td></tr>` + headerHtml + tableHtml;
-            
-            document.getElementById('table-rows').innerHTML = tableHtml;
-        }
-        
-        function switchTab(n) {
-            document.querySelectorAll('.workspace').forEach((el, i) => el.classList.toggle('active', i === n));
-            document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === n));
-            setTimeout(() => {
-                if (n === 1) calculateTab1();
-                if (n === 2) drawTableGraph();
-                Object.values(charts).forEach(c => c && c.resize?.());
-            }, 50);
-        }
-        
-        setTimeout(() => {
-            updateVal('table-time', '');
-            updateVal('table-depth', ' m');
-            updateVal('conso1', '');
-            calculateTab0();
-            calculateTab1();
-            drawTableGraph();
-        }, 100);
-    </script>
+        // Brume selon visibilité
+        const fogGrad=ctx.createLinearGradient(0,ch*0.3,0,ch*0.75);
+        fogGrad.addColorStop(0,s.fogCol+'0)');
+        fogGrad.addColorStop(1,s.fogCol+s.fogAmt+')');
+        ctx.fillStyle=fogGrad; ctx.fillRect(0,ch*0.3,cw,ch*0.7);
+      }
+
+      // Particules/bulles
+      for(let i=0;i<14;i++){
+        const bx=(Math.sin(i*2.1)*0.5+0.5)*cw;
+        const by=(Math.sin(i*1.7)*0.3+0.3)*ch;
+        ctx.fillStyle=`rgba(180,220,255,${0.06+i%3*0.04})`;
+        ctx.beginPath(); ctx.arc(bx,by,0.8+i%3,0,Math.PI*2); ctx.fill();
+      }
+    }
+
+    // Reflet surface
+    const surfGrad=ctx.createLinearGradient(0,0,0,6);
+    surfGrad.addColorStop(0,'rgba(255,255,255,0.12)');
+    surfGrad.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=surfGrad; ctx.fillRect(0,0,cw,6);
+
+    // Barre de couleur accent en bas
+    ctx.fillStyle=s.accent+'66';
+    ctx.fillRect(0,ch-3,cw,3);
+  });
+}
+// Attendre que le layout soit calculé pour avoir les bonnes dimensions
+requestAnimationFrame(()=>requestAnimationFrame(drawSitePreviews));
+</script>
 </body>
 </html>
