@@ -1,18 +1,15 @@
-// controls.js — Clavier, souris, joysticks tactiles, son Web Audio
+// controls.js — Clavier, souris, joysticks tactiles
 'use strict';
 
 // ===== CAMÉRA =====
 let yaw=0,pitch=0,locked=false;
 let moveF=false,moveB=false,moveL=false,moveR=false,moveU=false,moveD=false;
 
-// Quaternions réutilisables — pas de new à chaque frame
-const _qYaw=new THREE.Quaternion();
-const _qPitch=new THREE.Quaternion();
-const _axisY=new THREE.Vector3(0,1,0);
-const _axisX=new THREE.Vector3(1,0,0);
-
 function _applyYaw(delta){ yaw-=delta; while(yaw>Math.PI)yaw-=Math.PI*2; while(yaw<-Math.PI)yaw+=Math.PI*2; }
 function _applyPitch(delta){ pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch-delta)); }
+
+// Exposé pour game.js (détection 360)
+Object.defineProperty(window,'_yaw',{get:()=>yaw});
 
 document.addEventListener('keydown',e=>{
   if(!G.simStarted)return;
@@ -58,10 +55,8 @@ const velocity=new THREE.Vector3();
 
 function applyMovement(dt){
   const cam=window._camera;if(!cam)return;
-  // Quaternions statiques réutilisés — pas de new à chaque frame
-  _qYaw.setFromAxisAngle(_axisY,yaw);
-  _qPitch.setFromAxisAngle(_axisX,pitch);
-  cam.quaternion.multiplyQuaternions(_qYaw,_qPitch);
+  // Rotation caméra robuste
+  cam.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
 
   const maxSpd=G.rescued?2.0:5.0;
   const accel=4.0;
