@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <title>Remontée Assistée</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- CANVAS PRINCIPAL -->
+  <canvas id="scene"></canvas>
+  <div id="vignette"></div>
+
+  <!-- PANEL DROIT : CONFIG AVANT PLONGÉE -->
+  <aside id="panelRight">
+    <div class="pr-title">🤿 Remontée Assistée</div>
+    <div class="pr-sub">Simulateur pédagogique</div>
+
+    <div class="pr-block">
+      <div class="pr-h">📍 Profondeur initiale</div>
+      <div class="depth-row" id="depthRow"></div>
+      <div class="pr-note">Sortir rapidement de &gt;30m, puis respecter 10 m/min entre 20–5m.</div>
+    </div>
+
+    <div class="pr-block">
+      <div class="pr-h">⚖️ Poids du blessé</div>
+      <input id="wVictim" type="range" min="55" max="110" step="1" value="75">
+      <div class="pr-mini">
+        <span>55</span>
+        <span id="wVictimVal">75 kg</span>
+        <span>110</span>
+      </div>
+      <div class="pr-note">Plus le blessé est lourd, plus il faudra d’air pour être neutre.</div>
+    </div>
+
+    <div class="pr-block">
+      <button class="pr-btn" id="btnStart">PLONGER ▶️</button>
+
+      <div id="keyboardDisplay">
+        <div class="pr-h">⌨️ Commandes (PC)</div>
+        <div class="kb-row"><div class="kb-key" data-key="Space">ESPACE</div></div>
+        <div class="kb-row">
+          <div class="kb-key" data-key="KeyE">E</div>
+          <div class="kb-key" data-key="KeyV">V</div>
+        </div>
+        <div class="kb-row">
+          <div class="kb-key" data-key="KeyD">D</div>
+          <div class="kb-key" data-key="KeyF">F</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pr-block pr-faint">
+      <div>Phase : <b id="phaseTxt">--</b></div>
+      <div>Profondeur : <b id="depthTxt">--</b> m</div>
+      <div>Chrono : <b id="timeTxt">0:00</b></div>
+    </div>
+  </aside>
+
+  <!-- CONTROLES -->
+  <div id="controls">
+    <button class="ctrl" id="btn-purge-v"><span class="ico">🔽</span><span>PURGE<br>blessé</span></button>
+    <button class="ctrl" id="btn-inflate"><span class="ico">💨</span><span>GONFLE<br>blessé</span></button>
+
+    <button class="ctrl" id="btn-inhale"><span class="ico">🫁</span><span>INSPIR<br>5s</span></button>
+
+    <!-- ✅ SINUSOÏDE ENTRE INSPIR ET EXPIR -->
+    <canvas id="lungWaveMini" width="60" height="60"></canvas>
+
+    <button class="ctrl" id="btn-exhale"><span class="ico">💨</span><span>EXPIR<br>5s</span></button>
+    <button class="ctrl" id="btn-purge-s"><span class="ico">🔽</span><span>PURGE<br>moi</span></button>
+  </div>
+
+  <!-- HUD GAUCHE (PARFAIT, ON GARDE) -->
+  <div id="hudSim" style="display:none;">
+    <div class="hud-block">
+      <div class="hud-h">🧪 Gilets</div>
+      <div class="hudGauges">
+        <div class="hudCol">
+          <div class="hudLabel">BLESSE</div>
+          <div class="hudTube"><div class="hudLiquid" id="bcdV"></div></div>
+          <div class="hudPct" id="bcdVtxt">0%</div>
+        </div>
+        <div class="hudCol">
+          <div class="hudLabel">MOI</div>
+          <div class="hudTube"><div class="hudLiquid" id="bcdS"></div></div>
+          <div class="hudPct" id="bcdStxt">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-block">
+      <div class="hud-h">📈 Vitesse</div>
+      <div class="hudSpeed">
+        <div class="hudSpd" id="spdVal">0.0</div>
+        <div class="hudUnit">m/min</div>
+        <div class="hudLim">Limite : <span id="spdLim">10</span></div>
+      </div>
+      <div class="warn" id="warnSpeed">⚠️ Trop rapide</div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script defer src="config.java"></script>
+  <script defer src="state.java"></script>
+  <script defer src="audio.java"></script>
+  <script defer src="physics.java"></script>
+  <script defer src="render.java"></script>
+  <script defer src="ui.java"></script>
+  <script defer src="input.java"></script>
+  <script defer src="main.java"></script>
+
+</body>
+</html>
