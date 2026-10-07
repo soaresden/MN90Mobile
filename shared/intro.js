@@ -1,5 +1,5 @@
 /* ============================================================
-   MN90 Mobile — Animation d'ouverture (8 s, passable d'un toucher)
+   MN90 Mobile — Animation d'ouverture (8 s, puis la scène attend un toucher)
    Un plongeur fait un saut droit depuis un ponton, descend vite jusqu'à
    une épave au milieu d'un récif plein de vie. Les animaux viennent
    tourner autour de lui, il respire sur son détendeur et finit par un 👌.
@@ -15,12 +15,12 @@
   if (!document.body) return;
 
   const TXT = {
-    fr: ['Bienvenue dans', 'Touche l’écran pour passer'],
-    en: ['Welcome to', 'Tap the screen to skip'],
-    es: ['Bienvenido a', 'Toca la pantalla para saltar'],
-    it: ['Benvenuto in', 'Tocca lo schermo per saltare'],
-    'pt-BR': ['Bem-vindo ao', 'Toque na tela para pular'],
-    pl: ['Witaj w', 'Dotknij ekranu, aby pominąć'],
+    fr: ['Bienvenue dans', 'Touche l’écran pour passer', 'Touche l’écran pour entrer'],
+    en: ['Welcome to', 'Tap the screen to skip', 'Tap the screen to enter'],
+    es: ['Bienvenido a', 'Toca la pantalla para saltar', 'Toca la pantalla para entrar'],
+    it: ['Benvenuto in', 'Tocca lo schermo per saltare', 'Tocca lo schermo per entrare'],
+    'pt-BR': ['Bem-vindo ao', 'Toque na tela para pular', 'Toque na tela para entrar'],
+    pl: ['Witaj w', 'Dotknij ekranu, aby pominąć', 'Dotknij ekranu, aby wejść'],
   };
   let lang = 'fr';
   try { lang = localStorage.getItem('mn90-lang') || navigator.language || 'fr'; } catch (e) { lang = 'fr'; }
@@ -73,7 +73,7 @@
   document.documentElement.style.overflow = 'hidden';
 
   const svg = ov.querySelector('svg'), world = ov.querySelector('#intro-world');
-  const title = ov.querySelector('.intro-title'), bar = ov.querySelector('.intro-bar');
+  const title = ov.querySelector('.intro-title'), bar = ov.querySelector('.intro-bar'), skipTxt = ov.querySelector('.intro-skip');
 
   // Créatures dessinées, centrées sur l'origine, tournées vers la droite
   const SHAPES = {
@@ -260,7 +260,7 @@
   }
 
   const t0 = performance.now();
-  let raf = 0, lastPuff = 0, lastRPuff = 0, lastLove = 0, done = false;
+  let raf = 0, lastPuff = 0, lastRPuff = 0, lastLove = 0, done = false, ended = false;
   function frame(now) {
     const t = FREEZE !== null ? FREEZE : reduce ? DUR - 1 : now - t0;
     const P = pose(t);
@@ -274,13 +274,13 @@
     rfins.setAttribute('transform', t > 1900 && t < 6300 ? `rotate(${Math.sin(t / 85 + 1) * 16} 0 24)` : '');
     const wave2 = ease(seg(t, 6200, 6600));
     rarm.setAttribute('transform', `rotate(${(-wave2 * 140 + (wave2 >= 1 ? Math.sin(t / 120) * 18 : 0)).toFixed(1)} 5 -16)`);
-    $('#in-reye').setAttribute('r', t > 7100 && t < 7350 ? '0.4' : '1.6');
+    $('#in-reye').setAttribute('r', t > 7100 && (t - 7100) % 4100 < 240 ? '0.4' : '1.6');
     // Le 👌 final : le bras se lève vers toi
     const okK = ease(seg(t, 6000, 6500));
     arm.setAttribute('transform', `rotate(${-okK * 125} 6 -18)`);
     ok.setAttribute('opacity', okK.toFixed(2));
     // Clin d'œil final
-    $('#in-eye1').setAttribute('r', t > 6700 && t < 6950 ? '0.4' : '1.7');
+    $('#in-eye1').setAttribute('r', t > 6700 && (t - 6700) % 3600 < 240 ? '0.4' : '1.7');
     ok.setAttribute('transform', `translate(${24 + okK * 6} ${-52}) scale(${0.4 + okK * 0.9 + Math.sin(t / 160) * 0.05 * okK})`);
     $('#in-sun').setAttribute('transform', `translate(330 90) rotate(${(t / 60) % 360})`);
     // Vagues
@@ -313,9 +313,9 @@
       let x = x0, y = y0, flip = false;
       if (sp) {
         const dir = k % 2 ? 1 : -1;
-        x = x0 + Math.sin(t / 1000 * sp + k) * 40 + dir * t / 1000 * sp * 7;
+        x = x0 + Math.sin(t / 1000 * sp + k) * 40 + dir * Math.sin(t / 9000 * sp) * 70;
         y = y0 + Math.sin(t / 700 * sp + k * 2) * 8;
-        flip = Math.cos(t / 1000 * sp + k) * 40 * sp / 1000 + dir * sp * 0.007 < 0;
+        flip = Math.cos(t / 1000 * sp + k) * 40 * sp / 1000 + dir * Math.cos(t / 9000 * sp) * 70 * sp / 9000 < 0;
         if (friend && meet > 0) {
           const ang = t / 1400 * (k % 2 ? 1 : -1) + k * 1.3, rad = 52 + (k % 3) * 16;
           const ox = END.x + Math.cos(ang) * rad * 1.15, oy = END.y + 6 + Math.sin(ang) * rad * 0.75;
@@ -343,7 +343,8 @@
     weeds.forEach((w, k) => w.setAttribute('transform', `skewX(${Math.sin(t / 700 + k) * 6})`));
     bar.style.width = Math.min(100, (now - t0) / DUR * 100) + '%';
     if ((FREEZE !== null ? FREEZE : now - t0) > (reduce ? 200 : 5600)) title.classList.add('on');
-    if (FREEZE === null && now - t0 >= DUR) return close();
+    // Fin de l'animation : la scène continue de vivre et attend un toucher
+    if (FREEZE === null && now - t0 >= DUR && !ended) { ended = true; skipTxt.textContent = tx[2]; bar.style.opacity = '0'; }
     raf = requestAnimationFrame(frame);
   }
 

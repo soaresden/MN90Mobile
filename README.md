@@ -26,7 +26,7 @@ Chaque ouverture de l’accueil lance une petite animation de 8 secondes. Pour l
 - Ils descendent tête la première jusqu’à l’épave **OGN**, au milieu d’un récif : raies, poissons-clowns, hippocampes, tortues, poissons-globes, crevettes…
 - Les animaux viennent tourner autour d’eux. Le plongeur respire sur son détendeur et finit par un 👌. Le lapin, lui, fait coucou.
 
-C’est mon hommage au club et à sa section plongée, qu’on retrouve aussi en bas de l’accueil.
+Fait avec amour, dédicace à l’**OGN**, à sa **section plongée** et à ses **moniteurs** ❤️. On retrouve cette dédicace en bas de l’accueil.
 
 <p align="center"><img src="docs/screenshots/17-intro.jpg" width="640" alt="Fin de l’animation : le plongeur et le lapin au-dessus de l’épave OGN"></p>
 
@@ -350,4 +350,4 @@ puis ouvre `http://127.0.0.1:8090/`.
 
 ---
 
-MN90 Mobile · Soaresden · 2025-2026
+MN90 Mobile · Soaresden · 2025-2026 · Fait avec amour, dédicace à l’OGN, à sa section plongée et à ses moniteurs ❤️
