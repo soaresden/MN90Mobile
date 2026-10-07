@@ -158,9 +158,9 @@
         <fieldset><legend>Nitrox</legend><div class="pills" data-pf="nitrox">
           ${NITROX.map(n => `<label class="pill"><input type="radio" name="pf-nx" value="${n.id}"><span>${n.label}</span></label>`).join('')}
         </div></fieldset>
-        <fieldset><legend>Mon matériel et ma consommation</legend><div class="grid2">
+        <fieldset><legend>Mon matériel et ma consommation</legend><div class="gear-art" id="pf-gear"></div><div class="grid2">
           <label class="field">Bloc (L)<input class="input" type="number" inputmode="decimal" data-g="tank" min="3" max="40" step="1"></label>
-          <label class="field">Pression (bar)<input class="input" type="number" inputmode="numeric" data-g="press" min="50" max="300" step="10"></label>
+          <label class="field">Pression bouteille de départ (bar)<input class="input" type="number" inputmode="numeric" data-g="press" min="50" max="300" step="10"></label>
           <label class="field">Conso surface (L/min)<input class="input" type="number" inputmode="numeric" data-g="sac" min="5" max="60" step="1"></label>
           <label class="field">Réserve (bar)<input class="input" type="number" inputmode="numeric" data-g="reserve" min="0" max="150" step="10"></label>
         </div><p class="muted small">Pas sûr de ta conso ? 20 L/min est la valeur utilisée en formation.</p></fieldset>
@@ -177,6 +177,8 @@
       if (act.dataset.act === 'save') { save(readModal()); close(); }
       else close();
     });
+    // Le dessin suit les valeurs en direct
+    modal.addEventListener('input', e => { if (e.target.matches('[data-g]')) drawGear(); });
     modal.addEventListener('change', e => {
       // Nitrox Confirmé implique Nitrox : rien à cocher en plus, mais on garde la cohérence N1 + PA40 etc.
       if (e.target.name === 'pf-level') syncQuals();
@@ -197,12 +199,21 @@
     });
   }
 
+  function drawGear() {
+    const box = modal && modal.querySelector('#pf-gear');
+    if (!box) return;
+    const g = {};
+    modal.querySelectorAll('[data-g]').forEach(i => { g[i.dataset.g] = +i.value; });
+    box.innerHTML = gearSvg(g, { o2: 21 });
+  }
+
   function fillModal(p) {
     modal.querySelectorAll('input[name="pf-level"]').forEach(r => { r.checked = r.value === p.level; });
     modal.querySelectorAll('[data-pf="quals"] input').forEach(c => { c.checked = p.quals.includes(c.value); });
     modal.querySelectorAll('input[name="pf-nx"]').forEach(r => { r.checked = r.value === p.nitrox; });
     modal.querySelectorAll('[data-g]').forEach(i => { i.value = p.gear[i.dataset.g]; });
     syncQuals();
+    drawGear();
   }
 
   function readModal() {
@@ -246,7 +257,79 @@
     if (document.body && document.body.hasAttribute('data-ask-profile') && !get().saved) open();
   }
 
-  window.MN90Profile = { LEVELS, QUALS, NITROX, get, save, onChange, rights, requirements, label, open };
+  /* ---------- Dessin du matériel : plongeur et bouteille ----------
+     opts = { o2: 21..100 }. La bouteille grossit avec la contenance, l'air monte avec
+     la pression de départ (bulles), la réserve est en rouge pâle au fond, les traits de
+     souffle au détendeur suivent la consommation. Composition comme dans le cours :
+     O2 en vert en haut, azote en jaune en dessous, avec leurs pourcentages. */
+  let gearUid = 0;
+  function gearSvg(g, opts) {
+    const o2 = Math.round((opts && opts.o2) || 21);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, +v || 0));
+    const V = clamp(g.tank, 6, 24), P = clamp(g.press, 0, 300), R = clamp(g.reserve, 0, P), sac = clamp(g.sac, 5, 60);
+    const id = 'gs' + (++gearUid);
+    const O2C = '#43A047', N2C = '#F2E100', air = 'var(--text2)';
+    const h = Math.round(44 + V * 3.3), w = Math.round(14 + V * 0.95);   // 15 L -> 94 x 28
+    const right = 106, bx = right - w, top = 52, bottom = top + h, cx = bx + w / 2;
+    const inner = h - 8;
+    const fillH = P / 300 * inner, resH = R / 300 * inner;
+    const nBreath = Math.max(1, Math.min(6, Math.round(sac / 7)));
+    let s = `<svg viewBox="0 0 250 ${Math.max(190, bottom + 22)}" role="img" aria-label="Bouteille de ${V} litres à ${P} bars, réserve ${R} bars, consommation ${sac} litres par minute">`;
+    s += `<defs><clipPath id="${id}"><rect x="${bx + 3}" y="${top + 4}" width="${w - 6}" height="${inner}" rx="${(w - 6) / 2}"/></clipPath></defs>`;
+    // Plongeur (de profil, face à droite)
+    s += `<path d="M110 118 L100 172 L90 180 L110 180 L118 128 M132 118 L142 172 L134 182 L156 182 L148 172 L140 120" style="fill:none;stroke:var(--text2)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s += `<rect x="106" y="58" width="36" height="66" rx="12" style="fill:var(--surface2);stroke:var(--text2)" stroke-width="2.5"/>`;
+    s += `<path d="M138 68 Q156 80 158 100" style="fill:none;stroke:var(--text2)" stroke-width="6" stroke-linecap="round"/>`;
+    s += `<circle cx="128" cy="40" r="15" style="fill:var(--surface2);stroke:var(--text2)" stroke-width="2.5"/>`;
+    s += `<rect x="131" y="31" width="14" height="10" rx="3" style="fill:var(--water1);stroke:var(--text2)" stroke-width="2"/>`;
+    // Bouteille sur le dos : corps, air (pression), réserve, robinet
+    s += `<rect x="${bx}" y="${top}" width="${w}" height="${h}" rx="${w / 2}" style="fill:var(--surface)"/>`;
+    s += `<g clip-path="url(#${id})">`;
+    const o2H = fillH * o2 / 100, n2H = fillH - o2H, gTop = bottom - 4 - fillH;
+    s += `<rect x="${bx}" y="${gTop}" width="${w}" height="${o2H}" fill="${O2C}"/>`;
+    s += `<rect x="${bx}" y="${gTop + o2H}" width="${w}" height="${n2H}" fill="${N2C}"/>`;
+    s += `<rect x="${bx}" y="${bottom - 4 - resH}" width="${w}" height="${resH}" style="fill:var(--danger)" fill-opacity=".35"/>`;
+    if (resH > 1) s += `<line x1="${bx}" x2="${right}" y1="${bottom - 4 - resH}" y2="${bottom - 4 - resH}" style="stroke:var(--danger)" stroke-width="1.5" stroke-dasharray="3 2"/>`;
+    if (fillH > 14) {
+      for (let i = 0; i < 4; i++) {
+        const x = bx + 6 + (i * (w - 12)) / 3, y0 = bottom - 8, y1 = bottom - 4 - fillH + 4, d = 2 + i * 0.6;
+        s += `<circle cx="${x.toFixed(1)}" cy="${y0}" r="${1.6 + (i % 2)}" fill="#fff" fill-opacity=".85"><animate attributeName="cy" values="${y0};${y1}" dur="${d}s" begin="${i * 0.5}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="${d}s" begin="${i * 0.5}s" repeatCount="indefinite"/></circle>`;
+      }
+    }
+    s += `</g>`;
+    s += `<rect x="${bx}" y="${top}" width="${w}" height="${h}" rx="${w / 2}" fill="none" stroke="#1E6FD9" stroke-width="3"/>`;   // trait bleu autour du gaz
+    // Pourcentages dans la bouteille (O2 en blanc sur vert, N2 en foncé sur jaune)
+    const fs = Math.max(8, Math.min(11, w * 0.36));
+    const f1 = Math.min(fs, o2H - 1), f2 = Math.min(fs, n2H - 1);   // le texte s'adapte à la place
+    if (f1 >= 6.5) s += `<text x="${cx}" y="${gTop + o2H / 2 + f1 / 2.8}" text-anchor="middle" font-size="${f1.toFixed(1)}" font-weight="800" fill="#fff">${o2}%</text>`;
+    if (f2 >= 6.5) s += `<text x="${cx}" y="${gTop + o2H + n2H / 2 + f2 / 2.8}" text-anchor="middle" font-size="${f2.toFixed(1)}" font-weight="800" fill="#3a3500">${100 - o2}%</text>`;
+    s += `<rect x="${cx - 5}" y="${top - 9}" width="10" height="10" rx="2" style="fill:var(--text2)"/>`;
+    // Flexible jusqu'au détendeur
+    s += `<path d="M${cx} ${top - 7} C ${cx} 18, 150 14, 146 40" style="fill:none;stroke:var(--text2)" stroke-width="3"/>`;
+    s += `<circle cx="146" cy="44" r="5" style="fill:var(--text2)"/>`;
+    // Souffle : plus il y a de traits, plus le plongeur consomme
+    for (let i = 0; i < nBreath; i++) {
+      const a = -0.9 + i * (1.5 / Math.max(1, nBreath - 1 || 1));
+      const x1 = 154 + Math.cos(a) * 8, y1 = 44 + Math.sin(a) * 8, x2 = 154 + Math.cos(a) * (18 + i % 2 * 5), y2 = 44 + Math.sin(a) * (18 + i % 2 * 5);
+      s += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" style="stroke:${air}" stroke-width="2.5" stroke-linecap="round"/>`;
+    }
+    // Étiquettes avec traits de rappel
+    const lab = (x, y, x2, y2, l1, l2, anchor, color) =>
+      `<line x1="${x}" y1="${y}" x2="${x2}" y2="${y2}" style="stroke:var(--text2)" stroke-width="1"/>` +
+      `<text x="${x2 + (anchor === 'end' ? -3 : 3)}" y="${y2 - 2}" text-anchor="${anchor}" font-size="10" style="fill:var(--text2)">${l1}</text>` +
+      `<text x="${x2 + (anchor === 'end' ? -3 : 3)}" y="${y2 + 10}" text-anchor="${anchor}" font-size="11.5" font-weight="800" style="fill:${color || 'var(--text)'}">${l2}</text>`;
+    s += lab(bx, top + 8, bx - 12, top + 8, 'Contenance', `${V} L`, 'end');
+    const dY = Math.max(top + 34, Math.min(bottom - 4 - fillH + 3, bottom - 36));
+    s += lab(bx + 2, Math.max(top + 6, bottom - 4 - fillH + 3), bx - 12, dY, 'Départ', `${P} b`, 'end', air);
+    s += lab(bx + 2, bottom - 6, bx - 12, bottom - 4, 'Réserve', `${R} b`, 'end', 'var(--danger)');
+    s += lab(176, 34, 186, 22, 'Conso', `${sac} L/min`, 'start', 'var(--text)');
+    s += `<rect x="178" y="${bottom - 26}" width="10" height="10" fill="${O2C}"/><text x="192" y="${bottom - 17}" font-size="10" style="fill:var(--text2)">O₂ ${o2} %</text>`;
+    s += `<rect x="178" y="${bottom - 12}" width="10" height="10" fill="${N2C}"/><text x="192" y="${bottom - 3}" font-size="10" style="fill:var(--text2)">N₂ ${100 - o2} %</text>`;
+    s += `</svg>`;
+    return s;
+  }
+
+  window.MN90Profile = { LEVELS, QUALS, NITROX, get, save, onChange, rights, requirements, label, open, gearSvg };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

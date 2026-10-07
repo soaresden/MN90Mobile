@@ -7,7 +7,7 @@
   'use strict';
 
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
-    'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
+    'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'gearArt', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
     'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc'];
 
@@ -108,7 +108,8 @@
       setSeg(el.gasSeg, S.gas);
       setSeg(el.ppSeg, String(S.pmax));
       const g = p.gear;
-      el.gearTxt.textContent = `Bloc ${g.tank} L · ${g.press} b · ${g.sac} L/min · réserve ${g.reserve} b`;
+      el.gearTxt.textContent = `Bloc ${g.tank} L · départ ${g.press} b · ${g.sac} L/min · réserve ${g.reserve} b`;
+      el.gearArt.innerHTML = P.gearSvg(g, { o2: isNx() ? +el.o2.value : 21 });
 
       const r = compute();
       S.last = r;

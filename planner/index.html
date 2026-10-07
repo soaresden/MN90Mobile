@@ -19,6 +19,7 @@
   .side .tabs { margin-bottom: 12px; }
   .side .field { margin-bottom: 10px; }
   .gear-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .82rem; color: var(--text2); background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; }
+  .gear-box .gear-art svg { max-width: 230px; margin-bottom: 4px; }
   .chk { display: flex; gap: 8px; align-items: center; font-size: .86rem; color: var(--text2); cursor: pointer; margin-bottom: 10px; }
 
   /* Réponse directe */
@@ -207,7 +208,8 @@
       <span class="hint">1,4 recommandé (DAN) · 1,6 = limite absolue</span>
     </div>
     <label class="chk" id="cmpField" hidden><input type="checkbox" id="compare" checked> Comparer avec la même plongée à l’air</label>
-    <div class="gear-line"><span id="gearTxt"></span><button type="button" class="btn btn-outline btn-sm" id="gearEdit">Modifier</button></div>
+    <div class="gear-box"><div class="gear-art" id="gearArt"></div>
+      <div class="gear-line"><span id="gearTxt"></span><button type="button" class="btn btn-outline btn-sm" id="gearEdit">Modifier</button></div></div>
   </aside>
 
   <!-- ===== Centre : réponse, courbe, indicateurs ===== -->
