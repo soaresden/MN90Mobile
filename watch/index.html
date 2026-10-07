@@ -110,10 +110,10 @@
       res() {
         const r = dive();
         if (!r.prof) return `<div class="res bad"><div class="lbl">${r.tab.err}</div></div>`;
-        const D = L.decollage(r, gear()), rec = Math.ceil(Math.max(D.gp, D.exact) / 10) * 10;
+        const D = L.decollage(r, gear()), tito = Math.ceil(D.tito / 10) * 10, rec = Math.max(tito, tito < D.exact ? Math.ceil(D.exact) : 0);   // règle de Tito, relevée au minimum exact
         const pB = V.press - L.gasUse(L.squareBottom(V.depth, V.time), V.sac) / V.tank;
         const bad = pB < D.exact;
-        return `<div class="res ${bad ? 'bad' : ''}"><div class="lbl">Décolle à</div><div class="big">${rec} b</div>
+        return `<div class="res ${bad ? 'bad' : ''}"><div class="lbl">Décolle à (règle de Tito)</div><div class="big">${rec} b</div>
           <div class="line">ou au bout de <b>${V.time}′</b> au fond</div></div>
           <p class="msg${bad ? ' bad' : ''}">${bad ? `⛔ Tu n’auras que ${Math.round(pB)} b au départ du fond : raccourcis` : `DTR ${D.dtr}′ · le premier des deux fait décoller`}</p>`;
       } },

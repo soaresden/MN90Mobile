@@ -25,6 +25,10 @@
   .side .answer > .alert, .side .answer > [data-calcopen] { grid-column: 1 / -1; }
   @media (min-width: 1000px) and (min-height: 600px) {
     .side .ans .det, .side .hint { display: none; }
+    .side.drawing .hint { display: block; font-size: .8rem; }
+    .side.drawing .gear-box { display: block; }
+    .side.drawing .gear-box .gear-art svg { max-width: 250px; margin: 0 auto 6px; }
+    .side.drawing .gear-box .gear-line { flex-direction: row; text-align: left; }
     .side .card { padding: 10px 12px; }
     .side .field { margin-bottom: 6px; }
     .side .tabs { margin-bottom: 8px; }
@@ -244,7 +248,7 @@
         <span class="hint">De la mise à l’eau au départ du fond</span></label>
     </div>
     <div id="drawInputs" hidden>
-      <p class="hint" style="margin-bottom:8px">Touche la courbe pour poser un point, glisse-le pour le déplacer, double-touche (ou appui long) pour le supprimer. Le dernier point est ton <b>départ du fond</b>.</p>
+      <p class="hint" style="margin-bottom:8px">✏️ Touche la courbe pour <b>poser un point</b>, glisse un point pour le <b>déplacer</b>, touche un point sans glisser pour l’<b>effacer</b>. Le dernier point est ton <b>départ du fond</b> : remontée et paliers s’ajoutent tout seuls.</p>
       <label class="field"><span class="field-row">Échelle profondeur <b><span id="vScaleZ"></span> m</b></span>
         <input type="range" id="scaleZ" min="10" max="65" step="5" value="40"></label>
       <label class="field"><span class="field-row">Échelle durée <b><span id="vScaleT"></span> min</b></span>

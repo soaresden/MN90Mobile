@@ -221,31 +221,28 @@ final class Mn90 {
         return Math.ceil(sac * 2.25 / tank * 2) / 2;
     }
 
-    /** Pression de décollage conseillée : max(GP, exacte) arrondie à la dizaine supérieure. */
+    /** Pression de décollage : règle de Tito [0], minimum exact (remontée + réserve) [1], méthode GP [2]. */
     static double[] decollage(Eval e, Gear g) {
         int i = 0;
         while (i < e.prof.pts.size() && e.prof.pts.get(i)[0] < e.prof.bottomEnd - 1e-9) i++;
         double ascL = gasUse(e.prof.pts.subList(i, e.prof.pts.size()), g.sac);
         double gp = e.tab.row.dtr * beta(g.tank, g.sac) + g.reserve;
         double exact = g.reserve + ascL / g.tank;
-        double rec = Math.ceil(Math.max(gp, exact) / 10) * 10;
-        return new double[]{rec, exact, gp};
+        double tito = Math.ceil((e.depth + 2 * e.tab.row.dtr) / 10) * 10;   // règle de Tito retenue
+        return new double[]{tito, exact, gp};
     }
 
-    /** Remontée rapide : demi-profondeur, 5 min, nouvelle durée, au moins 2 min à 3 m. */
-    static final class Rapid { double mid; int duration; Lookup tab; int[] stop; }
+    /** Remontée rapide (définition du cours) : 5 min à mi-profondeur minimum, puis les paliers
+     *  prévus + 1 min à 6 m + 5 min à 3 m. */
+    static final class Rapid { double mid; int[] stop; }
 
     Rapid rapid(Eval e) {
         if (e.prof == null) return null;
         Rapid r = new Rapid();
-        double ref = e.nitrox ? e.depth : e.tab.d;
-        r.mid = ref / 2;
-        double t = e.prof.bottomEnd + e.depth / 30 + 3 + r.mid / DESC + 5;
-        r.duration = (int) Math.ceil(t - 1e-9);
-        r.tab = lookup(Math.max(e.nitrox ? pea(e.depth, e.fo2) : e.depth, 0.1), r.duration);
-        if (r.tab.err != null) return r;
-        r.stop = r.tab.row.stop.clone();
-        r.stop[3] = Math.max(r.stop[3], 2);
+        r.mid = Math.ceil(e.depth / 2);
+        r.stop = e.tab.row.stop.clone();
+        r.stop[6] += 1;
+        r.stop[3] += 5;
         return r;
     }
 }

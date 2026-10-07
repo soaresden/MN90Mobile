@@ -341,13 +341,16 @@ public class MainActivity extends Activity {
         double[] d = Mn90.decollage(e, g);
         double pB = g.press - Mn90.gasUse(Mn90.square(val("depth"), val("time")), g.sac) / g.tank;
         boolean bad = pB < d[1];
-        LinearLayout c = card(bad ? DANGER : ACCENT);
-        c.addView(text("Décolle à", 11, MUTED, false));
-        c.addView(text((int) d[0] + " b", 30, bad ? DANGER : ACCENT, true));
+        boolean short_ = d[0] < d[1];                      // Tito sous le minimum exact
+        int dec = (int) Math.max(d[0], short_ ? Math.ceil(d[1]) : 0);
+        LinearLayout c = card(bad ? DANGER : short_ ? WARN : ACCENT);
+        c.addView(text("Décolle à (règle de Tito)", 11, MUTED, false));
+        c.addView(text(dec + " b", 30, bad ? DANGER : ACCENT, true));
         c.addView(text("ou au bout de " + (int) val("time") + "′ au fond", 13, TEXT, false));
         result.addView(c);
+        if (short_) result.addView(note("⚠ Tito donne " + (int) d[0] + " b, mais il faut au moins " + (int) Math.ceil(d[1]) + " b avec ce bloc", WARN));
         result.addView(note(bad ? "⛔ Tu n'auras que " + Math.round(pB) + " b au départ du fond : raccourcis"
-                : "DTR " + e.tab.row.dtr + "′ · le premier des deux fait décoller", bad ? DANGER : MUTED));
+                : (int) val("depth") + " + 2 × DTR " + e.tab.row.dtr + "′ · le premier des deux fait décoller", bad ? DANGER : MUTED));
     }
 
     private void resMod() {
@@ -373,7 +376,7 @@ public class MainActivity extends Activity {
     private void resUrgence() {
         Mn90.Eval e = mn.square(val("depth"), val("time"), fo2(), gear());
         Mn90.Rapid r = e.prof != null ? mn.rapid(e) : null;
-        if (r == null || r.tab.err != null) {
+        if (r == null) {
             result.addView(note("Oxygène, alerte 196 / 112, évacuation", DANGER));
             return;
         }
@@ -381,7 +384,7 @@ public class MainActivity extends Activity {
         c.addView(text("1. Moins de 3 min en surface, plongeur OK", 13, TEXT, false));
         String mid = r.mid == Math.floor(r.mid) ? String.valueOf((int) r.mid) : f1(r.mid);
         c.addView(text("2. Redescendre à " + mid + " m, 5 min", 14, TEXT, true));
-        c.addView(text("3. Paliers :", 13, TEXT, false));
+        c.addView(text("3. Paliers prévus + 1′ à 6 m + 5′ à 3 m :", 13, TEXT, false));
         c.addView(stops(r.stop, 15));
         result.addView(c);
         result.addView(note("Le moindre symptôme : O₂, 196 / 112", DANGER));
