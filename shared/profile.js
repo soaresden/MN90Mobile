@@ -123,11 +123,12 @@
       const needConf = dive.fo2 > 0.40 + 1e-9;
       const code = needConf ? 'Nitrox Confirmé' : 'Nitrox';
       const pct = Math.round(dive.fo2 * 100);
-      if (!r) items.push({ code, status: 'unknown', text: `Nx${pct} : qualification ${code} requise.` });
-      else if (needConf ? r.pnc : r.pn) items.push({ code, status: 'used', text: `Tu utilises ta qualification ${p.nitrox === 'PNC' ? 'Nitrox Confirmé' : 'Nitrox'} (Nx${pct}).` });
+      const mix = pct >= 100 ? 'O₂ pur' : `Nx${pct}`;
+      if (!r) items.push({ code, status: 'unknown', text: `${mix} : qualification ${code} requise.` });
+      else if (needConf ? r.pnc : r.pn) items.push({ code, status: 'used', text: `Tu utilises ta qualification ${p.nitrox === 'PNC' ? 'Nitrox Confirmé' : 'Nitrox'} (${mix}).` });
       else items.push({ code, status: 'missing', text: needConf
-        ? `Nx${pct} : au-delà de 40 % d’O₂, réservé au Nitrox Confirmé.`
-        : `Nx${pct} : il te faut la qualification Nitrox.` });
+        ? `${mix} : au-delà de 40 % d’O₂, réservé au Nitrox Confirmé.`
+        : `${mix} : il te faut la qualification Nitrox.` });
     }
     return items;
   }

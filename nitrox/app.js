@@ -20,7 +20,6 @@
 
     function render() {
       const conf = P.get().nitrox === 'PNC';
-      el.o2.max = conf ? 100 : 40;
       const pct = +el.o2.value, fo2 = pct / 100, depth = +el.depth.value;
       el.vO2.textContent = pct;
       el.vDepth.textContent = depth;
@@ -40,7 +39,7 @@
         ['Profondeur', `(${fmt(pa, 3)} − 1) × 10 = ${fmt((pa - 1) * 10, 2)} m → <b>${fmt(mod, 1)} m</b> (arrondi vers le bas : jamais au-delà)`],
         ['Sur le bloc', `on écrit la MOD et le % d’O₂ analysé, avec la date et ses initiales.`],
       ].map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('');
-      el.modPlot.innerHTML = modChart(fo2, conf);
+      el.modPlot.innerHTML = modChart(fo2, conf || pct > 40);
 
       // ----- Best mix et mélanges à cette profondeur -----
       el.bestTrio.innerHTML = PPS.map(p => {

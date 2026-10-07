@@ -100,7 +100,6 @@
       el.vScaleZ.textContent = el.scaleZ.value;
       el.vScaleT.textContent = el.scaleT.value;
       const p = P.get();
-      el.o2.max = p.nitrox === 'PNC' ? 100 : 40;
       el.vO2.textContent = el.o2.value;
       el.o2Field.hidden = !isNx();
       el.ppSeg.parentElement.hidden = !isNx();
