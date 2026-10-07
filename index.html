@@ -1,106 +1,87 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="dark">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MN90 Mobile — Outils plongée</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MN90 Mobile · Outils de plongée</title>
+<meta name="description" content="Outils de plongée FFESSM : planificateur MN90, Nitrox, DTR et pression de décollage, procédures, simulateur 3D.">
+<script src="shared/theme.js"></script>
 <link rel="stylesheet" href="shared/style.css">
-<script src="shared/theme.js" defer></script>
+<script src="shared/profile.js" defer></script>
 <style>
-  .hero {
-    padding: 32px 0 16px;
-    text-align: center;
-  }
-  .hero-logo { font-size: 3rem; margin-bottom: 8px; }
-  .hero h1 { color: var(--accent); margin-bottom: 6px; }
-  .hero p { color: var(--text2); font-size: 0.9rem; max-width: 360px; margin: 0 auto; }
-
-  .section-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text3);
-    padding: 20px 0 8px;
-  }
-
-  .tool-card-wip { opacity: 0.55; pointer-events: none; }
-  .badge-new  { background: rgba(46,213,115,0.15); color: var(--ok);   border-color: var(--ok); }
-  .badge-wip  { background: rgba(255,165,0,0.12);  color: var(--warn); border-color: var(--warn); }
-  .badge-conf { background: rgba(0,232,255,0.12);  color: var(--accent2); border-color: var(--accent2); }
-
-  footer {
-    text-align: center;
-    padding: 32px 0 20px;
-    font-size: 0.75rem;
-    color: var(--text3);
-  }
+  .hero { padding: 26px 0 8px; text-align: center; }
+  .hero-logo { font-size: 2.6rem; }
+  .hero h1 { color: var(--accent); margin: 4px 0 6px; }
+  .hero p { color: var(--text2); max-width: 420px; margin: 0 auto; }
+  .section-label { font-size: .76rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text2); padding: 18px 0 2px; }
+  .me { margin: 16px 0 0; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; font-size: .9rem; color: var(--text2); }
+  footer { text-align: center; padding: 26px 0 30px; font-size: .78rem; color: var(--text2); }
 </style>
 </head>
 <body>
 
 <nav class="navbar">
-  <a class="navbar-brand" href="index.html">
-    <span class="logo">🤿</span>
-    <span>MN90 Mobile</span>
-  </a>
+  <a class="navbar-brand" href="index.html">🤿 MN90 Mobile</a>
   <div class="navbar-actions">
+    <button type="button" class="profile-chip">🤿 Mon profil</button>
     <div class="theme-picker">
-      <button class="theme-btn">🎨 Thème ▾</button>
+      <button type="button" class="theme-btn" aria-label="Changer de thème">🎨 Thème</button>
       <div class="theme-dropdown"></div>
     </div>
   </div>
 </nav>
 
-<div class="container">
+<main class="container">
   <div class="hero">
     <div class="hero-logo">🌊</div>
     <h1>Outils plongée MN90</h1>
-    <p>Tables FFESSM · Nitrox · Décompression · Simulateur 3D</p>
+    <p>Tables FFESSM · Nitrox · DTR et décollage · Procédures · Simulateur 3D</p>
   </div>
 
-  <div class="section-label">Calculs & tables</div>
+  <div class="section-label">Préparer ma plongée</div>
   <div class="tool-grid">
-
+    <a class="tool-card featured" href="planner/index.html">
+      <div class="tool-card-icon">📈</div>
+      <div class="tool-card-title">Planificateur de plongée</div>
+      <div class="tool-card-desc">Combien de temps je peux rester ? Paliers, lecture de table justifiée, jauges cerveau et poumons, procédures d’urgence.</div>
+      <span class="tool-card-badge">Tables MN90 · Air et Nitrox</span>
+    </a>
+    <a class="tool-card" href="planner/index.html#contrat">
+      <div class="tool-card-icon">⏱️</div>
+      <div class="tool-card-title">DTR et pression de décollage</div>
+      <div class="tool-card-desc">Le contrat de palanquée : temps au fond OU pression. Méthode GP, règle de Tito, calcul exact, mi-pression.</div>
+      <span class="tool-card-badge">Guide de palanquée</span>
+    </a>
+    <a class="tool-card" href="planner/index.html#dessin">
+      <div class="tool-card-icon">✏️</div>
+      <div class="tool-card-title">Je dessine ma plongée</div>
+      <div class="tool-card-desc">Dessine un profil multi-niveaux au doigt : paliers, conso et alertes calculés en temps réel.</div>
+      <span class="tool-card-badge">Dessin libre</span>
+    </a>
     <a class="tool-card" href="nitrox/index.html">
       <div class="tool-card-icon">⚗️</div>
-      <div class="tool-card-title">Nitrox Confirmé</div>
-      <div class="tool-card-desc">PEA · PpO₂ · Best Mix · %SNC · OTU · Paliers O₂ pur</div>
-      <span class="tool-card-badge badge-conf">FFESSM Confirmé</span>
+      <div class="tool-card-title">Nitrox</div>
+      <div class="tool-card-desc">MOD, best mix, PEA, mélanges utilisables et toxicité de l’oxygène expliquée simplement.</div>
+      <span class="tool-card-badge">Nitrox · Nitrox Confirmé</span>
     </a>
-
-    <a class="tool-card" href="dtr/index.html">
-      <div class="tool-card-icon">⏱️</div>
-      <div class="tool-card-title">DTR Planner</div>
-      <div class="tool-card-desc">Durée Totale de Remontée · Paliers MN90 · Vitesses</div>
-      <span class="tool-card-badge">Tables MN90</span>
-    </a>
-
-    <a class="tool-card" href="decomp/index.html">
-      <div class="tool-card-icon">📊</div>
-      <div class="tool-card-title">Décompression</div>
-      <div class="tool-card-desc">Tables MN90 complètes · Plongées successives · Majoration</div>
-      <span class="tool-card-badge">Tables MN90</span>
-    </a>
-
   </div>
 
   <div class="section-label">Simulateurs</div>
   <div class="tool-grid">
-
     <a class="tool-card" href="3dassist/index.html">
       <div class="tool-card-icon">🦺</div>
-      <div class="tool-card-title">Remontée Assistée 3D</div>
-      <div class="tool-card-desc">Simulateur de sauvetage sous-marin en temps réel</div>
-      <span class="tool-card-badge badge-new">Simulateur 3D</span>
+      <div class="tool-card-title">Remontée assistée 3D</div>
+      <div class="tool-card-desc">Simulateur de sauvetage sous-marin en temps réel.</div>
+      <span class="tool-card-badge">Simulateur 3D</span>
     </a>
-
   </div>
 
-</div>
+  <p class="me">Ton profil (niveau, Nitrox, bloc, conso) est gardé dans ce téléphone et sert dans tous les outils.</p>
+</main>
 
 <footer>
-  MN90 Mobile · Tables FFESSM MN90 · Soaresden · 2025-2026
+  MN90 Mobile · Tables FFESSM MN90 · Soaresden · 2025-2026<br>
+  Outil d’entraînement : il ne remplace ni ta formation, ni ton ordinateur, ni les consignes de ton directeur de plongée.
 </footer>
 
 </body>

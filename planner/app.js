@@ -438,12 +438,32 @@
           <div><em>Sécu paliers</em>${secuOk ? `<b style="color:var(--ok)">OK</b> : au départ du fond tu auras environ ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin} (calcul exact)${secuMarge ? ` et ${r.pdecoRec} avec la marge GP.` : `. <b style="color:var(--warn)">Sous le repère GP de ${r.pdecoRec} b : peu de marge.</b>`}` : `<b style="color:var(--danger)">NON</b> : au départ du fond tu n’auras que ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin}. Raccourcis la plongée.`}</div>
         </div>
         <div class="deco-rows">${rows.map(x => `<div class="deco-row ${x.best ? 'best' : ''}"><span><b>${x.name}</b>${x.best ? '<span class="badge">la plus prudente</span>' : ''}${x.k === 'tito' && titoLow ? '<span class="badge warnb">insuffisante ici</span>' : ''}</span><span class="dv">${fmt(x.v, 0)} b${x.k === 'tito' && titoRound !== x.v ? ` <small style="font-size:.6em;color:var(--text2)">→ ${titoRound}</small>` : ''}</span><span class="dd">${x.d}</span></div>`).join('')}</div>
-        <div class="alert ${r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok'}" style="margin-top:12px">🔑 Contrat : <b>${timeTxt} au fond OU ${r.pdecoRec} b au manomètre</b>, le premier des deux fait décoller.${r.pBottom < r.pdecoRec ? ` Avec environ ${Math.round(r.pBottom)} b au départ du fond, c’est la pression qui décidera avant le temps${r.pBottom < r.pdecoMin ? ' : raccourcis la plongée' : ''}.` : ''}</div>`;
+        <div class="alert ${r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok'}" style="margin-top:12px">🔑 Contrat : <b>${timeTxt} au fond OU ${r.pdecoRec} b au manomètre</b>, le premier des deux fait décoller.${r.pBottom < r.pdecoRec ? ` Avec environ ${Math.round(r.pBottom)} b au départ du fond, c’est la pression qui décidera avant le temps${r.pBottom < r.pdecoMin ? ' : raccourcis la plongée' : ''}.` : ''}</div>` + phasesTable(r);
+    }
+
+    // Consommation phase par phase (repris de l'ancien outil DTR)
+    function phasesTable(r) {
+      const pts = r.prof.pts, g = r.gear;
+      const isStop = (t0, z) => r.prof.segs.some(s => s.depth === z && Math.abs(s.from - t0) < 1e-6);
+      let p = g.press, rows = '';
+      for (let i = 1; i < pts.length; i++) {
+        const [t0, z0] = pts[i - 1], [t1, z1] = pts[i];
+        const dt = t1 - t0;
+        if (dt <= 1e-9) continue;
+        const L_ = L.gasUse([pts[i - 1], pts[i]], g.sac), dp = L_ / g.tank;
+        p -= dp;
+        const name = z1 > z0 ? `Descente → ${fmt(z1, 0)} m` : z1 < z0 ? `Remontée → ${fmt(z1, 0)} m`
+          : isStop(t0, z0) ? `<span class="pd${z0}" style="font-weight:800">Palier ${z0} m</span>` : `Fond à ${fmt(z0, 0)} m`;
+        const cls = p < g.reserve ? 'color:var(--danger);font-weight:800' : '';
+        rows += `<tr><td style="text-align:left">${name}</td><td>${mmss(dt)}</td><td>−${fmt(dp, 1)}</td><td style="${cls}">${Math.round(p)}</td></tr>`;
+      }
+      return `<details style="margin-top:12px"><summary class="muted" style="cursor:pointer;font-weight:700">Consommation phase par phase</summary>
+        <div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th style="text-align:left">Phase</th><th>Durée</th><th>bar</th><th>Reste</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
     }
 
     /* ---------- Procédures d'urgence MN90 ---------- */
     function miniChart(pts, segs, mark) {
-      const W = 600, H = 200, m = { l: 34, r: 10, t: 14, b: 22 };
+      const W = 460, H = 190, m = { l: 30, r: 8, t: 14, b: 20 };
       const maxT = pts[pts.length - 1][0] * 1.03, maxZ = Math.max(10, Math.ceil(Math.max(...pts.map(p => p[1])) / 5) * 5);
       const X = t => m.l + t / maxT * (W - m.l - m.r), Y = z => m.t + z / maxZ * (H - m.t - m.b);
       let g = `<rect width="${W}" height="${H}" style="fill:var(--water1)"/>`;
@@ -638,7 +658,17 @@
     let rz = 0;
     window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(render, 120); });
 
+    // Liens directs : #dessin ouvre le dessin libre, #contrat va au contrat de palanquée
+    const hash = (location.hash || '').toLowerCase();
+    if (hash === '#dessin') {
+      S.view = 'draw';
+      document.querySelectorAll('.tab[data-mode]').forEach(x => x.classList.toggle('on', x.dataset.mode === 'draw'));
+    }
     render();
+    if (hash === '#contrat') {
+      const c = el.deco.closest('.card');
+      if (c) setTimeout(() => c.scrollIntoView({ block: 'start' }), 60);
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
