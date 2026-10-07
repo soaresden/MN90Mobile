@@ -1,4 +1,4 @@
-# Compile l'APK Wear OS « MN90 Montre » (sans Android Studio) et peut publier la release GitHub.
+﻿# Compile l'APK Wear OS « MN90 Montre » (sans Android Studio) et peut publier la release GitHub.
 #   powershell -ExecutionPolicy Bypass -File tools\build-wear.ps1                    -> version actuelle de wear\app\build.gradle
 #   powershell -ExecutionPolicy Bypass -File tools\build-wear.ps1 -Version 1.0.1     -> passe en 1.0.1 (versionCode + 1)
 #   powershell -ExecutionPolicy Bypass -File tools\build-wear.ps1 -Publish           -> puis crée la release wear-vX.Y.Z avec l'APK
@@ -22,6 +22,12 @@ if ($Version) {
 $Version = [regex]::Match($g, "versionName\s+'([^']+)'").Groups[1].Value
 Write-Host "MN90 Montre $Version"
 
+# Numéro de version affiché sur le site (accueil + page montre)
+$verJs = "/* Version de l'appli montre publiée — mise à jour par tools/build-wear.ps1 (ne pas modifier à la main) */`n" +
+  "window.MN90_WEAR = {`n  version: '$Version',`n  apk: 'https://github.com/soaresden/MN90Mobile/releases/latest/download/MN90-Montre.apk',`n" +
+  "  release: 'https://github.com/soaresden/MN90Mobile/releases/tag/wear-v$Version',`n};`n"
+[IO.File]::WriteAllText((Join-Path $root 'shared\wear-version.js'), $verJs, $utf8)
+
 $jdk = Get-ChildItem 'C:\Program Files\Microsoft' -Directory -Filter 'jdk-17*' -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($jdk) { $env:JAVA_HOME = $jdk.FullName; $env:Path = "$($jdk.FullName)\bin;$env:Path" }
 if (-not $env:ANDROID_HOME) { $env:ANDROID_HOME = 'C:\Android\sdk' }
@@ -41,4 +47,5 @@ if ($Publish) {
   gh release create $tag $apk --repo soaresden/MN90Mobile --title "MN90 Montre $Version (Wear OS)" --notes $notes
   if ($LASTEXITCODE -ne 0) { throw 'Publication de la release impossible' }
   Write-Host "Release publiée : https://github.com/soaresden/MN90Mobile/releases/tag/$tag"
+  Write-Host "Pense à commiter et pousser shared\wear-version.js pour afficher v$Version sur le site."
 }
