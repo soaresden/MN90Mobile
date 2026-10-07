@@ -25,6 +25,19 @@
   .side .answer > .alert, .side .answer > [data-calcopen] { grid-column: 1 / -1; }
   @media (min-width: 1000px) and (min-height: 600px) {
     .side .ans .det, .side .hint { display: none; }
+    .side .card { padding: 10px 12px; }
+    .side .field { margin-bottom: 6px; }
+    .side .tabs { margin-bottom: 8px; }
+    .side input[type="range"] { height: 22px; }
+    .side { overflow-x: hidden; }
+    .side #answerCard { flex: 1; }
+    .side .ans-row { flex-direction: column; align-items: flex-start; gap: 3px; }
+    .side .ans-row .btn { padding: 2px 8px; font-size: .7rem; }
+    .side .ans .v { white-space: nowrap; font-size: 1.3rem; }
+    .side .ans .l { font-size: .68rem; }
+    .side .ans .why { font-size: .7rem; line-height: 1.25; }
+    .side #answerCard h2 { margin-bottom: 6px; }
+    .gear-box .gear-line { font-size: .74rem; padding: 6px 8px; gap: 4px; }
     .gear-box { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; align-items: center; }
     .gear-box .gear-art svg { max-width: 112px; margin: 0; }
     .gear-box .gear-line { flex-direction: column; align-items: stretch; text-align: center; }
@@ -59,6 +72,14 @@
   .legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; background: var(--c); }
   .legend i.dash { background: none; border-top: 2px dashed var(--c); height: 0; }
   .draw-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* Calques : boutons d'affichage et bilan de fin de plongée */
+  .layer-bar { display: flex; flex-wrap: wrap; gap: 5px; }
+  .layer-btn { border: 1px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 999px; padding: 3px 9px; font-size: .78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .layer-btn svg { width: 22px; height: 8px; }
+  .layer-btn.on { border-color: var(--accent); color: var(--text); background: var(--surface); box-shadow: inset 0 -2px 0 var(--accent); }
+  .layer-sum { display: flex; flex-wrap: wrap; gap: 5px; font-size: .78rem; }
+  .layer-sum span { border-radius: 8px; padding: 2px 8px; border: 1px solid var(--border); background: var(--bg2); }
+  .layer-sum .ok { border-color: var(--ok); } .layer-sum .warn { border-color: var(--warn); background: var(--warn-bg); } .layer-sum .danger { border-color: var(--danger); background: var(--danger-bg); }
 
   /* Vignettes rangées par catégorie (nombre fixe : la hauteur ne bouge pas) */
   .kgroups { display: grid; grid-template-columns: 3fr 2fr; gap: 8px; }
@@ -136,6 +157,23 @@
   .badge.warnb { background: var(--warn-bg); border-color: var(--warn); }
   .mix-tbl td:first-child, .mix-tbl th:first-child { text-align: left; }
   .mix-tbl tr.cur td { font-weight: 800; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  /* Table complète en superposition */
+  .modal.full-table { max-width: min(1400px, 96vw); width: 96vw; max-height: 90vh; }
+  .ft-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; top: -20px; background: var(--surface); padding: 4px 0 6px; z-index: 2; }
+  .ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 8px; }
+  .ft-block { border: 1px solid var(--border); border-radius: 10px; padding: 6px; background: var(--bg2); scroll-margin-top: 56px; }
+  .ft-block.cur { border: 2px solid var(--accent); }
+  .ft-block h3 { margin: 0 0 4px !important; color: var(--accent); }
+  .ft-block .tbl { font-size: .78rem; }
+  .ft-block .tbl th, .ft-block .tbl td { padding: 2px 3px; }
+  .succ-in .field { margin-bottom: 6px; }
+  .kind { display: inline-block; font-weight: 800; border-radius: 999px; padding: 3px 10px; margin: 6px 0; border: 1px solid var(--border); background: var(--bg2); }
+  .kind.successive { border-color: var(--warn); background: var(--warn-bg); }
+  .kind.consecutive { border-color: var(--danger); background: var(--danger-bg); }
+  .kind.isolee { border-color: var(--ok); background: var(--ok-bg); }
+  .tI td.hit, .tII td.hit { background: var(--accent); color: var(--on-accent); font-weight: 800; }
+  .tI tr.row td:first-child, .tII tr.row td:first-child { font-weight: 800; color: var(--accent); }
+  .tI .tbl, .tII .tbl { font-size: .74rem; } .tI .tbl td, .tII .tbl td, .tI .tbl th, .tII .tbl th { padding: 2px 3px; }
   .pane h3 { margin: 12px 0 6px; }
   .pane h3:first-child { margin-top: 0; }
 
@@ -233,7 +271,7 @@
       <div class="gear-line"><span id="gearTxt"></span><button type="button" class="btn btn-outline btn-sm" id="gearEdit">Modifier</button></div></div>
    </section>
    <section class="card" id="answerCard">
-     <h2>⏱️ Combien de temps je peux rester ?</h2>
+     <h2>⏱️ Combien de temps ?</h2>
      <div class="answer" id="answer"></div>
    </section>
   </aside>
@@ -248,10 +286,12 @@
         <button type="button" class="btn btn-outline btn-sm" id="clearPts">Effacer</button>
         <button type="button" class="btn btn-outline btn-sm" id="examplePts">Exemple multi-niveaux</button>
       </div>
+      <div class="layer-bar" id="layerBar" role="group" aria-label="Calques de la courbe"></div>
       <div class="chart" id="chart">
         <svg id="svg" role="img" aria-label="Profil de la plongée"></svg>
         <div class="tip" id="tip" hidden></div>
       </div>
+      <div class="layer-sum" id="layerSum"></div>
       <div class="legend">
         <span style="--c:var(--c1)"><i></i>Ma plongée</span>
         <span style="--c:var(--c4)" id="lgGhost"><i class="dash"></i>Même plongée à l’air</span>
@@ -275,6 +315,7 @@
       <button type="button" class="ptab" data-pane="table">📖 Table</button>
       <button type="button" class="ptab" data-pane="contrat">🤝 Contrat</button>
       <button type="button" class="ptab" data-pane="corps">🧠 Corps</button>
+      <button type="button" class="ptab" data-pane="succ">🔁 2ᵉ plongée</button>
       <button type="button" class="ptab" data-pane="urgence">🚨 Urgence</button>
       <button type="button" class="ptab" data-pane="mix" id="mixTab">⚗️ Mélanges</button>
     </div>
@@ -300,6 +341,20 @@
       <div class="pane" data-pane="corps" hidden>
         <h3>🧠 🫁 Ce que l’oxygène fait à ton corps</h3>
         <div class="gauges" id="gauges"></div>
+      </div>
+      <div class="pane" data-pane="succ" hidden>
+        <h3>🔁 Et si je replonge ?</h3>
+        <div class="succ-in">
+          <label class="field"><span class="field-row">Intervalle de surface <b id="vInt"></b></span>
+            <input type="range" id="sInt" min="0" max="720" step="5" value="120"></label>
+          <label class="field"><span class="field-row">Profondeur 2ᵉ plongée <b><span id="vD2"></span> m</b></span>
+            <input type="range" id="sD2" min="6" max="60" step="1" value="20"></label>
+          <label class="field"><span class="field-row">Durée 2ᵉ plongée <b><span id="vT2"></span> min</b></span>
+            <input type="range" id="sT2" min="1" max="120" step="1" value="30"></label>
+          <label class="field"><span class="field-row">Mélange 2ᵉ plongée <b id="vO22"></b></span>
+            <input type="range" id="sO2" min="21" max="40" step="1" value="21"></label>
+        </div>
+        <div id="succ"></div>
       </div>
       <div class="pane" data-pane="urgence" hidden>
         <div id="emerg"></div>

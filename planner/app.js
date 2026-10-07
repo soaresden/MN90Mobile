@@ -9,7 +9,7 @@
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
     'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'gearArt', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
-    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc'];
+    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc', 'layerBar', 'layerSum', 'succ', 'sInt', 'sD2', 'sT2', 'sO2', 'vInt', 'vD2', 'vT2', 'vO22'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile, H = window.MN90Help;
@@ -75,6 +75,7 @@
         if (air.prof) res.air = air;
       }
       if (S.view === 'param') res.lim = L.limits(res.depth, res.fo2, res.nitrox, g);
+      if (res.prof) res.tl = L.timeline(res.prof.pts, res.fo2, g, 300);
       return res;
     }
 
@@ -83,7 +84,8 @@
       const out = [];
       for (let i = 1; i < pts.length; i++) {
         const dz = pts[i - 1][1] - pts[i][1], dt = pts[i][0] - pts[i - 1][0];
-        if (dz > 0 && dt > 0 && dz / dt > L.SPEED.asc + 1e-9) out.push({ i, rate: dz / dt, from: pts[i - 1], to: pts[i] });
+        if (dz > 0 && dt > 0 && dz / dt > L.SPEED.asc + 1e-9)
+          out.push({ i, rate: dz / dt, from: pts[i - 1], to: pts[i], rapid: L.isRapidAscent(pts[i - 1][1], pts[i][1], dt) });
       }
       return out;
     }
@@ -118,6 +120,7 @@
       renderAnswer(r);
       renderReqs(r);
       renderKpis(r);   // avant la courbe : sa hauteur dépend de la place laissée par les vignettes
+      renderLayerSum(r);
       drawChart(r);
       renderGauges(r);
       renderStops(r);
@@ -126,6 +129,7 @@
       renderDeco(r);
       renderEmerg(r);
       renderCalc(r);
+      renderSucc(r);
     }
 
     function setSeg(seg, v) {
@@ -169,7 +173,7 @@
       el.answer.className = 'answer' + (block ? ' blocked' : '');
       el.answer.innerHTML = (block ? `<div class="alert danger" style="grid-column:1/-1">⛔ Plongée non permise : ${block}</div>` : '')
         + card('Sans palier', lim.maxNoStop)
-        + card('Maximum, paliers compris', lim.max)
+        + card('Avec paliers', lim.max)
         + `<button type="button" class="btn btn-outline btn-sm" data-calcopen style="grid-column:1/-1;justify-self:start">🧮 Voir le calcul</button>`;
 
       // Comparatif des mélanges
@@ -190,6 +194,74 @@
       let html = r.reqs.map(x => `<div class="req ${x.status}"><span>${icon[x.status]}</span><span><b>${x.code}</b> · ${x.text}</span></div>`).join('');
       if (!P.get().level) html += `<button type="button" class="btn btn-outline btn-sm" data-open-profile style="align-self:flex-start">Renseigner mon profil</button>`;
       el.reqs.innerHTML = html;
+    }
+
+    /* ---------- Calques : paramètres qui évoluent au fil de la plongée ----------
+       Chaque calque a sa propre échelle (bas = 0, haut = max) ; sa couleur suit la zone
+       (vert / orange / rouge) et une étiquette donne la valeur à la sortie. */
+    const LAYERS = [
+      { key: 'press', icon: '🫧', name: 'Bouteille', dash: '', max: r => r.gear.press, fmt: v => `${Math.round(v)} b`,
+        zone: (v, r) => (v < r.gear.reserve ? 'danger' : v < r.gear.reserve + 20 ? 'warn' : 'ok') },
+      { key: 'sat', icon: '🧬', name: 'Saturation N₂', dash: '7 4', max: () => 120, fmt: v => `${Math.round(v)} %`,
+        zone: v => (v > 100 ? 'danger' : 'ok') },   // 100 % = seuil critique Sc (toutes les lignes MN90 restent dessous)
+      { key: 'snc', icon: '🧠', name: '%SNC', dash: '2 4', max: () => 100, fmt: v => `${Math.round(v)} %`,
+        zone: v => (v > L.LIMITS.sncMax ? 'danger' : v > L.LIMITS.sncWarn ? 'warn' : 'ok') },
+      { key: 'ppo2', icon: '💨', name: 'PpO₂', dash: '10 3 2 3', max: () => 1.8, fmt: v => `${fmt(v, 2)} b`,
+        zone: (v, r) => (v > r.pmax + 1e-9 ? 'danger' : r.nitrox && v > 1.4 ? 'warn' : 'ok') },
+      { key: 'ppn2', icon: '🥴', name: 'Narcose PpN₂', dash: '1 3', max: () => 6.5, fmt: v => `${fmt(v, 1)} b`,
+        zone: v => (v > 5.6 ? 'danger' : v > 3.2 ? 'warn' : 'ok') },
+    ];
+    const ZCOL = { ok: 'var(--ok)', warn: 'var(--warn)', danger: 'var(--danger)' };
+    const ZTXT = { ok: '✓', warn: '⚠', danger: '⛔' };
+    let layersOn;
+    try { layersOn = new Set(JSON.parse(localStorage.getItem('mn90-layers') || '["press","sat"]')); } catch (e) { layersOn = new Set(['press', 'sat']); }
+    const saveLayers = () => { try { localStorage.setItem('mn90-layers', JSON.stringify([...layersOn])); } catch (e) { /* rien */ } };
+
+    function renderLayerBar() {
+      el.layerBar.innerHTML = LAYERS.map(l => `<button type="button" class="layer-btn${layersOn.has(l.key) ? ' on' : ''}" data-layer="${l.key}" aria-pressed="${layersOn.has(l.key)}">
+        <svg viewBox="0 0 22 8" aria-hidden="true"><line x1="1" x2="21" y1="4" y2="4" stroke="currentColor" stroke-width="2.5"${l.dash ? ` stroke-dasharray="${l.dash}"` : ''}/></svg>${l.icon} ${l.name}</button>`).join('');
+    }
+
+    // Bilan : valeur à la sortie et pire valeur de chaque calque affiché
+    function renderLayerSum(r) {
+      if (!r.tl) { el.layerSum.innerHTML = ''; return; }
+      const parts = LAYERS.filter(l => layersOn.has(l.key)).map(l => {
+        const arr = r.tl[l.key], last = arr[arr.length - 1];
+        const worst = l.key === 'press' ? Math.min(...arr) : Math.max(...arr);
+        const zl = l.zone(last, r), zw = l.zone(worst, r);
+        const z = zw === 'danger' || zl === 'danger' ? 'danger' : zw === 'warn' || zl === 'warn' ? 'warn' : 'ok';
+        const extra = l.key === 'press' ? '' : ` · max ${l.fmt(worst)}`;
+        return `<span class="${z}">${ZTXT[z]} ${l.icon} ${l.name} : sortie ${l.fmt(last)}${extra}</span>`;
+      });
+      el.layerSum.innerHTML = parts.length ? `<b style="align-self:center">Fin de plongée :</b>${parts.join('')}` : '';
+    }
+
+    function drawLayers(r, X, mT, mB) {
+      if (!r.tl) return '';
+      const hgt = mB - mT;
+      let g = '';
+      const labels = [];
+      LAYERS.filter(l => layersOn.has(l.key)).forEach(l => {
+        const arr = r.tl[l.key], max = l.max(r);
+        const Yv = v => mT + (1 - Math.max(0, Math.min(1, v / max))) * hgt;
+        // segments colorés selon la zone
+        let cur = null, pts = [];
+        const flush = () => { if (pts.length > 1) g += `<polyline points="${pts.join(' ')}" fill="none" stroke="${ZCOL[cur]}" stroke-width="2.6" stroke-linejoin="round"${l.dash ? ` stroke-dasharray="${l.dash}"` : ''}/>`; };
+        arr.forEach((v, i) => {
+          const z = l.zone(v, r), p = `${X(r.tl.t[i]).toFixed(1)},${Yv(v).toFixed(1)}`;
+          if (z !== cur) { if (cur) { pts.push(p); flush(); } cur = z; pts = [p]; } else pts.push(p);
+        });
+        flush();
+        const last = arr[arr.length - 1];
+        labels.push({ y: Yv(last), x: X(r.tl.t[arr.length - 1]), text: `${l.icon} ${l.fmt(last)} ${ZTXT[l.zone(last, r)]}`, col: ZCOL[l.zone(last, r)] });
+      });
+      // étiquettes de fin, écartées pour ne pas se chevaucher
+      labels.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 15) labels[i].y = labels[i - 1].y + 15;
+      labels.forEach(lb => {
+        g += `<text x="${lb.x - 4}" y="${lb.y + 4}" text-anchor="end" font-size="11.5" font-weight="800" fill="${lb.col}" style="paint-order:stroke;stroke:var(--water1);stroke-width:3px">${lb.text}</text>`;
+      });
+      return g;
     }
 
     /* ---------- Courbe SVG ---------- */
@@ -254,8 +326,17 @@
           g += `<line x1="${X(s.from)}" x2="${X(s.to)}" y1="${Y(s.depth)}" y2="${Y(s.depth)}" style="stroke:var(--p${s.depth})" stroke-width="7" stroke-linecap="round"/>`;
           g += `<text x="${(X(s.from) + X(s.to)) / 2}" y="${Y(s.depth) + 19}" text-anchor="middle" font-size="11.5" font-weight="800" style="fill:var(--p${s.depth})">${s.depth} m · ${s.dur}′</text>`;
         });
+        g += drawLayers(r, X, m.t, H - m.b);
         g += `<circle cx="${X(r.prof.bottomEnd)}" cy="${Y(bottom().at(-1)[1])}" r="4" style="fill:var(--c1)"/>`;
-        g += `<text x="${Math.min(X(r.prof.total), W - m.r - 4)}" y="${Y(0) - 6}" text-anchor="end" font-size="11" font-weight="700" style="fill:var(--text)">sortie ${Math.round(r.prof.total)}′</text>`;
+        // DTR : trait violet du départ du fond à la sortie de l'eau, avec son étiquette
+        {
+          const x0 = X(r.prof.bottomEnd), x1 = X(r.prof.total), yb = 12, DTRC = '#7C3AED';
+          g += `<line x1="${x0}" x2="${x0}" y1="${yb}" y2="${Y(bottom().at(-1)[1])}" stroke="${DTRC}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>`;
+          g += `<line x1="${x1}" x2="${x1}" y1="${yb}" y2="${Y(0)}" stroke="${DTRC}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>`;
+          g += `<line x1="${x0}" x2="${x1}" y1="${yb}" y2="${yb}" stroke="${DTRC}" stroke-width="5" stroke-linecap="round"/>`;
+          const lx = Math.max(m.l + 60, Math.min((x0 + x1) / 2, W - m.r - 62));
+          g += `<text x="${lx}" y="${yb + 15}" text-anchor="middle" font-size="12" font-weight="800" fill="${DTRC}" style="paint-order:stroke;stroke:var(--water1);stroke-width:3px">DTR ${r.tab.dtr}′ · sortie ${Math.round(r.prof.total)}′</text>`;
+        }
       } else {
         g += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--danger)">${r.tab.err}</text>`;
       }
@@ -481,7 +562,9 @@
       if (r.depth > 60) A.push(['danger', 'Au-delà de 60 m : interdit (tables de secours uniquement).']);
       if (r.ppn2 > 5.6) A.push(['danger', `PpN₂ ${fmt(r.ppn2, 1)} b : au-delà de 5,6 b, narcose dangereuse.`]);
       else if (r.ppn2 > 3.2) A.push(['warn', `PpN₂ ${fmt(r.ppn2, 1)} b : narcose probable, palanquée expérimentée et vigilance.`]);
-      (r.fast || []).forEach(f => A.push(['danger', `Remontée trop rapide entre ${fmt(f.from[0], 1)}′ et ${fmt(f.to[0], 1)}′ : ${fmt(f.rate, 0)} m/min (max ${L.SPEED.asc} m/min).`]));
+      (r.fast || []).forEach(f => A.push(f.rapid
+        ? ['danger', `Remontée rapide entre ${fmt(f.from[0], 1)}′ et ${fmt(f.to[0], 1)}′ : ${fmt(f.rate, 0)} m/min de ${fmt(f.from[1], 0)} à ${fmt(f.to[1], 0)} m (plus de 15 m/min entre 30 m et la surface sur 10 m ou plus). Procédure dans l’onglet 🚨 Urgence.`]
+        : ['warn', `Remontée trop rapide entre ${fmt(f.from[0], 1)}′ et ${fmt(f.to[0], 1)}′ : ${fmt(f.rate, 0)} m/min (max ${L.SPEED.asc} m/min).`]));
       if (r.prof) {
         if (r.left < r.gear.reserve) A.push(['danger', `Gaz insuffisant : tu sors avec ${Math.round(r.left)} b (réserve ${r.gear.reserve} b).`]);
         if (r.pBottom < r.pdecoMin) A.push(['danger', `Au départ du fond tu n’auras que ${Math.round(r.pBottom)} b : il en faut ${r.pdecoMin} pour remonter avec ta réserve.`]);
@@ -532,7 +615,133 @@
       E.push(['GPS', r.tab.gps === '*' ? 'pas de lettre (*) : aucune plongée successive possible.' :
         `lettre <b>${r.tab.gps}</b> : elle mesure l’azote qu’il te reste en sortant. Pour une 2e plongée, tu la reportes dans le tableau I avec ton intervalle de surface.`]);
       html += `<div class="steps">${E.map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('')}</div>`;
+      html = `<button type="button" class="btn btn-outline btn-sm" data-fulltable style="margin-bottom:8px">📖 Voir la table MN90 complète</button>` + html;
       el.tableRead.innerHTML = html;
+    }
+
+    /* ---------- 2e plongée : consécutive, successive (tableaux I et II) ou isolée ---------- */
+    const hm = m => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') : ''}`);
+    let lastSucc = null;
+    function renderSucc(r) {
+      const iv = +el.sInt.value, d2 = +el.sD2.value, t2 = +el.sT2.value, o2 = +el.sO2.value;
+      el.vInt.textContent = hm(iv); el.vD2.textContent = d2; el.vT2.textContent = t2;
+      el.vO22.textContent = o2 <= 21 ? 'Air' : 'Nx' + o2;
+      if (!r || !r.prof) { el.succ.innerHTML = '<p class="muted">Règle d’abord une 1re plongée dans la table.</p>'; return; }
+      const fo2 = o2 / 100, nx = o2 > 21;
+      const n = L.nextDive(r, iv, d2, t2, fo2, nx, r.gear);
+      lastSucc = { n, r, d2, t2, o2, iv };
+      const KIND = { consecutive: 'Plongée consécutive (intervalle < 15 min)', successive: 'Plongée successive', isolee: 'Plongée isolée (intervalle ≥ 12 h)' };
+      let html = `<span class="kind ${n.kind}">${KIND[n.kind]}</span>`;
+      if (n.err) { el.succ.innerHTML = html + `<div class="alert danger">${n.err}</div>`; return; }
+      const E = [];
+      const p2 = nx ? `${fmt(L.pea(d2, fo2), 1)} m (PEA du Nx${o2})` : `${d2} m`;
+      if (n.kind === 'successive') {
+        E.push(['1re plongée', `ligne ${r.tab.d} m / ${r.tab.t}′ → lettre <b>${n.gps}</b>.`]);
+        E.push(['Tableau I', `ligne <b>${n.gps}</b>, intervalle ${hm(iv)} → colonne <b>${hm(n.col)}</b> (valeur immédiatement inférieure) → azote résiduel <b>${n.n2 === null ? 'revenu à la normale' : fmt(n.n2, 2)}</b>.`]);
+        E.push(['Tableau II', n.maj ? `azote ${fmt(n.n2, 2)} → ligne <b>${fmt(n.n2row, 2)}</b> (immédiatement supérieure), profondeur ${p2} → colonne <b>${n.depthCol} m</b> → majoration <b>${n.maj} min</b>.` : 'azote résiduel ≤ 0,81 : <b>pas de majoration</b>.']);
+        E.push(['Durée fictive', `${n.maj} + ${t2} = <b>${n.duration} min</b> → table ${n.tab.d} m / ${n.tab.t}′.`]);
+      } else if (n.kind === 'consecutive') {
+        E.push(['Règle', 'intervalle strictement inférieur à 15 min : on considère une seule et même plongée.']);
+        E.push(['Calcul', `durée = ${fmt(r.time, 0)} + ${t2} = <b>${n.duration} min</b>, profondeur max = <b>${fmt(n.tabDepth, 1)} m</b> → table ${n.tab.d} m / ${n.tab.t}′.`]);
+      } else {
+        E.push(['Règle', 'au moins 12 h après la précédente : la 2e plongée se calcule comme une plongée isolée.']);
+        E.push(['Table', `${p2} / ${t2}′ → ligne ${n.tab.d} m / ${n.tab.t}′.`]);
+      }
+      const st = L.stopList(n.tab.stops);
+      const g = r.gear, res = g.reserve;
+      E.push(['Résultat', `${st.length ? st.map(k => `<span class="pd${k}" style="font-weight:800">${k} m ${n.tab.stops[k]}′</span>`).join(' + ') : 'aucun palier'} · DTR <b>${n.tab.dtr}′</b> · lettre <b>${n.tab.gps}</b>.`]);
+      html += `<div class="steps" style="margin-top:4px">${E.map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('')}</div>`;
+      if (n.kind === 'successive') html += `<button type="button" class="btn btn-outline btn-sm" data-succtables style="margin-top:8px">📋 Voir les tableaux I et II</button>`;
+      const A = [];
+      A.push(n.left < res ? ['danger', `Bloc (même matériel, regonflé) : tu sortirais avec ${Math.round(n.left)} b, sous ta réserve de ${res} b.`] : ['ok', `Bloc (même matériel, regonflé) : sortie avec ${Math.round(n.left)} b.`]);
+      const snc = n.sncTotal;
+      A.push([snc > L.LIMITS.sncMax ? 'danger' : snc > L.LIMITS.sncWarn ? 'warn' : 'ok', `%SNC cumulé : ${fmt(n.sncCarry, 0)} % restant de la 1re (divisé par 2 toutes les 90 min) + ${fmt(n.tox.snc, 0)} % = <b>${fmt(snc, 0)} %</b>.`]);
+      A.push([n.otuTotal > L.LIMITS.otuDay ? 'danger' : 'ok', `OTU de la journée : ${fmt(n.otuTotal, 0)} / ${L.LIMITS.otuDay}.`]);
+      if (n.tab.gps === '*') A.push(['warn', 'Pas de lettre GPS après la 2e plongée : pas de 3e plongée.']);
+      A.push(['info', 'Deux plongées au maximum par 24 heures.']);
+      if (nx) { const mod = L.mod(fo2, 1.6); if (d2 > mod) A.push(['danger', `Nx${o2} interdit à ${d2} m (MOD ${fmt(mod, 1)} m à 1,6 b).`]); }
+      html += `<div class="alerts" style="margin-top:8px">${A.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('')}</div>`;
+      html += succChart(r, n, iv);
+      el.succ.innerHTML = html;
+    }
+
+    // Les deux plongées sur une même frise (intervalle de surface raccourci)
+    function succChart(r, n, iv) {
+      const W = 460, H = 160, m = { l: 28, r: 8, t: 12, b: 20 };
+      const t1 = r.prof.total, t2 = n.prof.total, gap = Math.max(t1, t2) * 0.35;
+      const tot = t1 + gap + t2, maxZ = Math.max(10, Math.ceil(Math.max(r.depth, ...n.prof.pts.map(p => p[1])) / 5) * 5);
+      const X = t => m.l + t / tot * (W - m.l - m.r), Y = z => m.t + z / maxZ * (H - m.t - m.b);
+      const line = (pts, off) => pts.map(([t, z]) => `${X(t + off).toFixed(1)},${Y(z).toFixed(1)}`).join(' ');
+      let g = `<rect width="${W}" height="${H}" style="fill:var(--water1)"/>`;
+      for (let z = 0; z <= maxZ; z += maxZ > 30 ? 10 : 5) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(z)}" y2="${Y(z)}" style="stroke:var(--grid)"/><text x="${m.l - 4}" y="${Y(z) + 4}" font-size="10" text-anchor="end" style="fill:var(--text2)">${z}</text>`;
+      g += `<polyline points="${line(r.prof.pts, 0)}" fill="none" style="stroke:var(--c1)" stroke-width="2.5"/>`;
+      g += `<polyline points="${line(n.prof.pts, t1 + gap)}" fill="none" style="stroke:var(--c3)" stroke-width="2.5"/>`;
+      [[r.prof.segs, 0], [n.prof.segs, t1 + gap]].forEach(([segs, off]) => segs.forEach(sg => { g += `<line x1="${X(sg.from + off)}" x2="${X(sg.to + off)}" y1="${Y(sg.depth)}" y2="${Y(sg.depth)}" style="stroke:var(--p${sg.depth})" stroke-width="6" stroke-linecap="round"/>`; }));
+      g += `<line x1="${X(t1)}" x2="${X(t1 + gap)}" y1="${Y(0)}" y2="${Y(0)}" style="stroke:var(--text2)" stroke-width="2" stroke-dasharray="4 3"/>`;
+      g += `<text x="${X(t1 + gap / 2)}" y="${Y(0) + 16}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text2)">surface ${hm(iv)}</text>`;
+      g += `<text x="${X(t1 / 2)}" y="${H - 5}" text-anchor="middle" font-size="10.5" font-weight="700" style="fill:var(--c1)">1re · ${r.tab.gps}</text>`;
+      g += `<text x="${X(t1 + gap + t2 / 2)}" y="${H - 5}" text-anchor="middle" font-size="10.5" font-weight="700" style="fill:var(--c3)">2e${n.maj ? ` · +${n.maj}′` : ''} · ${n.tab.gps}</text>`;
+      return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:8px;border-radius:10px;border:1px solid var(--border)" role="img" aria-label="Les deux plongées">${g}</svg>`;
+    }
+
+    // Tableaux I et II en superposition, cases utilisées surlignées
+    let succBack = null;
+    function openSuccTables() {
+      if (!lastSucc || lastSucc.n.kind !== 'successive') return;
+      const { n } = lastSucc;
+      if (!succBack) {
+        succBack = document.createElement('div');
+        succBack.className = 'modal-back';
+        succBack.hidden = true;
+        succBack.innerHTML = `<div class="modal full-table" role="dialog" aria-modal="true" aria-labelledby="st-title"><div class="ft-head"><h2 id="st-title">📋 Tableaux I et II MN90</h2><button type="button" class="btn btn-outline btn-sm" data-close>Fermer ✕</button></div><div class="st-body"></div></div>`;
+        document.body.appendChild(succBack);
+        succBack.addEventListener('click', e => { if (e.target === succBack || e.target.closest('[data-close]')) { succBack.hidden = true; document.documentElement.classList.remove('modal-open'); } });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && succBack && !succBack.hidden) { succBack.hidden = true; document.documentElement.classList.remove('modal-open'); } });
+      }
+      const ci = L.T1_COLS.indexOf(n.col);
+      const t1 = `<h3>Tableau I : azote résiduel</h3><p class="hint">Ligne = lettre GPS · colonne = intervalle de surface (valeur immédiatement inférieure).</p><div class="tbl-wrap tI"><table class="tbl"><thead><tr><th>GPS</th>${L.T1_COLS.map(c => `<th>${hm(c)}</th>`).join('')}</tr></thead><tbody>` +
+        Object.keys(L.TABLE_I).map(k => `<tr class="${k === n.gps ? 'row' : ''}"><td>${k}</td>${L.T1_COLS.map((c, j) => { const v = L.TABLE_I[k][j]; return `<td class="${k === n.gps && j === ci ? 'hit' : ''}">${v === undefined ? '' : fmt(v, 2)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>';
+      const t2 = `<h3 style="margin-top:12px">Tableau II : majoration (min)</h3><p class="hint">Ligne = azote résiduel (immédiatement supérieur) · colonne = profondeur de la 2e plongée (immédiatement supérieure).</p><div class="tbl-wrap tII"><table class="tbl"><thead><tr><th>Azote</th>${L.T2_DEPTHS.map(d => `<th>${d} m</th>`).join('')}</tr></thead><tbody>` +
+        L.TABLE_II.map(row => `<tr class="${Math.abs(row[0] - (n.n2row || -1)) < 1e-9 ? 'row' : ''}"><td>${fmt(row[0], 2)}</td>${L.T2_DEPTHS.map((d, j) => `<td class="${Math.abs(row[0] - (n.n2row || -1)) < 1e-9 && d === n.depthCol ? 'hit' : ''}">${row[1 + j]}</td>`).join('')}</tr>`).join('') + '</tbody></table></div>';
+      succBack.querySelector('.st-body').innerHTML = t1 + t2;
+      succBack.hidden = false;
+      document.documentElement.classList.add('modal-open');
+      succBack.querySelector('[data-close]').focus();
+    }
+
+    /* ---------- Table MN90 complète en superposition ---------- */
+    let fullBack = null;
+    function openFullTable(r) {
+      if (!fullBack) {
+        fullBack = document.createElement('div');
+        fullBack.className = 'modal-back';
+        fullBack.hidden = true;
+        fullBack.innerHTML = `<div class="modal full-table" role="dialog" aria-modal="true" aria-labelledby="ft-title">
+          <div class="ft-head"><h2 id="ft-title">📖 Table MN90 FFESSM</h2><button type="button" class="btn btn-outline btn-sm" data-close>Fermer ✕</button></div>
+          <p class="hint">Profondeur et durée immédiatement supérieures. Paliers en minutes : <b class="pd15">15 m</b> · <b class="pd12">12 m</b> · <b class="pd9">9 m</b> · <b class="pd6">6 m</b> · <b class="pd3">3 m</b>. 62 et 65 m : tables de secours.</p>
+          <div class="ft-grid"></div></div>`;
+        document.body.appendChild(fullBack);
+        fullBack.addEventListener('click', e => { if (e.target === fullBack || e.target.closest('[data-close]')) closeFullTable(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && fullBack && !fullBack.hidden) closeFullTable(); });
+      }
+      const curD = r && r.tab ? r.tab.d : null, curT = r && r.tab ? r.tab.t : null;
+      fullBack.querySelector('.ft-grid').innerHTML = L.DEPTHS.map(d => {
+        const rows = L.MN90[d];
+        const cols = L.STOP_DEPTHS.filter(c => rows.some(x => x[1][c]));
+        return `<section class="ft-block${d === curD ? ' cur' : ''}"${d === curD ? ' id="ft-cur"' : ''}><h3>${d} m${d > 60 ? ' <small>secours</small>' : ''}</h3>
+          <table class="tbl"><thead><tr><th>Durée</th>${cols.map(c => `<th class="pd${c}">${c}</th>`).join('')}<th>DTR</th><th>GPS</th></tr></thead><tbody>` +
+          rows.map(x => `<tr class="${d === curD && x[0] === curT ? 'hit' : ''}"><td>${x[0]}′</td>${cols.map(c => x[1][c] ? `<td class="pd${c}" style="font-weight:800">${x[1][c]}</td>` : '<td class="dim">·</td>').join('')}<td>${x[2]}</td><td>${x[3]}</td></tr>`).join('') +
+          `</tbody></table></section>`;
+      }).join('');
+      fullBack.hidden = false;
+      document.documentElement.classList.add('modal-open');
+      const cur = fullBack.querySelector('#ft-cur');
+      if (cur) setTimeout(() => cur.scrollIntoView({ block: 'start' }), 30);
+      fullBack.querySelector('[data-close]').focus();
+    }
+    function closeFullTable() {
+      fullBack.hidden = true;
+      document.documentElement.classList.remove('modal-open');
     }
 
     /* ---------- DTR et pression de décollage ---------- */
@@ -626,7 +835,16 @@
       if (t < 0 || t > r.prof.total) { el.tip.hidden = true; if (cur) cur.style.display = 'none'; return; }
       const z = L.depthAt(r.prof.pts, t);
       if (cur) { cur.setAttribute('x1', S.map.X(t)); cur.setAttribute('x2', S.map.X(t)); cur.style.display = ''; }
-      el.tip.innerHTML = `<b>${mmss(t)}</b> · ${fmt(z, 1)} m<br>PpO₂ ${fmt(L.ppo2At(z, r.fo2), 2)} b`;
+      let tipHtml = `<b>${mmss(t)}</b> · ${fmt(z, 1)} m`;
+      if (r.tl) {
+        const k = Math.max(0, Math.min(r.tl.t.length - 1, Math.round(t / r.tl.t[r.tl.t.length - 1] * (r.tl.t.length - 1))));
+        LAYERS.forEach(l => {
+          if (!layersOn.has(l.key) && l.key !== 'ppo2') return;
+          const v = r.tl[l.key][k], zz = l.zone(v, r);
+          tipHtml += `<br><span style="color:${ZCOL[zz]}">${l.icon} ${l.name} ${l.fmt(v)}</span>${l.key === 'sat' ? ` <small>(C${r.tl.lead[k]})</small>` : ''}`;
+        });
+      }
+      el.tip.innerHTML = tipHtml;
       el.tip.hidden = false;
       const px = e.clientX - rect.left;
       el.tip.style.left = Math.max(4, Math.min(px + 12, rect.width - el.tip.offsetWidth - 6)) + 'px';
@@ -697,6 +915,8 @@
     }
 
     /* ---------- Événements ---------- */
+    [el.sInt, el.sD2, el.sT2, el.sO2].forEach(i => i.addEventListener('input', () => renderSucc(S.last)));
+    el.succ.addEventListener('click', e => { if (e.target.closest('[data-succtables]')) openSuccTables(); });
     [el.depth, el.time, el.o2, el.compare, el.scaleZ, el.scaleT, el.dtrMax].forEach(i => i.addEventListener('input', render));
     el.gasSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.gas = b.dataset.v; render(); } });
     el.ppSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.pmax = +b.dataset.v; render(); } });
@@ -715,7 +935,18 @@
       render();
     });
     el.reqs.addEventListener('click', e => { if (e.target.closest('[data-open-profile]')) P.open(); });
+    el.tableRead.addEventListener('click', e => { if (e.target.closest('[data-fulltable]')) openFullTable(S.last); });
     el.ptabs.addEventListener('click', e => { const b = e.target.closest('.ptab'); if (b) showPane(b.dataset.pane); });
+    el.layerBar.addEventListener('click', e => {
+      const b = e.target.closest('[data-layer]');
+      if (!b) return;
+      const k = b.dataset.layer;
+      if (layersOn.has(k)) layersOn.delete(k); else layersOn.add(k);
+      saveLayers();
+      renderLayerBar();
+      render();
+    });
+    renderLayerBar();
     el.kpis.addEventListener('click', e => {
       if (e.target.closest('.help-btn')) return;
       const k = e.target.closest('.kpi[data-calc]');

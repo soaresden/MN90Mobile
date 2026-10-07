@@ -215,14 +215,12 @@
 
   /* ---------- Procédures MN90 (mode d'emploi des tables fédérales) ---------- */
 
-  // Remontée rapide (> 15-17 m/min), réimmersion possible en moins de 3 min :
-  // demi-profondeur (moitié de la profondeur de table ; Nitrox : moitié de la profondeur réelle),
-  // palier de 5 min, durée = début de plongée → fin du palier de demi-profondeur,
-  // au minimum 2 min à 3 m.  Hypothèses : remontée rapide à 30 m/min, 3 min en surface.
+  // Remontée rapide (définition du cours) : plus de 15 m/min entre 30 m et la surface, sur 10 m minimum.
+  // Dans les 3 min : palier de 5 min à mi-profondeur minimum, puis les paliers prévus
+  // + 1 min à 6 m + 5 min à 3 m. Hypothèses du dessin : remontée rapide à 30 m/min, 3 min en surface.
   function rapidAscent(res) {
     if (!res.prof) return null;
-    const ref = res.nitrox ? res.depth : res.tab.d;
-    const mid = ref / 2;
+    const mid = Math.ceil(res.depth / 2);
     const i = res.prof.pts.findIndex(p => p[0] >= res.prof.bottomEnd - 1e-9);
     const pts = res.prof.pts.slice(0, i + 1).map(p => p.slice());
     let [t, z] = pts[pts.length - 1];
@@ -231,14 +229,17 @@
     t += 3; pts.push([t, 0]);
     t += mid / SPEED.desc; pts.push([t, mid]);
     t += 5; pts.push([t, mid]);
-    const duration = Math.ceil(t - 1e-9);   // minute commencée = minute entière
-    const tabDepth = res.nitrox ? pea(res.depth, res.fo2) : res.depth;
-    const tab = lookup(Math.max(tabDepth, 0.1), duration);
-    if (tab.err) return { mid, duration, err: tab.err };
-    const stops = Object.assign({}, tab.stops);
-    stops[3] = Math.max(stops[3] || 0, 2);
+    const stops = Object.assign({}, res.tab.stops);
+    stops[6] = (stops[6] || 0) + 1;
+    stops[3] = (stops[3] || 0) + 5;
     const prof = buildProfile(pts, stops);
-    return { mid, ref, duration, tab, stops, prof, tSurface };
+    return { mid, ref: res.depth, stops, base: res.tab.stops, prof, tSurface };
+  }
+
+  // Une remontée est "rapide" (procédure) si elle dépasse 15 m/min entre 30 m et la surface sur 10 m minimum
+  function isRapidAscent(z0, z1, dt) {
+    const top = Math.min(z0, 30), dz = top - z1;
+    return z1 < z0 && dt > 0 && (z0 - z1) / dt > SPEED.asc + 1e-9 && dz >= 10 - 1e-9;
   }
 
   // Remontée lente jusqu'au 1er palier : on majore la durée de plongée de la durée de remontée
@@ -251,6 +252,101 @@
     return { speed, tAsc, duration, tab: lookup(Math.max(tabDepth, 0.1), duration) };
   }
 
+  // ===== Plongées successives (mode d'emploi des tables fédérales, Blanchard & Imbert) =====
+  // Tableau I : azote résiduel selon la lettre GPS et l'intervalle de surface (colonnes en minutes).
+  // Case vide (fin de ligne) : azote résiduel revenu à la normale, pas de majoration.
+  const T1_COLS = [15, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600, 630, 660, 690, 720];
+  const TABLE_I = {"A":[0.84,0.83,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81,0.81],"B":[0.88,0.88,0.87,0.86,0.85,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81],"C":[0.92,0.91,0.9,0.89,0.88,0.87,0.85,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81],"D":[0.97,0.95,0.94,0.93,0.91,0.89,0.88,0.86,0.85,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81],"E":[1.0,0.98,0.97,0.96,0.93,0.91,0.89,0.88,0.87,0.86,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81],"F":[1.05,1.03,1.01,0.99,0.96,0.94,0.91,0.9,0.88,0.87,0.86,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81,0.81],"G":[1.08,1.06,1.04,1.02,0.98,0.96,0.93,0.91,0.89,0.88,0.87,0.85,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81],"H":[1.13,1.1,1.08,1.05,1.01,0.98,0.95,0.93,0.91,0.89,0.88,0.86,0.85,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81],"I":[1.17,1.14,1.11,1.08,1.04,1.0,0.97,0.94,0.92,0.9,0.88,0.87,0.86,0.85,0.84,0.84,0.83,0.83,0.82,0.82,0.81,0.81,0.81,0.81,0.81,0.81],"J":[1.2,1.17,1.14,1.11,1.06,1.02,0.98,0.96,0.93,0.91,0.89,0.88,0.87,0.86,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81,0.81],"K":[1.25,1.21,1.18,1.15,1.09,1.04,1.01,0.97,0.95,0.92,0.9,0.89,0.87,0.86,0.85,0.84,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81],"L":[1.29,1.25,1.21,1.17,1.12,1.07,1.02,0.99,0.96,0.93,0.91,0.89,0.88,0.87,0.86,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81,0.81],"M":[1.33,1.29,1.25,1.21,1.14,1.09,1.04,1.01,0.97,0.94,0.92,0.9,0.89,0.87,0.86,0.85,0.84,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81],"N":[1.37,1.32,1.28,1.24,1.17,1.11,1.06,1.02,0.98,0.95,0.93,0.91,0.89,0.88,0.87,0.85,0.85,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81,0.81],"O":[1.41,1.36,1.32,1.27,1.2,1.13,1.08,1.04,1.0,0.97,0.94,0.92,0.9,0.88,0.87,0.86,0.85,0.84,0.84,0.83,0.82,0.82,0.82,0.81,0.81,0.81],"P":[1.45,1.4,1.35,1.3,1.22,1.15,1.1,1.05,1.01,0.98,0.95,0.93,0.91,0.89,0.87,0.86,0.85,0.84,0.84,0.83,0.83,0.82,0.82,0.82,0.81,0.81]};
+  // Tableau II : majoration (min) selon l'azote résiduel (ligne) et la profondeur de la 2e plongée (colonne)
+  const T2_DEPTHS = [12, 15, 18, 20, 22, 25, 28, 30, 32, 35, 38, 40, 42, 45, 48, 50, 52, 55, 58, 60];
+  const TABLE_II = [[0.82,4,3,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1],[0.84,7,6,5,4,4,3,3,3,3,2,2,2,2,2,2,2,2,2,1,1],[0.86,11,9,7,7,6,5,5,4,4,4,3,3,3,3,3,3,3,2,2,2],[0.89,17,13,11,10,9,8,7,7,6,6,5,5,5,4,4,4,4,4,3,3],[0.92,23,18,15,13,12,11,10,9,8,8,7,7,6,6,5,5,5,5,5,4],[0.95,29,23,19,17,15,13,12,11,10,10,9,8,8,7,7,7,6,6,6,5],[0.99,38,30,24,22,20,17,15,14,13,12,11,11,10,9,9,8,8,8,7,7],[1.03,47,37,30,27,24,21,19,17,16,15,14,13,12,11,11,10,10,9,9,9],[1.07,57,44,36,32,29,25,22,21,19,18,16,15,15,13,13,12,12,11,10,10],[1.11,68,52,42,37,34,29,26,24,22,20,19,18,17,16,15,14,13,13,12,12],[1.16,81,62,50,44,40,34,30,28,26,24,22,21,20,18,17,16,16,15,14,13],[1.2,93,70,56,50,45,39,34,32,29,27,24,23,22,20,19,18,18,17,16,15],[1.24,106,79,63,56,50,43,38,35,33,30,27,26,24,23,21,20,19,18,17,17],[1.29,124,91,72,63,56,49,43,40,37,33,30,29,27,25,24,23,22,20,19,19],[1.33,139,101,79,70,62,53,47,43,40,36,33,31,30,28,26,25,24,22,21,20],[1.38,160,114,89,78,69,59,52,48,44,40,37,35,33,30,28,27,26,24,23,22],[1.42,180,126,97,85,75,64,56,52,48,43,39,37,35,33,30,29,28,26,25,24],[1.45,196,135,104,90,80,68,59,55,51,46,42,39,37,34,32,31,29,28,26,25]];
+
+  /* Plongée suivante selon l'intervalle de surface (minutes) :
+     < 15 min : consécutive (durées additionnées, profondeur max) ; >= 12 h : isolée ;
+     sinon successive : Tableau I (colonne immédiatement inférieure) -> azote résiduel,
+     Tableau II (azote immédiatement supérieur, profondeur immédiatement supérieure) -> majoration. */
+  function nextDive(first, interval, depth2, time2, fo2, nitrox, gear) {
+    const out = { interval };
+    const pea2 = nitrox ? pea(depth2, fo2) : depth2;
+    if (interval < 15) {
+      out.kind = 'consecutive';
+      out.depth = Math.max(first.depth, depth2);
+      out.duration = first.time + time2;
+      out.tabDepth = Math.max(first.nitrox ? first.pea : first.depth, pea2);
+    } else if (interval >= 720) {
+      out.kind = 'isolee';
+      out.duration = time2;
+      out.tabDepth = pea2;
+    } else {
+      out.kind = 'successive';
+      const gps = first.tab && first.tab.gps;
+      if (!gps || gps === '*') { out.err = 'Pas de lettre GPS après la 1re plongée : plongée successive interdite (attendre 12 h).'; return out; }
+      let ci = -1;
+      T1_COLS.forEach((c, k) => { if (c <= interval) ci = k; });
+      out.col = T1_COLS[ci];
+      const row = TABLE_I[gps] || [];
+      out.gps = gps;
+      out.n2 = ci < row.length ? row[ci] : null;           // null : case vide, azote revenu à la normale
+      if (out.n2 === null || out.n2 <= 0.81 + 1e-9) { out.maj = 0; }
+      else {
+        const r2 = TABLE_II.find(r => r[0] >= out.n2 - 1e-9) || TABLE_II[TABLE_II.length - 1];
+        out.n2row = r2[0];
+        const di = T2_DEPTHS.findIndex(d => d >= pea2 - 1e-9);
+        if (di < 0) { out.err = 'Profondeur hors Tableau II (au-delà de 60 m).'; return out; }
+        out.depthCol = T2_DEPTHS[di];
+        out.maj = r2[1 + di];
+      }
+      out.duration = time2 + out.maj;
+      out.tabDepth = pea2;
+    }
+    out.tab = lookup(Math.max(out.tabDepth, 0.1), Math.max(out.duration, 0.1));
+    if (out.tab.err) { out.err = out.tab.err; return out; }
+    out.prof = buildProfile(squareBottom(depth2, time2), out.tab.stops);
+    out.gasL = gasUse(out.prof.pts, gear.sac);
+    out.left = gear.press - out.gasL / gear.tank;
+    out.tox = toxicity(out.prof.pts, fo2);
+    // %SNC : divisé par 2 toutes les 90 min en surface, on additionne
+    out.sncCarry = first.tox ? first.tox.snc * Math.pow(0.5, interval / 90) : 0;
+    out.sncTotal = out.sncCarry + out.tox.snc;
+    out.otuTotal = (first.tox ? first.tox.otu : 0) + out.tox.otu;
+    return out;
+  }
+
+  /* ---------- Évolution au fil de la plongée (calques de la courbe) ----------
+     Modèle MN90 : 12 compartiments de Haldane, périodes 5 à 120 min et coefficients de
+     sursaturation critique Sc (cours "Éléments de calcul de table"). Saturation affichée :
+     compartiment le plus chargé, tension / (Sc × pression ambiante) en %. 100 % = seuil. */
+  const COMPARTMENTS = [[5, 2.72], [7, 2.54], [10, 2.38], [15, 2.20], [20, 2.04], [30, 1.82],
+    [40, 1.68], [50, 1.61], [60, 1.58], [80, 1.56], [100, 1.55], [120, 1.54]];
+
+  function timeline(pts, fo2, gear, steps) {
+    const total = pts[pts.length - 1][0];
+    const n = Math.max(60, steps || 400), dt = total / n;
+    const fn2 = 1 - fo2;
+    const k = COMPARTMENTS.map(c => Math.LN2 / c[0]);
+    const T = COMPARTMENTS.map(() => 0.79);      // tissus saturés d'air en surface
+    const out = { t: [], depth: [], press: [], sat: [], lead: [], snc: [], ppo2: [], ppn2: [] };
+    let L = 0, snc = 0;
+    const push = (t, z) => {
+      const pamb = pabs(z);
+      let best = 0, lead = 0;
+      T.forEach((v, i) => { const r = v / (COMPARTMENTS[i][1] * pamb); if (r > best) { best = r; lead = i; } });
+      out.t.push(t); out.depth.push(z); out.press.push(gear.press - L / gear.tank);
+      out.sat.push(best * 100); out.lead.push(COMPARTMENTS[lead][0]); out.snc.push(snc); out.ppo2.push(pamb * fo2); out.ppn2.push(pamb * fn2);
+    };
+    push(0, 0);
+    for (let s = 1; s <= n; s++) {
+      const t0 = (s - 1) * dt, t1 = s * dt;
+      const zm = (depthAt(pts, t0) + depthAt(pts, t1)) / 2, pamb = pabs(zm), pi = pamb * fn2;
+      T.forEach((v, i) => { T[i] = v + (pi - v) * (1 - Math.exp(-k[i] * dt)); });
+      L += dt * gear.sac * pamb;
+      const pp = pamb * fo2;
+      if (pp >= 0.6) snc += dt / noaaLimit(pp) * 100;
+      push(t1, depthAt(pts, t1));
+    }
+    return out;
+  }
+
   const fmt = (n, d = 0) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
   const mmss = m => {
     const mm = Math.floor(m), ss = Math.round((m - mm) * 60);
@@ -261,6 +357,7 @@
   window.MN90Lib = {
     MN90, DEPTHS, STOP_DEPTHS, SPEED, LIMITS, NOAA,
     pabs, ppo2At, pea, mod, bestMix, lookup, stopList, buildProfile, squareBottom,
-    gasUse, noaaLimit, toxicity, depthAt, evaluate, limits, beta, ascentGas, decollage, rapidAscent, slowAscent, fmt, mmss,
+    gasUse, noaaLimit, toxicity, depthAt, evaluate, limits, beta, ascentGas, decollage, rapidAscent, isRapidAscent, slowAscent, nextDive,
+    T1_COLS, TABLE_I, T2_DEPTHS, TABLE_II, COMPARTMENTS, timeline, fmt, mmss,
   };
 })();
