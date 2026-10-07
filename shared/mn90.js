@@ -312,6 +312,41 @@
     return out;
   }
 
+  /* ---------- Évolution au fil de la plongée (calques de la courbe) ----------
+     Modèle MN90 : 12 compartiments de Haldane, périodes 5 à 120 min et coefficients de
+     sursaturation critique Sc (cours "Éléments de calcul de table"). Saturation affichée :
+     compartiment le plus chargé, tension / (Sc × pression ambiante) en %. 100 % = seuil. */
+  const COMPARTMENTS = [[5, 2.72], [7, 2.54], [10, 2.38], [15, 2.20], [20, 2.04], [30, 1.82],
+    [40, 1.68], [50, 1.61], [60, 1.58], [80, 1.56], [100, 1.55], [120, 1.54]];
+
+  function timeline(pts, fo2, gear, steps) {
+    const total = pts[pts.length - 1][0];
+    const n = Math.max(60, steps || 400), dt = total / n;
+    const fn2 = 1 - fo2;
+    const k = COMPARTMENTS.map(c => Math.LN2 / c[0]);
+    const T = COMPARTMENTS.map(() => 0.79);      // tissus saturés d'air en surface
+    const out = { t: [], depth: [], press: [], sat: [], lead: [], snc: [], ppo2: [], ppn2: [] };
+    let L = 0, snc = 0;
+    const push = (t, z) => {
+      const pamb = pabs(z);
+      let best = 0, lead = 0;
+      T.forEach((v, i) => { const r = v / (COMPARTMENTS[i][1] * pamb); if (r > best) { best = r; lead = i; } });
+      out.t.push(t); out.depth.push(z); out.press.push(gear.press - L / gear.tank);
+      out.sat.push(best * 100); out.lead.push(COMPARTMENTS[lead][0]); out.snc.push(snc); out.ppo2.push(pamb * fo2); out.ppn2.push(pamb * fn2);
+    };
+    push(0, 0);
+    for (let s = 1; s <= n; s++) {
+      const t0 = (s - 1) * dt, t1 = s * dt;
+      const zm = (depthAt(pts, t0) + depthAt(pts, t1)) / 2, pamb = pabs(zm), pi = pamb * fn2;
+      T.forEach((v, i) => { T[i] = v + (pi - v) * (1 - Math.exp(-k[i] * dt)); });
+      L += dt * gear.sac * pamb;
+      const pp = pamb * fo2;
+      if (pp >= 0.6) snc += dt / noaaLimit(pp) * 100;
+      push(t1, depthAt(pts, t1));
+    }
+    return out;
+  }
+
   const fmt = (n, d = 0) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
   const mmss = m => {
     const mm = Math.floor(m), ss = Math.round((m - mm) * 60);
@@ -323,6 +358,6 @@
     MN90, DEPTHS, STOP_DEPTHS, SPEED, LIMITS, NOAA,
     pabs, ppo2At, pea, mod, bestMix, lookup, stopList, buildProfile, squareBottom,
     gasUse, noaaLimit, toxicity, depthAt, evaluate, limits, beta, ascentGas, decollage, rapidAscent, isRapidAscent, slowAscent, nextDive,
-    T1_COLS, TABLE_I, T2_DEPTHS, TABLE_II, fmt, mmss,
+    T1_COLS, TABLE_I, T2_DEPTHS, TABLE_II, COMPARTMENTS, timeline, fmt, mmss,
   };
 })();

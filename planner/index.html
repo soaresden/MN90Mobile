@@ -29,8 +29,10 @@
     .side .field { margin-bottom: 6px; }
     .side .tabs { margin-bottom: 8px; }
     .side input[type="range"] { height: 22px; }
-    .side .ans-row { flex-wrap: nowrap; }
-    .side .ans-row .btn { padding: 3px 7px; font-size: .72rem; }
+    .side { overflow-x: hidden; }
+    .side #answerCard { flex: 1; }
+    .side .ans-row { flex-direction: column; align-items: flex-start; gap: 3px; }
+    .side .ans-row .btn { padding: 2px 8px; font-size: .7rem; }
     .side .ans .v { white-space: nowrap; font-size: 1.3rem; }
     .side .ans .l { font-size: .68rem; }
     .side .ans .why { font-size: .7rem; line-height: 1.25; }
@@ -70,6 +72,14 @@
   .legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; background: var(--c); }
   .legend i.dash { background: none; border-top: 2px dashed var(--c); height: 0; }
   .draw-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* Calques : boutons d'affichage et bilan de fin de plongée */
+  .layer-bar { display: flex; flex-wrap: wrap; gap: 5px; }
+  .layer-btn { border: 1px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 999px; padding: 3px 9px; font-size: .78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .layer-btn svg { width: 22px; height: 8px; }
+  .layer-btn.on { border-color: var(--accent); color: var(--text); background: var(--surface); box-shadow: inset 0 -2px 0 var(--accent); }
+  .layer-sum { display: flex; flex-wrap: wrap; gap: 5px; font-size: .78rem; }
+  .layer-sum span { border-radius: 8px; padding: 2px 8px; border: 1px solid var(--border); background: var(--bg2); }
+  .layer-sum .ok { border-color: var(--ok); } .layer-sum .warn { border-color: var(--warn); background: var(--warn-bg); } .layer-sum .danger { border-color: var(--danger); background: var(--danger-bg); }
 
   /* Vignettes rangées par catégorie (nombre fixe : la hauteur ne bouge pas) */
   .kgroups { display: grid; grid-template-columns: 3fr 2fr; gap: 8px; }
@@ -268,10 +278,12 @@
         <button type="button" class="btn btn-outline btn-sm" id="clearPts">Effacer</button>
         <button type="button" class="btn btn-outline btn-sm" id="examplePts">Exemple multi-niveaux</button>
       </div>
+      <div class="layer-bar" id="layerBar" role="group" aria-label="Calques de la courbe"></div>
       <div class="chart" id="chart">
         <svg id="svg" role="img" aria-label="Profil de la plongée"></svg>
         <div class="tip" id="tip" hidden></div>
       </div>
+      <div class="layer-sum" id="layerSum"></div>
       <div class="legend">
         <span style="--c:var(--c1)"><i></i>Ma plongée</span>
         <span style="--c:var(--c4)" id="lgGhost"><i class="dash"></i>Même plongée à l’air</span>

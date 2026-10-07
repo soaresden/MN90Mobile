@@ -9,7 +9,7 @@
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
     'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'gearArt', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
-    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc'];
+    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc', 'layerBar', 'layerSum'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile, H = window.MN90Help;
@@ -75,6 +75,7 @@
         if (air.prof) res.air = air;
       }
       if (S.view === 'param') res.lim = L.limits(res.depth, res.fo2, res.nitrox, g);
+      if (res.prof) res.tl = L.timeline(res.prof.pts, res.fo2, g, 300);
       return res;
     }
 
@@ -119,6 +120,7 @@
       renderAnswer(r);
       renderReqs(r);
       renderKpis(r);   // avant la courbe : sa hauteur dépend de la place laissée par les vignettes
+      renderLayerSum(r);
       drawChart(r);
       renderGauges(r);
       renderStops(r);
@@ -193,6 +195,74 @@
       el.reqs.innerHTML = html;
     }
 
+    /* ---------- Calques : paramètres qui évoluent au fil de la plongée ----------
+       Chaque calque a sa propre échelle (bas = 0, haut = max) ; sa couleur suit la zone
+       (vert / orange / rouge) et une étiquette donne la valeur à la sortie. */
+    const LAYERS = [
+      { key: 'press', icon: '🫧', name: 'Bouteille', dash: '', max: r => r.gear.press, fmt: v => `${Math.round(v)} b`,
+        zone: (v, r) => (v < r.gear.reserve ? 'danger' : v < r.gear.reserve + 20 ? 'warn' : 'ok') },
+      { key: 'sat', icon: '🧬', name: 'Saturation N₂', dash: '7 4', max: () => 120, fmt: v => `${Math.round(v)} %`,
+        zone: v => (v > 100 ? 'danger' : 'ok') },   // 100 % = seuil critique Sc (toutes les lignes MN90 restent dessous)
+      { key: 'snc', icon: '🧠', name: '%SNC', dash: '2 4', max: () => 100, fmt: v => `${Math.round(v)} %`,
+        zone: v => (v > L.LIMITS.sncMax ? 'danger' : v > L.LIMITS.sncWarn ? 'warn' : 'ok') },
+      { key: 'ppo2', icon: '💨', name: 'PpO₂', dash: '10 3 2 3', max: () => 1.8, fmt: v => `${fmt(v, 2)} b`,
+        zone: (v, r) => (v > r.pmax + 1e-9 ? 'danger' : r.nitrox && v > 1.4 ? 'warn' : 'ok') },
+      { key: 'ppn2', icon: '🥴', name: 'Narcose PpN₂', dash: '1 3', max: () => 6.5, fmt: v => `${fmt(v, 1)} b`,
+        zone: v => (v > 5.6 ? 'danger' : v > 3.2 ? 'warn' : 'ok') },
+    ];
+    const ZCOL = { ok: 'var(--ok)', warn: 'var(--warn)', danger: 'var(--danger)' };
+    const ZTXT = { ok: '✓', warn: '⚠', danger: '⛔' };
+    let layersOn;
+    try { layersOn = new Set(JSON.parse(localStorage.getItem('mn90-layers') || '["press","sat"]')); } catch (e) { layersOn = new Set(['press', 'sat']); }
+    const saveLayers = () => { try { localStorage.setItem('mn90-layers', JSON.stringify([...layersOn])); } catch (e) { /* rien */ } };
+
+    function renderLayerBar() {
+      el.layerBar.innerHTML = LAYERS.map(l => `<button type="button" class="layer-btn${layersOn.has(l.key) ? ' on' : ''}" data-layer="${l.key}" aria-pressed="${layersOn.has(l.key)}">
+        <svg viewBox="0 0 22 8" aria-hidden="true"><line x1="1" x2="21" y1="4" y2="4" stroke="currentColor" stroke-width="2.5"${l.dash ? ` stroke-dasharray="${l.dash}"` : ''}/></svg>${l.icon} ${l.name}</button>`).join('');
+    }
+
+    // Bilan : valeur à la sortie et pire valeur de chaque calque affiché
+    function renderLayerSum(r) {
+      if (!r.tl) { el.layerSum.innerHTML = ''; return; }
+      const parts = LAYERS.filter(l => layersOn.has(l.key)).map(l => {
+        const arr = r.tl[l.key], last = arr[arr.length - 1];
+        const worst = l.key === 'press' ? Math.min(...arr) : Math.max(...arr);
+        const zl = l.zone(last, r), zw = l.zone(worst, r);
+        const z = zw === 'danger' || zl === 'danger' ? 'danger' : zw === 'warn' || zl === 'warn' ? 'warn' : 'ok';
+        const extra = l.key === 'press' ? '' : ` · max ${l.fmt(worst)}`;
+        return `<span class="${z}">${ZTXT[z]} ${l.icon} ${l.name} : sortie ${l.fmt(last)}${extra}</span>`;
+      });
+      el.layerSum.innerHTML = parts.length ? `<b style="align-self:center">Fin de plongée :</b>${parts.join('')}` : '';
+    }
+
+    function drawLayers(r, X, mT, mB) {
+      if (!r.tl) return '';
+      const hgt = mB - mT;
+      let g = '';
+      const labels = [];
+      LAYERS.filter(l => layersOn.has(l.key)).forEach(l => {
+        const arr = r.tl[l.key], max = l.max(r);
+        const Yv = v => mT + (1 - Math.max(0, Math.min(1, v / max))) * hgt;
+        // segments colorés selon la zone
+        let cur = null, pts = [];
+        const flush = () => { if (pts.length > 1) g += `<polyline points="${pts.join(' ')}" fill="none" stroke="${ZCOL[cur]}" stroke-width="2.6" stroke-linejoin="round"${l.dash ? ` stroke-dasharray="${l.dash}"` : ''}/>`; };
+        arr.forEach((v, i) => {
+          const z = l.zone(v, r), p = `${X(r.tl.t[i]).toFixed(1)},${Yv(v).toFixed(1)}`;
+          if (z !== cur) { if (cur) { pts.push(p); flush(); } cur = z; pts = [p]; } else pts.push(p);
+        });
+        flush();
+        const last = arr[arr.length - 1];
+        labels.push({ y: Yv(last), x: X(r.tl.t[arr.length - 1]), text: `${l.icon} ${l.fmt(last)} ${ZTXT[l.zone(last, r)]}`, col: ZCOL[l.zone(last, r)] });
+      });
+      // étiquettes de fin, écartées pour ne pas se chevaucher
+      labels.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 15) labels[i].y = labels[i - 1].y + 15;
+      labels.forEach(lb => {
+        g += `<text x="${lb.x - 4}" y="${lb.y + 4}" text-anchor="end" font-size="11.5" font-weight="800" fill="${lb.col}" style="paint-order:stroke;stroke:var(--water1);stroke-width:3px">${lb.text}</text>`;
+      });
+      return g;
+    }
+
     /* ---------- Courbe SVG ---------- */
     function drawChart(r) {
       const W = Math.max(300, el.chart.clientWidth || 800);
@@ -255,6 +325,7 @@
           g += `<line x1="${X(s.from)}" x2="${X(s.to)}" y1="${Y(s.depth)}" y2="${Y(s.depth)}" style="stroke:var(--p${s.depth})" stroke-width="7" stroke-linecap="round"/>`;
           g += `<text x="${(X(s.from) + X(s.to)) / 2}" y="${Y(s.depth) + 19}" text-anchor="middle" font-size="11.5" font-weight="800" style="fill:var(--p${s.depth})">${s.depth} m · ${s.dur}′</text>`;
         });
+        g += drawLayers(r, X, m.t, H - m.b);
         g += `<circle cx="${X(r.prof.bottomEnd)}" cy="${Y(bottom().at(-1)[1])}" r="4" style="fill:var(--c1)"/>`;
         // DTR : trait violet du départ du fond à la sortie de l'eau, avec son étiquette
         {
@@ -673,7 +744,16 @@
       if (t < 0 || t > r.prof.total) { el.tip.hidden = true; if (cur) cur.style.display = 'none'; return; }
       const z = L.depthAt(r.prof.pts, t);
       if (cur) { cur.setAttribute('x1', S.map.X(t)); cur.setAttribute('x2', S.map.X(t)); cur.style.display = ''; }
-      el.tip.innerHTML = `<b>${mmss(t)}</b> · ${fmt(z, 1)} m<br>PpO₂ ${fmt(L.ppo2At(z, r.fo2), 2)} b`;
+      let tipHtml = `<b>${mmss(t)}</b> · ${fmt(z, 1)} m`;
+      if (r.tl) {
+        const k = Math.max(0, Math.min(r.tl.t.length - 1, Math.round(t / r.tl.t[r.tl.t.length - 1] * (r.tl.t.length - 1))));
+        LAYERS.forEach(l => {
+          if (!layersOn.has(l.key) && l.key !== 'ppo2') return;
+          const v = r.tl[l.key][k], zz = l.zone(v, r);
+          tipHtml += `<br><span style="color:${ZCOL[zz]}">${l.icon} ${l.name} ${l.fmt(v)}</span>${l.key === 'sat' ? ` <small>(C${r.tl.lead[k]})</small>` : ''}`;
+        });
+      }
+      el.tip.innerHTML = tipHtml;
       el.tip.hidden = false;
       const px = e.clientX - rect.left;
       el.tip.style.left = Math.max(4, Math.min(px + 12, rect.width - el.tip.offsetWidth - 6)) + 'px';
@@ -764,6 +844,16 @@
     el.reqs.addEventListener('click', e => { if (e.target.closest('[data-open-profile]')) P.open(); });
     el.tableRead.addEventListener('click', e => { if (e.target.closest('[data-fulltable]')) openFullTable(S.last); });
     el.ptabs.addEventListener('click', e => { const b = e.target.closest('.ptab'); if (b) showPane(b.dataset.pane); });
+    el.layerBar.addEventListener('click', e => {
+      const b = e.target.closest('[data-layer]');
+      if (!b) return;
+      const k = b.dataset.layer;
+      if (layersOn.has(k)) layersOn.delete(k); else layersOn.add(k);
+      saveLayers();
+      renderLayerBar();
+      render();
+    });
+    renderLayerBar();
     el.kpis.addEventListener('click', e => {
       if (e.target.closest('.help-btn')) return;
       const k = e.target.closest('.kpi[data-calc]');
