@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Procédures · MN90 Mobile</title>
+<script src="../shared/theme.js"></script>
+<link rel="stylesheet" href="../shared/style.css">
+<script src="../shared/mn90.js" defer></script>
+<script src="../shared/profile.js" defer></script>
+<script src="../shared/procedures.js" defer></script>
+<style>
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 30px; }
+  @media (min-width: 900px) { .layout { grid-template-columns: 300px minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+  .steps { display: flex; flex-direction: column; gap: 6px; font-size: .9rem; margin-top: 10px; }
+  .steps > div { padding: 7px 9px; border-left: 3px solid var(--accent); background: var(--bg2); }
+  .steps em { font-style: normal; font-weight: 800; color: var(--text2); margin-right: 4px; }
+  .reflex .steps > div { border-left-color: var(--danger); }
+  h3 { margin: 12px 0 6px; } h3:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-back" href="../index.html">← Accueil</a>
+  <span class="nav-title">🚨 Procédures</span>
+  <div class="navbar-actions">
+    <button type="button" class="profile-chip">🤿 Mon profil</button>
+    <div class="theme-picker">
+      <button type="button" class="theme-btn" aria-label="Changer de thème">🎨</button>
+      <div class="theme-dropdown"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="layout">
+  <section class="card">
+    <h2>Ma plongée</h2>
+    <label class="field"><span class="field-row">Profondeur max <b><span id="vDepth"></span> m</b></span>
+      <input type="range" id="depth" min="6" max="60" step="1" value="30"></label>
+    <label class="field"><span class="field-row">Durée de plongée <b><span id="vTime"></span> min</b></span>
+      <input type="range" id="time" min="1" max="90" step="1" value="25"></label>
+    <div class="field">Gaz
+      <div class="seg" id="gasSeg">
+        <button type="button" data-v="air" class="on">Air</button>
+        <button type="button" data-v="nx">Nitrox</button>
+      </div>
+    </div>
+    <label class="field" id="o2Field" hidden><span class="field-row">Mélange <b>Nx<span id="vO2"></span></b></span>
+      <input type="range" id="o2" min="22" max="40" step="1" value="32"></label>
+    <p class="hint">Bloc, conso et réserve : ceux de ton profil (bouton en haut).</p>
+  </section>
+
+  <section class="card reflex">
+    <h2>🆘 Fiche réflexe accident</h2>
+    <div id="reflex"></div>
+  </section>
+
+  <section class="card">
+    <h2>🚨 Procédures MN90 pour cette plongée</h2>
+    <div id="proc"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  function init() {
+    const L = window.MN90Lib, P = window.MN90Profile, X = window.MN90Procedures;
+    const ids = ['depth', 'time', 'vDepth', 'vTime', 'gasSeg', 'o2Field', 'o2', 'vO2', 'reflex', 'proc'];
+    const el = {};
+    if (!L || !P || !X || ids.some(id => !(el[id] = document.getElementById(id)))) { console.error('[procédures] init impossible'); return; }
+    let gas = 'air';
+    function render() {
+      el.vDepth.textContent = el.depth.value;
+      el.vTime.textContent = el.time.value;
+      el.vO2.textContent = el.o2.value;
+      el.o2Field.hidden = gas !== 'nx';
+      el.gasSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === gas));
+      const fo2 = gas === 'nx' ? +el.o2.value / 100 : 0.21;
+      const r = X.compute(+el.depth.value, +el.time.value, fo2, gas === 'nx', P.get().gear);
+      el.proc.innerHTML = r.prof ? X.html(r) : `<div class="alert danger">${r.tab.err}</div>`;
+    }
+    el.reflex.innerHTML = X.reflex();
+    [el.depth, el.time, el.o2].forEach(i => i.addEventListener('input', render));
+    el.gasSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { gas = b.dataset.v; render(); } });
+    P.onChange(render);
+    render();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body>
+</html>
