@@ -12,7 +12,7 @@
     { id: 'deep-ocean',      label: '🌊 Grands fonds',        dot: '#2dd4bf' },
     { id: 'sunset',          label: '🌅 Coucher de soleil',   dot: '#b23c0e' },
     { id: 'octobre-rose',    label: '🎗️ Octobre rose',        dot: '#db2777' },
-    { id: 'ouistreham',      label: '🏖️ Ouistreham',          dot: '#1f5f7a' },
+    { id: 'ouistreham',      label: '⛵ Ouistreham',          dot: '#1D4E89' },
     { id: 'tortue',          label: '🐢 Tortue',              dot: '#2f6b3a' },
     { id: 'hippocampe',      label: '🐉 Hippocampe',          dot: '#f5b83d' },
     { id: 'crevette',        label: '🦐 Crevette',            dot: '#e8603c' },

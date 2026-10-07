@@ -8,6 +8,16 @@
 <script src="shared/theme.js"></script>
 <link rel="stylesheet" href="shared/style.css">
 <script src="shared/profile.js" defer></script>
+<script src="shared/wear-version.js" defer></script>
+<script defer>
+  document.addEventListener('DOMContentLoaded', () => {
+    const W = window.MN90_WEAR;
+    if (!W) return;
+    document.querySelectorAll('[data-wear-version]').forEach(e => { e.textContent = 'v' + W.version; });
+    const dl = document.getElementById('wearApk');
+    if (dl) { dl.href = W.apk; dl.title = 'Télécharger MN90 Montre v' + W.version; }
+  });
+</script>
 <style>
   .hero { padding: 26px 0 8px; text-align: center; }
   .hero-logo { font-size: 2.6rem; }
@@ -16,7 +26,10 @@
   .section-label { font-size: .76rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text2); padding: 18px 0 2px; }
   .me { margin: 16px 0 0; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; font-size: .9rem; color: var(--text2); }
   .home { max-width: 1800px; }
-  .home .tool-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .watch-card { gap: 8px; }
+  .watch-main { color: inherit; text-decoration: none; display: flex; flex-direction: column; }
+  .watch-dl { align-self: flex-start; margin-top: 4px; }
+  .home .tool-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
   footer { text-align: center; padding: 26px 0 30px; font-size: .78rem; color: var(--text2); }
 </style>
 </head>
@@ -71,12 +84,15 @@
       <div class="tool-card-desc">Fiche réflexe accident, remontée rapide, panne d’ordinateur, palier interrompu, remontée lente : calculées pour ta plongée.</div>
       <span class="tool-card-badge">Toujours accessible via 🚨</span>
     </a>
-    <a class="tool-card" href="watch/index.html">
-      <div class="tool-card-icon">⌚</div>
-      <div class="tool-card-title">Montre</div>
-      <div class="tool-card-desc">Une question, une réponse : temps max, paliers, décollage, MOD, best mix, remontée rapide. Aussi en appli Wear OS.</div>
-      <span class="tool-card-badge">Wear OS</span>
-    </a>
+    <div class="tool-card watch-card">
+      <a class="watch-main" href="watch/index.html">
+        <div class="tool-card-icon">⌚</div>
+        <div class="tool-card-title">Montre</div>
+        <div class="tool-card-desc">Une question, une réponse : temps max, paliers, décollage, MOD, best mix, remontée rapide.</div>
+      </a>
+      <a class="btn btn-primary btn-sm watch-dl" id="wearApk" href="https://github.com/soaresden/MN90Mobile/releases/latest/download/MN90-Montre.apk">⬇️ APK Wear OS <span data-wear-version></span></a>
+      <span class="tool-card-badge">Version en ligne : <b data-wear-version>—</b></span>
+    </div>
     <a class="tool-card" href="3dassist/index.html">
       <div class="tool-card-icon">🦺</div>
       <div class="tool-card-title">Remontée assistée 3D</div>

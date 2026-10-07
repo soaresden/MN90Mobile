@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>MN90 Montre</title>
 <script src="../shared/mn90.js"></script>
+<script src="../shared/wear-version.js"></script>
 <style>
   /* Écran de montre rond : sombre (OLED), gros caractères, marges pour les bords arrondis */
   :root { --bg: #000; --card: #12202e; --line: #24394f; --text: #f2f7fb; --muted: #a9bccc; --accent: #22d3ee;
@@ -143,7 +144,8 @@
   ];
 
   function home() {
-    app.innerHTML = `<h1>🤿 MN90</h1><p class="sub">Une question, une réponse</p>` +
+    const ver = window.MN90_WEAR ? ' · v' + window.MN90_WEAR.version : '';
+    app.innerHTML = `<h1>🤿 MN90</h1><p class="sub">Une question, une réponse${ver}</p>` +
       Q.map(q => `<button class="q" data-q="${q.id}"><span>${q.icon}</span>${q.title}</button>`).join('');
   }
   function screen(q) {

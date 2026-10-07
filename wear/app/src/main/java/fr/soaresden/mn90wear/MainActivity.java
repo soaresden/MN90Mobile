@@ -130,6 +130,15 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Numéro de version installé (à comparer avec celui affiché sur le site). */
+    private String appVersion() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            return "?";
+        }
+    }
+
     // ---------- Valeurs ----------
     private String[] field(String key) {
         for (String[] f : FIELDS) if (f[0].equals(key)) return f;
@@ -177,6 +186,7 @@ public class MainActivity extends Activity {
         col.removeAllViews();
         col.addView(text("🤿 MN90", 22, ACCENT, true));
         col.addView(text("Une question, une réponse", 13, MUTED, false));
+        col.addView(text("v" + appVersion(), 12, MUTED, false));
         space(8);
         for (String[] q : QUESTIONS) {
             Button b = button(q[1], 14);
