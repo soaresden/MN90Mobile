@@ -213,6 +213,44 @@
     };
   }
 
+  /* ---------- Procédures MN90 (mode d'emploi des tables fédérales) ---------- */
+
+  // Remontée rapide (> 15-17 m/min), réimmersion possible en moins de 3 min :
+  // demi-profondeur (moitié de la profondeur de table ; Nitrox : moitié de la profondeur réelle),
+  // palier de 5 min, durée = début de plongée → fin du palier de demi-profondeur,
+  // au minimum 2 min à 3 m.  Hypothèses : remontée rapide à 30 m/min, 3 min en surface.
+  function rapidAscent(res) {
+    if (!res.prof) return null;
+    const ref = res.nitrox ? res.depth : res.tab.d;
+    const mid = ref / 2;
+    const i = res.prof.pts.findIndex(p => p[0] >= res.prof.bottomEnd - 1e-9);
+    const pts = res.prof.pts.slice(0, i + 1).map(p => p.slice());
+    let [t, z] = pts[pts.length - 1];
+    t += z / 30; pts.push([t, 0]);
+    const tSurface = t;
+    t += 3; pts.push([t, 0]);
+    t += mid / SPEED.desc; pts.push([t, mid]);
+    t += 5; pts.push([t, mid]);
+    const duration = Math.ceil(t - 1e-9);   // minute commencée = minute entière
+    const tabDepth = res.nitrox ? pea(res.depth, res.fo2) : res.depth;
+    const tab = lookup(Math.max(tabDepth, 0.1), duration);
+    if (tab.err) return { mid, duration, err: tab.err };
+    const stops = Object.assign({}, tab.stops);
+    stops[3] = Math.max(stops[3] || 0, 2);
+    const prof = buildProfile(pts, stops);
+    return { mid, ref, duration, tab, stops, prof, tSurface };
+  }
+
+  // Remontée lente jusqu'au 1er palier : on majore la durée de plongée de la durée de remontée
+  function slowAscent(res, speed) {
+    if (!res.prof) return null;
+    const first = stopList(res.tab.stops)[0] || 0;
+    const tAsc = (res.depth - first) / speed;
+    const duration = Math.ceil(res.time + tAsc - 1e-9);
+    const tabDepth = res.nitrox ? pea(res.depth, res.fo2) : res.depth;
+    return { speed, tAsc, duration, tab: lookup(Math.max(tabDepth, 0.1), duration) };
+  }
+
   const fmt = (n, d = 0) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
   const mmss = m => {
     const mm = Math.floor(m), ss = Math.round((m - mm) * 60);
@@ -223,6 +261,6 @@
   window.MN90Lib = {
     MN90, DEPTHS, STOP_DEPTHS, SPEED, LIMITS, NOAA,
     pabs, ppo2At, pea, mod, bestMix, lookup, stopList, buildProfile, squareBottom,
-    gasUse, noaaLimit, toxicity, depthAt, evaluate, limits, beta, ascentGas, decollage, fmt, mmss,
+    gasUse, noaaLimit, toxicity, depthAt, evaluate, limits, beta, ascentGas, decollage, rapidAscent, slowAscent, fmt, mmss,
   };
 })();
