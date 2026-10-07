@@ -150,7 +150,8 @@
   function themeRow() {
     const T = window.MN90Theme;
     if (!T || !T.tiles) return '';
-    return `<div class="pf-theme" role="group" aria-label="Thème"><span class="pf-theme-lbl">🎨 Thème</span><div class="th-row">${T.tiles(T.current())}</div></div>`;
+    const cur = T.THEMES.find(t => t.id === T.current()) || T.THEMES[0];
+    return `<div class="pf-theme" role="group" aria-label="Thème"><span class="pf-theme-lbl">🎨 Thème · <b id="pf-th-name">${cur.label}</b></span><div class="th-grid th-mini">${T.tiles(cur.id)}</div></div>`;
   }
 
   function buildModal() {
@@ -160,10 +161,9 @@
     modal.hidden = true;
     modal.innerHTML = `
       <div class="modal pf-modal" role="dialog" aria-modal="true" aria-labelledby="pf-title">
-        <h2 id="pf-title">🤿 Mon profil plongeur</h2>
-        ${langRow()}
+        <div class="pf-head"><h2 id="pf-title">🤿 Mon profil plongeur</h2>${langRow()}</div>
+        <p class="pf-note muted">Gardé uniquement sur ${window.MN90Theme && window.MN90Theme.storedWhere ? window.MN90Theme.storedWhere() : 'cet appareil'} (rien n’est envoyé). Il sert à vérifier tes prérogatives et à calculer ton autonomie dans tous les outils.</p>
         ${themeRow()}
-        <p class="muted">Gardé uniquement sur ${window.MN90Theme && window.MN90Theme.storedWhere ? window.MN90Theme.storedWhere() : 'cet appareil'} (rien n’est envoyé). Il sert à vérifier tes prérogatives et à calculer ton autonomie dans tous les outils.</p>
         <div class="pf-cols"><div>
         <fieldset><legend>Mon niveau</legend><div class="pills" data-pf="level">
           <label class="pill"><input type="radio" name="pf-level" value=""><span>Pas encore</span></label>
@@ -176,12 +176,12 @@
           ${NITROX.map(n => `<label class="pill"><input type="radio" name="pf-nx" value="${n.id}"><span>${n.label}</span></label>`).join('')}
         </div></fieldset>
         </div><div>
-        <fieldset><legend>Mon matériel et ma consommation</legend><div class="gear-art" id="pf-gear"></div><div class="grid2">
+        <fieldset><legend>Mon matériel et ma consommation</legend><div class="pf-gear"><div class="gear-art" id="pf-gear"></div><div class="grid2">
           <label class="field">Bloc (L)<input class="input" type="number" inputmode="decimal" data-g="tank" min="3" max="40" step="1"></label>
           <label class="field">Pression bouteille de départ (bar)<input class="input" type="number" inputmode="numeric" data-g="press" min="50" max="300" step="10"></label>
           <label class="field">Conso surface (L/min)<input class="input" type="number" inputmode="numeric" data-g="sac" min="5" max="60" step="1"></label>
           <label class="field">Réserve (bar)<input class="input" type="number" inputmode="numeric" data-g="reserve" min="0" max="150" step="10"></label>
-        </div><p class="muted small">Pas sûr de ta conso ? 20 L/min est la valeur utilisée en formation.</p></fieldset>
+        </div></div><p class="muted small">Pas sûr de ta conso ? 20 L/min est la valeur utilisée en formation.</p></fieldset>
         </div></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-outline" data-act="later">Plus tard</button>
@@ -194,6 +194,8 @@
       const th = e.target.closest('[data-theme-pick]');
       if (th && window.MN90Theme) {
         window.MN90Theme.apply(th.dataset.themePick);
+        const t = window.MN90Theme.THEMES.find(x => x.id === th.dataset.themePick), nm = modal.querySelector('#pf-th-name');
+        if (t && nm) nm.textContent = t.label;
         return;
       }
       const lg = e.target.closest('[data-lang]');

@@ -34,7 +34,7 @@
 
   // Vignettes d'aperçu : chaque vignette porte data-theme, elle s'affiche donc avec les couleurs de son thème
   function tiles(cur) {
-    return THEMES.map(t => `<button type="button" class="th-tile${t.id === cur ? ' on' : ''}" data-theme="${t.id}" data-theme-pick="${t.id}" aria-pressed="${t.id === cur}">
+    return THEMES.map(t => `<button type="button" class="th-tile${t.id === cur ? ' on' : ''}" data-theme="${t.id}" data-theme-pick="${t.id}" aria-pressed="${t.id === cur}" title="${t.label}" aria-label="${t.label}">
         <span class="th-prev" aria-hidden="true"><i class="th-bar"></i><i class="th-card"><b></b><b></b></i><i class="th-dot"></i></span>
         <span class="th-name">${t.label}</span></button>`).join('');
   }
