@@ -1,7 +1,7 @@
 /* MN90 Mobile — service worker : appli installable et utilisable hors ligne.
    Stratégie "réseau d'abord" : en ligne on a toujours la dernière version ;
    hors ligne, on sert la dernière copie gardée en cache. */
-const CACHE = 'mn90-v1';
+const CACHE = 'mn90-v2';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './shared/style.css', './shared/theme.js', './shared/mn90.js', './shared/profile.js', './shared/glossary.js',

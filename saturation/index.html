@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Saturation et GF · MN90 Mobile</title>
+<script src="../shared/theme.js"></script>
+<link rel="stylesheet" href="../shared/style.css">
+<script src="../shared/mn90.js" defer></script>
+<script src="../shared/buhlmann.js" defer></script>
+<script src="../shared/profile.js" defer></script>
+<script src="../shared/glossary.js" defer></script>
+<script src="app.js" defer></script>
+<style>
+  /* Empilé sur téléphone, tableau de bord plein écran sur ordinateur (comme la page Nitrox) */
+  .sx-app { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 30px; }
+  .sx-side, .sx-center { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .sx-panel { display: flex; flex-direction: column; min-width: 0; padding: 10px; }
+  .side-field .field { margin-bottom: 8px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 8px; }
+  .presets button { border: 1px solid var(--border); background: var(--bg2); color: var(--text); border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: .8rem; cursor: pointer; }
+  .presets button.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .duo > div { border: 1px solid var(--border); border-radius: 10px; padding: 7px 8px; background: var(--bg2); min-width: 0; }
+  .duo > div.on { border: 2px solid var(--accent); }
+  .duo span { display: block; font-size: .72rem; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: .03em; }
+  .duo b { display: block; font-size: 1.35rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .duo small { display: block; font-size: .8rem; color: var(--text2); }
+  .plot { position: relative; min-height: 220px; }
+  .plot svg { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--border); touch-action: pan-y; }
+  .plot-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: .76rem; color: var(--text2); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { display: inline-block; width: 16px; height: 4px; border-radius: 2px; background: var(--c); }
+  .legend i.dash { background: repeating-linear-gradient(90deg, var(--c) 0 4px, transparent 4px 7px); }
+  .scrub { display: flex; align-items: center; gap: 10px; }
+  .scrub input { flex: 1; }
+  .scrub b { min-width: 9em; text-align: right; font-variant-numeric: tabular-nums; font-size: .88rem; }
+  .play { border: 1px solid var(--border); background: var(--bg2); color: var(--text); border-radius: 999px; width: 36px; height: 36px; cursor: pointer; font-size: 1rem; flex-shrink: 0; }
+  .ptabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .ptab { border: 1px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 999px; padding: 5px 10px; font-weight: 700; font-size: .8rem; cursor: pointer; }
+  .ptab.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .pane[hidden] { display: none !important; }
+  .pane h3 { margin: 10px 0 6px; }
+  .pane h3:first-child { margin-top: 0; }
+  .steps { display: flex; flex-direction: column; gap: 6px; font-size: .88rem; }
+  .steps > div { padding: 6px 9px; border-left: 3px solid var(--accent); background: var(--bg2); }
+  .steps em { font-style: normal; font-weight: 800; color: var(--text2); margin-right: 4px; }
+  .gf-tbl td:first-child, .gf-tbl th:first-child { text-align: left; }
+  .gf-tbl tr.cur td { font-weight: 800; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .gf-tbl tr.mn td { font-style: italic; }
+  .gf-tbl tbody tr { cursor: pointer; }
+  .q-tbl tr.cur td { font-weight: 800; background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .bars-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .bars-head .seg { min-width: 230px; }
+  .side-field select { width: 100%; }
+
+  @media (min-width: 1000px) and (min-height: 600px) {
+    html, body { height: 100%; overflow: hidden; }
+    .sx-app { grid-template-columns: 290px minmax(0, 1fr) minmax(340px, 28vw); height: calc(100dvh - var(--nav-h, 58px)); padding: 10px 14px; }
+    .sx-side { overflow-y: auto; }
+    .sx-center { min-height: 0; gap: 8px; }
+    .sx-center .card { min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; }
+    .sx-center .card.grow { flex: 1.5; }
+    .sx-center .card.grow2 { flex: 1; }
+    .plot { flex: 1; min-height: 120px; }
+    .plot svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .sx-panel { min-height: 0; }
+    .pbody { flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-back" href="../index.html">← Accueil</a>
+  <span class="nav-title">🫧 Saturation et GF</span>
+  <div class="navbar-actions">
+    <a class="nav-sos" href="../procedures/index.html" title="Procédures d’urgence"><span aria-hidden="true">🚨</span><span class="nav-sos-txt"> Procédures</span></a>
+    <button type="button" class="profile-chip">🤿 Mon profil</button>
+    <div class="theme-picker">
+      <button type="button" class="theme-btn" aria-label="Changer de thème">🎨</button>
+      <div class="theme-dropdown"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="sx-app">
+  <!-- ===== Réglages ===== -->
+  <aside class="sx-side">
+    <section class="card side-field">
+      <h2>🤿 Ma plongée</h2>
+      <label class="field"><span class="field-row">Profondeur <b><span id="vDepth"></span> m</b></span>
+        <input type="range" id="depth" min="12" max="60" step="1" value="50"></label>
+      <label class="field"><span class="field-row">Durée de plongée <b><span id="vTime"></span> min</b></span>
+        <input type="range" id="time" min="5" max="60" step="1" value="15"></label>
+      <label class="field"><span class="field-row">Mélange <b id="vGas"></b></span>
+        <input type="range" id="o2" min="21" max="40" step="1" value="21"></label>
+    </section>
+    <section class="card side-field">
+      <h2>🎚️ Mes GF <button type="button" class="help-btn" data-help="gf" aria-label="C’est quoi ?">?</button></h2>
+      <div class="presets" id="presets"></div>
+      <label class="field"><span class="field-row">GF bas <b><span id="vLow"></span> %</b></span>
+        <input type="range" id="gfLow" min="10" max="100" step="5" value="85"></label>
+      <label class="field"><span class="field-row">GF haut <b><span id="vHigh"></span> %</b></span>
+        <input type="range" id="gfHigh" min="40" max="100" step="5" value="85"></label>
+      <div class="duo" id="duo"></div>
+      <p class="hint" id="gfHint" style="margin-top:6px"></p>
+    </section>
+    <section class="card side-field">
+      <h2>🔬 Compartiment suivi</h2>
+      <select class="input" id="comp"></select>
+      <p class="hint" style="margin-top:6px">Par défaut : le compartiment <b>directeur</b>, celui qui impose le premier palier.</p>
+    </section>
+  </aside>
+
+  <!-- ===== Graphiques ===== -->
+  <div class="sx-center">
+    <section class="card grow">
+      <div class="plot-title"><h2>📈 Tension et pression absolue <button type="button" class="help-btn" data-help="mvalue" aria-label="C’est quoi ?">?</button></h2>
+        <div class="legend">
+          <span style="--c:var(--text2)"><i></i>Pression absolue</span>
+          <span style="--c:var(--danger)"><i></i>M-value</span>
+          <span style="--c:var(--accent)"><i></i>Ligne GF</span>
+          <span style="--c:var(--c1)"><i></i>Tissu suivi</span>
+        </div></div>
+      <div class="plot" id="pPlot"></div>
+      <div class="scrub">
+        <button type="button" class="play" id="play" aria-label="Lecture">▶</button>
+        <input type="range" id="tCur" min="0" max="100" step="0.1" value="100" aria-label="Moment de la plongée">
+        <b id="vCur"></b>
+      </div>
+    </section>
+    <section class="card grow2">
+      <div class="bars-head"><h2>🫧 Les compartiments à cet instant</h2>
+        <div class="seg" id="model">
+          <button type="button" data-v="zh" class="on">Bühlmann · 16</button>
+          <button type="button" data-v="mn">MN90 · 12</button>
+        </div></div>
+      <div class="plot" id="bPlot"></div>
+    </section>
+  </div>
+
+  <!-- ===== Panneau à onglets ===== -->
+  <section class="card sx-panel">
+    <div class="ptabs" id="tabs" role="tablist">
+      <button type="button" class="ptab on" data-pane="cmp">⚖️ Comparer les GF</button>
+      <button type="button" class="ptab" data-pane="prof">📉 Profils</button>
+      <button type="button" class="ptab" data-pane="read">📖 Lire le graphique</button>
+      <button type="button" class="ptab" data-pane="q">🎲 Facteur Q</button>
+    </div>
+    <div class="pbody">
+      <div class="pane" data-pane="cmp">
+        <h3>Même plongée, GF différents</h3>
+        <div class="tbl-wrap"><table class="tbl gf-tbl" id="cmpTbl"></table></div>
+        <p class="hint" style="margin-top:6px">Touche une ligne pour l’essayer. « % DTR à moins de 10 m » : part de la remontée passée dans les 10 derniers mètres.</p>
+        <div class="steps" id="cmpNotes" style="margin-top:10px"></div>
+      </div>
+      <div class="pane" data-pane="prof" hidden>
+        <h3>Profil GF et profil MN90</h3>
+        <div class="plot" id="zPlot" style="min-height:230px"></div>
+        <div class="steps" id="profSteps" style="margin-top:10px"></div>
+      </div>
+      <div class="pane" data-pane="read" hidden>
+        <div class="steps" id="readSteps"></div>
+      </div>
+      <div class="pane" data-pane="q" hidden>
+        <div class="steps" id="qSteps"></div>
+        <h3>Risque statistique d’accident</h3>
+        <div class="tbl-wrap"><table class="tbl q-tbl" id="qTbl"></table></div>
+        <p class="hint" style="margin-top:6px">Doubler la profondeur, c’est diviser le temps par 4 pour garder le même Q.</p>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

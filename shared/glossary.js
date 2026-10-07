@@ -47,6 +47,16 @@
       simple: 'Respirer de l’oxygène très longtemps irrite les poumons, comme un coup de soleil à l’intérieur. 1 OTU = 1 minute d’oxygène pur à la surface. Limite : 850 par jour.',
       cours: 'Effet Lorrain-Smith, dès PpO₂ 0,5 b dans la durée. OTU/min = ((PpO₂ − 0,5) / 0,5)^0,83. Dose max 850 OTU pour 1 jour, moins sur plusieurs jours consécutifs.',
     },
+    gf: {
+      title: 'GF : facteurs de gradient',
+      simple: 'Deux réglages de prudence de l’ordinateur. Le GF bas décide où commence le premier palier, le GF haut combien on garde de marge en sortant de l’eau. Plus ils sont bas, plus la remontée est prudente et longue.',
+      cours: 'Modèle Bühlmann ZHL-16C. GF = part de l’écart entre pression ambiante et M-value qu’on s’autorise. GF bas ↓ : premier palier plus profond ; GF haut ↓ : dernier palier plus long. Le cours conseille des valeurs entre 85 et 100.',
+    },
+    mvalue: {
+      title: 'M-value : la tension maximale tolérée',
+      simple: 'Pour chaque tissu, la quantité d’azote au-delà de laquelle des bulles se forment. Elle dépend de la pression autour de toi : plus tu es profond, plus le tissu en supporte.',
+      cours: 'M = a + Pabs / b (coefficients Bühlmann de chaque compartiment). Le graphique du cours trace la tension du tissu en fonction de la pression absolue : sous la droite ambiante le tissu se charge, entre ambiante et M-value il désature sans bulles, au-dessus de la M-value : bulles.',
+    },
     palier: {
       title: 'Palier',
       simple: 'Un arrêt obligatoire à une profondeur donnée pendant la remontée, pour laisser ton corps éliminer l’azote sans faire de bulles.',
