@@ -6,6 +6,7 @@
 <title>Briefing · MN90 Mobile</title>
 <script src="../shared/theme.js"></script>
 <link rel="stylesheet" href="../shared/style.css">
+<script src="../shared/mn90.js" defer></script>
 <script src="../shared/profile.js" defer></script>
 <style>
   .bf-app { padding: 12px 16px 30px; max-width: 1800px; margin: 0 auto; }
@@ -25,6 +26,20 @@
   .bf-item.on span { color: var(--text2); text-decoration: line-through; }
   .bf-item b { color: var(--accent); }
   .bf-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* Calcul intégré : on reste sur le briefing */
+  .bf-calc { padding: 12px; margin-bottom: 12px; }
+  .bf-calc h2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .bf-in { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin: 8px 0 10px; }
+  .bf-in label { display: flex; flex-direction: column; gap: 3px; font-size: .8rem; font-weight: 700; color: var(--text2); }
+  .bf-in input { width: 100%; font-size: 1rem; }
+  .bf-out { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 8px; }
+  .bf-out > div { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: var(--bg2); }
+  .bf-out > div.key { border: 2px solid var(--accent); }
+  .bf-out span { display: block; font-size: .75rem; color: var(--text2); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .bf-out b.v { display: block; font-size: 1.5rem; line-height: 1.15; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .bf-out small { display: block; font-size: .8rem; color: var(--text2); }
+  .bf-note { margin-top: 8px; font-size: .85rem; }
+  .bf-calc .alert { margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -50,10 +65,22 @@
     </div>
     <div class="bf-prog"><span id="progTxt"></span><div class="bar"><i id="progBar"></i></div></div>
     <div class="bf-actions">
-      <a class="btn btn-outline btn-sm" href="../planner/index.html#contrat">⏱️ Calculer DTR, décollage, mi-pression</a>
       <button type="button" class="btn btn-outline btn-sm" id="reset">↺ Tout décocher</button>
     </div>
   </div>
+  <section class="card bf-calc" id="calc">
+    <h2>🧮 DTR, décollage et mi-pression <small class="muted" style="font-weight:600;text-transform:none;letter-spacing:0">calculé ici, sans quitter le briefing</small></h2>
+    <div class="bf-in">
+      <label>Profondeur (m)<input class="input" type="number" inputmode="numeric" data-c="depth" min="6" max="65" step="1"></label>
+      <label>Durée au fond (min)<input class="input" type="number" inputmode="numeric" data-c="time" min="1" max="120" step="1"></label>
+      <label>% O₂ (21 = air)<input class="input" type="number" inputmode="numeric" data-c="o2" min="21" max="40" step="1"></label>
+      <label>Bloc (L)<input class="input" type="number" inputmode="numeric" data-c="tank" min="3" max="40" step="1"></label>
+      <label>Pression départ (b)<input class="input" type="number" inputmode="numeric" data-c="press" min="50" max="300" step="10"></label>
+      <label>Conso (L/min)<input class="input" type="number" inputmode="numeric" data-c="sac" min="5" max="60" step="1"></label>
+      <label>Réserve (b)<input class="input" type="number" inputmode="numeric" data-c="reserve" min="0" max="150" step="10"></label>
+    </div>
+    <div id="calcOut"></div>
+  </section>
   <div class="bf-grid" id="grid"></div>
 </main>
 
@@ -113,7 +140,53 @@
     });
     document.getElementById('reset').addEventListener('click', () => { st[cur] = {}; save(); render(); });
     render();
+    initCalc();
   }
+  /* ---------- Calcul de briefing : table MN90, Tito, mi-pression ---------- */
+  function initCalc() {
+    const box = document.getElementById('calc'), out = document.getElementById('calcOut');
+    const L = window.MN90Lib, P = window.MN90Profile;
+    if (!box || !out) return;
+    if (!L) { box.hidden = true; return; }
+    const g0 = P ? P.get().gear : { tank: 15, press: 200, sac: 20, reserve: 50 };
+    const def = { depth: 40, time: 20, o2: 21, tank: g0.tank, press: g0.press, sac: g0.sac, reserve: g0.reserve };
+    const v = Object.assign({}, def, st.calc || {});
+    const inputs = box.querySelectorAll('[data-c]');
+    inputs.forEach(i => { i.value = v[i.dataset.c]; });
+    const fmt = L.fmt;
+    const num = (i, d) => { const x = parseFloat(i.value); const lo = +i.min, hi = +i.max; return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d; };
+    function calc() {
+      const c = {};
+      inputs.forEach(i => { c[i.dataset.c] = num(i, def[i.dataset.c]); });
+      st.calc = c; save();
+      const fo2 = c.o2 / 100, nitrox = c.o2 > 21;
+      const gear = { tank: c.tank, press: c.press, sac: c.sac, reserve: c.reserve };
+      const r = L.evaluate({ bottom: L.squareBottom(c.depth, c.time), fo2, nitrox, gear });
+      const pp = L.ppo2At(c.depth, fo2);
+      if (r.tab.err || !r.prof) { out.innerHTML = `<div class="alert danger">${r.tab.err || 'Plongée hors table.'}</div>`; return; }
+      const d = L.decollage(r, gear);
+      const tito = Math.ceil(d.tito / 10) * 10, min = Math.ceil(d.exact);
+      const pdeco = Math.max(tito, min);
+      const pBottom = c.press - L.gasUse(L.squareBottom(c.depth, c.time), c.sac) / c.tank;
+      const half = Math.round(c.press / 2), halfTrip = Math.round((c.press + pdeco) / 2);
+      const st0 = L.stopList(r.tab.stops);
+      const stops = st0.length ? st0.map(z => `<b class="pd${z}">${z} m ${r.tab.stops[z]}′</b>`).join(' + ') : 'aucun palier obligatoire';
+      const read = nitrox ? `PEA ${fmt(r.pea, 1)} m → ligne ${r.tab.d} m / ${r.tab.t}′` : `ligne ${r.tab.d} m / ${r.tab.t}′`;
+      const dtrReal = Math.ceil(r.dtrReal - 1e-9);
+      out.innerHTML = `<div class="bf-out">
+          <div><span>Table MN90</span><b class="v">${r.tab.dtr}′ DTR</b><small>${read} · ${stops} · GPS ${r.tab.gps}${nitrox && dtrReal !== r.tab.dtr ? ` · DTR réelle ≈ ${dtrReal}′` : ''}</small></div>
+          <div class="key"><span>Pression de décollage</span><b class="v">${pdeco} b</b><small>Tito : ${c.depth} + 2 × ${d.dtr} = ${fmt(d.tito, 0)} → ${tito} b${tito < min ? ` · relevée au minimum exact ${min} b (bloc ${c.tank} L)` : ` · minimum exact ${min} b`}</small></div>
+          <div><span>Mi-pression</span><b class="v">${half} b</b><small>moitié de ${c.press} b · aller-retour : demi-tour à (${c.press} + ${pdeco}) / 2 = ${halfTrip} b</small></div>
+          <div><span>Au départ du fond</span><b class="v" style="color:${pBottom < min ? 'var(--danger)' : pBottom < pdeco ? 'var(--warn)' : 'var(--ok)'}">≈ ${Math.round(pBottom)} b</b><small>${c.time} min à ${c.depth} m avec ${c.sac} L/min · surface ≈ ${Math.round(r.left)} b</small></div>
+        </div>
+        ${pp > 1.6 + 1e-9 ? `<div class="alert danger">PpO₂ ${fmt(pp, 2)} b au fond : au-delà de 1,6 b, mélange interdit à cette profondeur (MOD ${fmt(L.mod(fo2, 1.6), 1)} m).</div>` : ''}
+        ${pBottom < min ? `<div class="alert danger">Pas assez d’air : ${Math.round(pBottom)} b au départ du fond pour ${min} b nécessaires. Raccourcis la plongée.</div>` : pBottom < pdeco ? `<div class="alert warn">Avec ≈ ${Math.round(pBottom)} b au départ du fond, c’est la pression (${pdeco} b) qui fera décoller avant le temps.</div>` : ''}
+        <p class="bf-note">🔑 Contrat à annoncer : <b>${c.time} min au fond OU ${pdeco} b au manomètre</b>, le premier des deux fait décoller.</p>`;
+    }
+    box.addEventListener('input', calc);
+    calc();
+  }
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>

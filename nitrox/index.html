@@ -45,7 +45,9 @@
   .pane[hidden] { display: none !important; }
   .side-field .field { margin-bottom: 8px; }
   #lvlSeg button { font-size: .86rem; }
-  .ptab[hidden] { display: none !important; }
+  .ptab[hidden], .conf-only[hidden], .simple-only[hidden] { display: none !important; }
+  .pp-tbl td.bad { color: var(--danger); font-weight: 800; background: color-mix(in srgb, var(--danger) 10%, transparent); }
+  .pp-tbl tr.cur td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
 
   @media (min-width: 1000px) and (min-height: 600px) {
     html, body { height: 100%; overflow: hidden; }
@@ -88,7 +90,7 @@
   <!-- ===== Réglages et réponses ===== -->
   <aside class="nx-side">
     <div class="seg" id="lvlSeg" role="group" aria-label="Niveau Nitrox">
-      <button type="button" data-v="simple" class="on">⚗️ Nitrox</button>
+      <button type="button" data-v="simple" class="on">⚗️ Nitrox simple</button>
       <button type="button" data-v="conf">🎓 Nitrox Confirmé</button>
     </div>
     <section class="card side-field">
@@ -98,10 +100,10 @@
       <div class="field">PpO₂ max retenue
         <div class="seg" id="ppSeg">
           <button type="button" data-v="1.4" class="on">1,4</button>
-          <button type="button" data-v="1.5">1,5</button>
+          <button type="button" data-v="1.5" class="conf-only" hidden>1,5</button>
           <button type="button" data-v="1.6">1,6</button>
         </div>
-        <span class="hint">1,4 recommandé (DAN) · 1,5 pour limiter le %SNC · 1,6 = limite absolue</span>
+        <span class="hint" id="ppHint"></span>
       </div>
       <div class="muted small">MOD : jusqu’où je peux descendre</div>
       <div class="big" id="modBig"></div>
@@ -123,16 +125,18 @@
       <div class="plot-title"><h2>📉 MOD selon le mélange</h2>
         <div class="legend">
           <span style="--c:var(--c1)"><i></i>PpO₂ 1,4</span>
-          <span style="--c:var(--c2)"><i></i>PpO₂ 1,5</span>
+          <span style="--c:var(--c2)" class="conf-only" hidden><i></i>PpO₂ 1,5</span>
           <span style="--c:var(--c3)"><i></i>PpO₂ 1,6</span>
         </div></div>
       <div class="plot" id="modPlot"></div>
     </section>
     <section class="card">
-      <div class="plot-title"><h2>🧠 Toxicité de l’oxygène <button type="button" class="help-btn" data-help="snc" aria-label="C’est quoi ?">?</button></h2>
+      <div class="plot-title conf-only" hidden><h2>🧠 Toxicité de l’oxygène <button type="button" class="help-btn" data-help="snc" aria-label="C’est quoi ?">?</button></h2>
         <span class="small muted">%SNC par minute selon la PpO₂ : regarde le saut entre 1,5 et 1,6 <button type="button" class="btn btn-outline btn-sm" data-noaa>📋 Table NOAA</button></span></div>
+      <div class="plot-title simple-only"><h2>🧠 PpO₂ selon la profondeur <button type="button" class="help-btn" data-help="ppo2" aria-label="C’est quoi ?">?</button></h2>
+        <span class="small muted">Au-delà de 1,6 b : zone interdite</span></div>
       <div class="plot" id="sncPlot"></div>
-      <label class="field" style="margin:0"><span class="field-row">Durée à cette PpO₂ <b><span id="vMin"></span> min</b></span>
+      <label class="field conf-only" hidden style="margin:0"><span class="field-row">Durée à cette PpO₂ <b><span id="vMin"></span> min</b></span>
         <input type="range" id="minutes" min="5" max="120" step="5" value="30"></label>
     </section>
   </div>
@@ -142,7 +146,7 @@
     <div class="ptabs" id="ntabs" role="tablist">
       <button type="button" class="ptab on" data-pane="mix">⚗️ Mélanges</button>
       <button type="button" class="ptab" data-pane="calc">🧮 Calculs</button>
-      <button type="button" class="ptab" data-pane="tox">🧠 Toxicité</button>
+      <button type="button" class="ptab" data-pane="tox">🧠 Toxicité O₂</button>
       <button type="button" class="ptab" data-pane="gen">📋 Table Nitrox</button>
       <button type="button" class="ptab conf-only" data-pane="decogas" hidden>🟢 Gaz de déco</button>
       <button type="button" class="ptab conf-only" data-pane="o2stops" hidden>⏱️ Paliers O₂</button>
@@ -159,7 +163,7 @@
         <div class="steps" id="modSteps"></div>
       </div>
       <div class="pane" data-pane="tox" hidden>
-        <h3>Ma dose d’oxygène <button type="button" class="btn btn-outline btn-sm" data-noaa>📋 Table NOAA</button></h3>
+        <h3 class="conf-only" hidden>Ma dose d’oxygène <button type="button" class="btn btn-outline btn-sm" data-noaa>📋 Table NOAA</button></h3><h3 class="simple-only">Toxicité de l’oxygène</h3>
         <div class="steps" id="sncSteps"></div>
       </div>
       <div class="pane" data-pane="decogas" hidden>
@@ -189,7 +193,7 @@
       </div>
       <div class="pane" data-pane="gen" hidden id="genCard">
         <h3>📋 Ma table de plongée pour ce Nitrox</h3>
-        <p class="small muted" style="margin-bottom:10px">La table MN90 réécrite en <b>profondeurs réelles</b> pour ton mélange : chaque profondeur est lue à sa PEA, comme les tables spécifiques Nitrox du cours. La DTR affichée est la DTR <b>réelle</b>. Immersion limitée à 2 h.</p>
+        <p class="small muted" style="margin-bottom:10px">La table MN90 réécrite en <b>profondeurs réelles</b> pour ton mélange : chaque profondeur est lue à sa PEA, comme les tables spécifiques Nitrox du cours. La DTR affichée est la DTR <b>réelle</b>. Immersion limitée à 2 h (toxicité de l’O₂).</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn btn-primary" id="genBtn">Générer la table</button>
           <button type="button" class="btn btn-outline" id="printBtn" hidden>🖨️ Imprimer / PDF</button>

@@ -25,12 +25,12 @@
     ppo2: {
       title: 'PpO₂ : pression partielle d’oxygène',
       simple: 'La « force » de l’oxygène que tu respires. Elle augmente quand tu descends. Trop forte, l’oxygène devient toxique pour le cerveau.',
-      cours: 'PpO₂ = Pabs × %O₂. Limite FFESSM 1,6 b ; DAN recommande 1,4 b en plongée ; best mix souvent calculé à 1,5 b pour limiter le %SNC.',
+      cours: 'PpO₂ = Pabs × %O₂ (triangle de Dalton). Limite du cours : 1,6 b (effet Paul Bert au-delà). DAN recommande de régler son ordinateur à 1,4 b.',
     },
     mod: {
       title: 'MOD : profondeur maximale d’utilisation',
       simple: 'La profondeur à ne JAMAIS dépasser avec ce mélange. Elle est écrite sur ton bloc.',
-      cours: 'MOD = (PpO₂ max / %O₂ − 1) × 10, arrondie vers le bas. Exemple : Nx32 à 1,4 b → 4,375 b → 33,7 m.',
+      cours: 'MOD = (PpO₂ max / %O₂ − 1) × 10, arrondie vers le bas. Exemples du cours à 1,6 b : air → 66 m, Nx32 → 40 m, Nx40 → 30 m. Elle est écrite sur l’étiquette du bloc.',
     },
     pea: {
       title: 'PEA : profondeur équivalente air',

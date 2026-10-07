@@ -6,8 +6,7 @@
   'use strict';
 
   const NEEDED = ['ntabs', 'vDepth2', 'lvlSeg', 'decoO2', 'vDeco', 'decoOut', 'o2Depth', 'o2Time', 'vOd', 'vOt', 'o2Out', 'gPf', 'gFo2', 'gPi', 'gFi', 'gonfOut', 'o2', 'vO2', 'ppSeg', 'modBig', 'modTrio', 'reqMix', 'modSteps', 'modPlot',
-    'depth', 'vDepth', 'bestTrio', 'mixTbl', 'sncPlot', 'minutes', 'vMin', 'sncSteps', 'genBtn', 'printBtn', 'genOut'];
-  const PPS = [1.4, 1.5, 1.6];
+    'depth', 'vDepth', 'ppHint', 'bestTrio', 'mixTbl', 'sncPlot', 'minutes', 'vMin', 'sncSteps', 'genBtn', 'printBtn', 'genOut'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile;
@@ -16,12 +15,17 @@
     const missing = NEEDED.filter(id => !(el[id] = document.getElementById(id)));
     if (missing.length) { console.error('[nitrox] éléments manquants :', missing); return; }
     const { fmt } = L;
-    const S = { pmax: 1.4, conf: P.get().nitrox === 'PNC' };
+    const S = { conf: P.get().nitrox === 'PNC' };
+    // Cours Nitrox simple : PpO₂ max 1,6 b (1,4 b = réglage d'ordinateur recommandé par DAN)
+    S.pmax = S.conf ? 1.4 : 1.6;
+    const pps = () => (S.conf ? [1.4, 1.5, 1.6] : [1.4, 1.6]);
 
     function render() {
       el.lvlSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.v === 'conf') === S.conf));
       el.o2.max = S.conf ? 100 : 40;
       document.querySelectorAll('.conf-only').forEach(b => { b.hidden = !S.conf; });
+      document.querySelectorAll('.simple-only').forEach(b => { b.hidden = S.conf; });
+      el.ppHint.textContent = S.conf ? '1,4 recommandé (DAN) · 1,5 pour limiter le %SNC · 1,6 = limite absolue' : '1,6 b = limite du cours · 1,4 b = réglage d’ordinateur recommandé (DAN)';
       const onTab = el.ntabs.querySelector('.ptab.on');
       if (!S.conf && onTab && onTab.classList.contains('conf-only')) el.ntabs.querySelector('[data-pane="mix"]').click();
       if (S.conf) { renderDecoGas(); renderO2Stops(); renderGonf(); }
@@ -37,7 +41,7 @@
       // ----- MOD -----
       const mod = L.mod(fo2, S.pmax);
       el.modBig.textContent = `${fmt(mod, 1)} m`;
-      el.modTrio.innerHTML = PPS.map(p => `<div class="${p === S.pmax ? 'on' : ''}"><b>${fmt(L.mod(fo2, p), 1)} m</b><span>à ${fmt(p, 1)} b</span></div>`).join('');
+      el.modTrio.innerHTML = pps().map(p => `<div class="${p === S.pmax ? 'on' : ''}"><b>${fmt(L.mod(fo2, p), 1)} m</b><span>à ${fmt(p, 1)} b</span></div>`).join('');
       const reqs = pct > 21 ? P.requirements({ depth: 0, mode: 'enc', nitrox: true, fo2 }).filter(x => /Nitrox/.test(x.code)) : [];
       const icon = { used: '🟡', missing: '⛔', unknown: '❔' };
       el.reqMix.innerHTML = reqs.map(x => `<div class="req ${x.status}"><span>${icon[x.status] || 'ℹ️'}</span><span><b>${x.code}</b> · ${x.text}</span></div>`).join('');
@@ -45,12 +49,13 @@
       el.modSteps.innerHTML = [
         ['Pression max', `PpO₂ max / %O₂ = ${fmt(S.pmax, 1)} / ${fmt(fo2, 2)} = ${fmt(pa, 3)} b`],
         ['Profondeur', `(${fmt(pa, 3)} − 1) × 10 = ${fmt((pa - 1) * 10, 2)} m → <b>${fmt(mod, 1)} m</b> (arrondi vers le bas : jamais au-delà)`],
-        ['Sur le bloc', `on écrit la MOD et le % d’O₂ analysé, avec la date et ses initiales.`],
+        ['Sur le bloc', `étiquette : % d’O₂ analysé par le préparateur puis par l’utilisateur (date, nom), pression et <b>profondeur maxi</b>.`],
+        ...(pct > 21 && depth <= mod + 1e-9 ? peaSteps(depth, fo2, pct) : []),
       ].map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('');
-      el.modPlot.innerHTML = modChart(fo2, conf || pct > 40);
+      el.modPlot.innerHTML = modChart(fo2, S.conf || pct > 40);
 
       // ----- Best mix et mélanges à cette profondeur -----
-      el.bestTrio.innerHTML = PPS.map(p => {
+      el.bestTrio.innerHTML = pps().map(p => {
         const b = L.bestMix(depth, p);
         return `<div class="${p === S.pmax ? 'on' : ''}"><b>${b >= 100 ? 'O₂ pur' : b <= 21 ? 'Air' : 'Nx' + b}</b><span>à ${fmt(p, 1)} b</span></div>`;
       }).join('');
@@ -70,6 +75,7 @@
 
       // ----- Toxicité -----
       const pp = L.ppo2At(depth, fo2), min = +el.minutes.value;
+      if (!S.conf) { el.sncPlot.innerHTML = ppChart(fo2, depth); el.sncSteps.innerHTML = toxSimple(pct, fo2, depth, pp); return; }
       const lim = L.noaaLimit(pp);
       const snc = pp < 0.6 ? 0 : min / lim * 100;
       el.sncPlot.innerHTML = sncChart(pp, min, snc);
@@ -81,6 +87,60 @@
         ['%SNC', `${min} / ${lim} × 100 = <b style="color:${snc > 80 ? 'var(--danger)' : snc > 50 ? 'var(--warn)' : 'var(--ok)'}">${fmt(snc, 0)} %</b> de la jauge cerveau.`],
         ['OTU', `${fmt(otu, 0)} OTU sur les 850 d’une journée (jauge poumons).`],
       ].map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('');
+    }
+
+    // Profondeur équivalente air, méthode du cours (même PpN₂)
+    function peaSteps(depth, fo2, pct) {
+      const pa = L.pabs(depth), ppn2 = pa * (1 - fo2), paAir = ppn2 / 0.8, z = (paAir - 1) * 10;
+      const line = L.DEPTHS.find(x => x >= Math.max(z, 0.1) - 1e-9);
+      return [
+        ['PpN₂', `Nx${pct} à ${depth} m : ${fmt(pa, 1)} × ${fmt(1 - fo2, 2)} = <b>${fmt(ppn2, 2)} b</b>`],
+        ['Pa air équivalente', `${fmt(ppn2, 2)} / 0,8 = ${fmt(paAir, 2)} b, soit <b>${fmt(z, 1)} m</b> à l’air`],
+        ['Table MN90', `on lit la ligne <b>${line ?? '—'} m</b> (immédiatement supérieure). Attention : la DTR de la table est fausse, on remonte de la profondeur réelle.`],
+      ];
+    }
+
+    // Tableau du cours : PpO₂ par profondeur pour l'air et les Nitrox usuels
+    const PP_MIX = [[21, 'Air', 'var(--text2)'], [32, 'Nx32', 'var(--c1)'], [36, 'Nx36', 'var(--c2)'], [40, 'Nx40', 'var(--c3)']];
+    const withCur = pct => (PP_MIX.some(m => m[0] === pct) ? PP_MIX : [...PP_MIX, [pct, 'Nx' + pct, 'var(--accent)']].sort((a, b) => a[0] - b[0]));
+    function toxSimple(pct, fo2, depth, pp) {
+      const mixes = withCur(pct);
+      const rows = [];
+      for (let z = 0; z <= 65; z += 5) rows.push(`<tr class="${Math.abs(z - depth) < 2.5 ? 'cur' : ''}"><td><b>${z} m</b></td><td>${fmt(L.pabs(z), 1)}</td>${mixes.map(m => { const v = L.ppo2At(z, m[0] / 100); return `<td class="${v > 1.6 + 1e-9 ? 'bad' : ''}">${fmt(v, 2)}</td>`; }).join('')}</tr>`);
+      const bad = pp > 1.6 + 1e-9;
+      return `<div><em>PpO₂</em>Nx${pct} à ${depth} m : ${fmt(L.pabs(depth), 1)} × ${fmt(fo2, 2)} = <b style="color:${bad ? 'var(--danger)' : 'var(--ok)'}">${fmt(pp, 2)} b</b>${bad ? ' : <b style="color:var(--danger)">au-delà de 1,6 b, zone interdite</b>' : ' : sous la limite de 1,6 b'}.</div>
+        <div><em>⚡ Effet Paul Bert</em>exposition <b>immédiate</b> à une PpO₂ &gt; 1,6 b. Touche le <b>système nerveux central</b> : crise convulsive (type épilepsie), parfois sans signe avant-coureur. C’est la limite principale du Nitrox.</div>
+        <div><em>Signes avant-coureurs</em>cœur qui s’accélère, nausées, vertiges, crampes du visage, troubles de la vue ou bourdonnements, euphorie.</div>
+        <div><em>Conduite à tenir</em>attendre au moins la fin de la phase tonique, garder le détendeur en bouche, remonter la victime (la soustraire au toxique), évacuer.</div>
+        <div><em>Prévention</em>ordinateur réglé à 1,4 b (recommandation DAN), garder de la marge (surtout au froid), ne pas frôler la profondeur max.</div>
+        <div><em>🫁 Effet Lorrain-Smith</em>exposition <b>prolongée</b> dès 0,5 b. Touche les <b>poumons</b> : toux, irritation, gêne respiratoire. Conduite : faire respirer de l’air, évacuer. Prévention : <b>plongées limitées à 2 h</b>.</div>
+        <h3 style="margin:10px 0 6px">PpO₂ selon la profondeur</h3>
+        <div class="tbl-wrap"><table class="tbl pp-tbl"><thead><tr><th>Prof.</th><th>Pabs</th>${mixes.map(m => `<th>${m[1]}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>
+        <p class="hint" style="margin-top:6px">En rouge : zone interdite (PpO₂ &gt; 1,6 b). Le suivi chiffré de la dose d’oxygène est vu au cours Nitrox Confirmé.</p>`;
+    }
+
+    function ppChart(fo2, depth) {
+      const [W, H] = plotSize(el.sncPlot, 420, 230); const m = { l: 40, r: 10, t: 12, b: 26 };
+      const xMax = 2.2, zMax = 65;
+      const X = p => m.l + p / xMax * (W - m.l - m.r);
+      const Y = z => m.t + z / zMax * (H - m.t - m.b);
+      let g = `<rect width="${W}" height="${H}" style="fill:var(--water1)"/>`;
+      g += `<rect x="${X(1.6)}" y="${m.t}" width="${X(xMax) - X(1.6)}" height="${H - m.t - m.b}" style="fill:var(--danger)" fill-opacity=".14"/>`;
+      g += `<text x="${(X(1.6) + X(xMax)) / 2}" y="${H - m.b - 8}" font-size="11" font-weight="800" text-anchor="middle" style="fill:var(--danger)">Zone interdite</text>`;
+      for (let z = 0; z <= zMax; z += 10) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(z)}" y2="${Y(z)}" style="stroke:var(--grid)"/><text x="${m.l - 5}" y="${Y(z) + 4}" font-size="11" text-anchor="end" style="fill:var(--text2)">${z} m</text>`;
+      [0.5, 1, 1.4, 1.6, 2].forEach(p => { g += `<text x="${X(p)}" y="${H - 8}" font-size="11" text-anchor="middle" style="fill:var(--text2)">${fmt(p, 1)}</text>`; });
+      g += `<line x1="${X(1.6)}" x2="${X(1.6)}" y1="${m.t}" y2="${H - m.b}" style="stroke:var(--danger)" stroke-width="2"/>`;
+      const pct = Math.round(fo2 * 100);
+      withCur(pct).forEach(([n, name, c]) => {
+        const f = n / 100, z1 = Math.min(zMax, (xMax / f - 1) * 10), on = n === pct;
+        const col = on ? 'var(--accent)' : c;
+        g += `<line x1="${X(f)}" y1="${Y(0)}" x2="${X(f * L.pabs(z1))}" y2="${Y(z1)}" style="stroke:${col}" stroke-width="${on ? 4 : 2}"/>`;
+        g += `<text x="${Math.min(X(f * L.pabs(z1)) + 4, W - m.r - 34)}" y="${Math.min(Y(z1), H - m.b - 22)}" font-size="11" font-weight="800" style="fill:${col}">${name}</text>`;
+      });
+      const pp = L.ppo2At(depth, fo2);
+      g += `<circle cx="${X(Math.min(pp, xMax))}" cy="${Y(depth)}" r="6" style="fill:var(--surface);stroke:${pp > 1.6 + 1e-9 ? 'var(--danger)' : 'var(--accent)'}" stroke-width="3"/>`;
+      g += `<text x="${Math.max(m.l + 90, X(Math.min(pp, xMax)) - 10)}" y="${Y(depth) - 10}" font-size="12" font-weight="800" text-anchor="end" style="fill:var(--text);paint-order:stroke;stroke:var(--water1);stroke-width:4px">${depth} m → ${fmt(pp, 2)} b</text>`;
+      return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="PpO₂ selon la profondeur pour chaque mélange">${g}</svg>`;
     }
 
     /* ---------- Table Nitrox générée (MN90 lue à la PEA, profondeurs réelles) ---------- */
@@ -117,7 +177,7 @@
         <div class="tbl-wrap"><table class="tbl gen-sum"><thead><tr><th>Profondeur réelle</th><th>PEA → ligne MN90</th><th>Sans palier</th><th>À l’air</th><th>Gain</th><th>PpO₂</th></tr></thead><tbody>${sum.join('')}</tbody></table></div>
         <p class="hint" style="margin-top:6px">Touche une profondeur pour voir toutes ses durées, paliers et lettres GPS.</p>
         ${det.join('')}
-        <p class="hint" style="margin-top:8px">Méthode du cours : PEA = [(P + 10) × %N₂ / 0,8] − 10, ligne MN90 immédiatement supérieure. Plongées successives : la lettre GPS se reporte comme à l’air. La table ne tient pas compte de la toxicité de l’O₂ : surveille le %SNC.</p>`;
+        <p class="hint" style="margin-top:8px">Méthode du cours : PEA = [(P + 10) × %N₂ / 0,8] − 10, ligne MN90 immédiatement supérieure. Plongées successives : la lettre GPS se reporte comme à l’air. La table ne tient pas compte de la toxicité de l’O₂ : ${S.conf ? 'surveille le %SNC' : 'immersion limitée à 2 h'}.</p>`;
       generated = true;
       el.printBtn.hidden = false;
     }
@@ -225,7 +285,7 @@
       for (let z = 0; z <= zMax; z += 10) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(z)}" y2="${Y(z)}" style="stroke:var(--grid)"/><text x="${m.l - 5}" y="${Y(z) + 4}" font-size="11" text-anchor="end" style="fill:var(--text2)">${z} m</text>`;
       const step = conf ? 10 : 2;
       for (let p = Math.ceil(xMin / step) * step; p <= xMax; p += step) g += `<text x="${X(p)}" y="${H - 8}" font-size="11" text-anchor="middle" style="fill:var(--text2)">${p}%</text>`;
-      [[1.4, 'var(--c1)'], [1.5, 'var(--c2)'], [1.6, 'var(--c3)']].forEach(([pp, c]) => {
+      [[1.4, 'var(--c1)'], [1.5, 'var(--c2)'], [1.6, 'var(--c3)']].filter(([pp]) => pps().includes(pp)).forEach(([pp, c]) => {
         const pts = [];
         for (let p = xMin; p <= xMax; p += 0.5) pts.push(`${X(p).toFixed(1)},${Y(Math.max(0, (pp / (p / 100) - 1) * 10)).toFixed(1)}`);
         g += `<polyline points="${pts.join(' ')}" fill="none" style="stroke:${c}" stroke-width="${pp === S.pmax ? 3.5 : 2}"/>`;
@@ -265,7 +325,7 @@
 
     [el.o2, el.depth, el.minutes].forEach(i => i.addEventListener('input', render));
     // Bouger la durée affiche le détail dans l'onglet Toxicité
-    el.minutes.addEventListener('input', () => { const t = el.ntabs.querySelector('[data-pane="tox"]'); if (t && !t.classList.contains('on')) t.click(); });
+    el.minutes.addEventListener('input', () => { if (!S.conf) return; const t = el.ntabs.querySelector('[data-pane="tox"]'); if (t && !t.classList.contains('on')) t.click(); });
     document.addEventListener('click', e => { if (e.target.closest('[data-noaa]')) openNoaa(); });
     el.o2.addEventListener('input', () => { if (generated) generate(); });
     el.genBtn.addEventListener('click', generate);
@@ -273,7 +333,7 @@
       el.genOut.querySelectorAll('details').forEach(d => { d.open = true; });
       window.print();
     });
-    el.lvlSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.conf = b.dataset.v === 'conf'; if (!S.conf && +el.o2.value > 40) el.o2.value = 40; render(); });
+    el.lvlSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.conf = b.dataset.v === 'conf'; if (!S.conf && +el.o2.value > 40) el.o2.value = 40; S.pmax = S.conf ? 1.4 : 1.6; render(); if (generated) generate(); });
     [el.decoO2].forEach(i => i.addEventListener('input', renderDecoGas));
     [el.o2Depth, el.o2Time].forEach(i => i.addEventListener('input', renderO2Stops));
     [el.gPf, el.gFo2, el.gPi, el.gFi].forEach(i => i.addEventListener('input', renderGonf));

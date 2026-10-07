@@ -109,5 +109,25 @@
     return best;
   }
 
-  window.MN90Buhlmann = { ZHL16C, PH2O, plan, ndl, ceilingP, mValue, gfLine, pabs };
+  // Suivi des 16 tensions le long d'un profil [[t, z], ...], pas de dt minutes
+  function trace(pts, fo2, dt) {
+    const fn2 = 1 - fo2, step = dt || 0.2;
+    const T = ZHL16C.map(() => (1 - PH2O) * 0.79);
+    const out = [{ t: 0, z: 0, p: 1, T: T.slice() }];
+    for (let i = 1; i < pts.length; i++) {
+      const [t0, z0] = pts[i - 1], [t1, z1] = pts[i];
+      const n = Math.max(1, Math.ceil((t1 - t0) / step));
+      for (let s = 1; s <= n; s++) {
+        const za = z0 + (z1 - z0) * (s - 1) / n, zb = z0 + (z1 - z0) * s / n;
+        load(T, za, zb, (t1 - t0) / n, fn2);
+        out.push({ t: t0 + (t1 - t0) * s / n, z: zb, p: pabs(zb), T: T.slice() });
+      }
+    }
+    return out;
+  }
+
+  // Part du gradient : (tension − ambiante) / (M-value − ambiante). 100 % = M-value, < 0 = le tissu se charge
+  const gradient = (i, T, p) => (T - p) / (mValue(i, p) - p);
+
+  window.MN90Buhlmann = { ZHL16C, PH2O, plan, ndl, ceilingP, mValue, gfLine, pabs, trace, gradient };
 })();

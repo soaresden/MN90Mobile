@@ -147,7 +147,7 @@
     modal.innerHTML = `
       <div class="modal pf-modal" role="dialog" aria-modal="true" aria-labelledby="pf-title">
         <h2 id="pf-title">🤿 Mon profil plongeur</h2>
-        <p class="muted">Gardé uniquement dans ce téléphone. Il sert à vérifier tes prérogatives et à calculer ton autonomie dans tous les outils.</p>
+        <p class="muted">Gardé uniquement sur ${window.MN90Theme && window.MN90Theme.storedWhere ? window.MN90Theme.storedWhere() : 'cet appareil'} (rien n’est envoyé). Il sert à vérifier tes prérogatives et à calculer ton autonomie dans tous les outils.</p>
         <div class="pf-cols"><div>
         <fieldset><legend>Mon niveau</legend><div class="pills" data-pf="level">
           <label class="pill"><input type="radio" name="pf-level" value=""><span>Pas encore</span></label>

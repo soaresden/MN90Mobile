@@ -206,7 +206,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
 
 /* ── Base ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+html { font-size: calc(16px * var(--fz, 1)); -webkit-text-size-adjust: 100%; }
 html.modal-open { overflow: hidden; }
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
@@ -250,18 +250,26 @@ button, input, select { font: inherit; color: inherit; }
 .nav-back:hover { color: var(--accent); }
 .nav-title { font-weight: 800; font-size: 1rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .navbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.profile-chip, .theme-btn {
+/* Téléphone : la barre ne déborde jamais, même avec un texte agrandi */
+@media (max-width: 560px) {
+  .navbar { gap: 6px; padding: 8px 10px; }
+  .navbar-actions { gap: 5px; min-width: 0; flex-shrink: 1; }
+  .profile-chip { min-width: 0; max-width: 38vw; overflow: hidden; text-overflow: ellipsis; }
+  .nav-back { font-size: .82rem; }
+  .navbar-brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+.profile-chip, .theme-btn, .nav-chip {
   background: var(--surface2); border: 1px solid var(--border); color: var(--text);
   border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: .85rem; font-weight: 600; white-space: nowrap;
 }
-.profile-chip:hover, .theme-btn:hover { border-color: var(--accent); }
+.profile-chip:hover, .theme-btn:hover, .nav-chip:hover { border-color: var(--accent); }
 .nav-sos {
   display: inline-flex; align-items: center; gap: 2px; text-decoration: none; white-space: nowrap;
   border: 1.5px solid var(--danger); color: var(--danger); background: var(--danger-bg);
   border-radius: 999px; padding: 5px 11px; font-size: .85rem; font-weight: 800;
 }
 .nav-sos:hover { background: var(--danger); color: #fff; }
-@media (max-width: 560px) { .nav-sos-txt { display: none; } .nav-sos { padding: 5px 9px; } }
+@media (max-width: 560px) { .nav-sos-txt, .nav-chip-txt { display: none; } .nav-sos { padding: 5px 9px; } }
 .theme-picker { position: relative; }
 .theme-dropdown {
   display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 200;
@@ -276,6 +284,12 @@ button, input, select { font: inherit; color: inherit; }
 .theme-option:hover { background: var(--surface2); }
 .theme-option.active { color: var(--accent); font-weight: 700; }
 .theme-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+/* Taille du texte (menu 🎨) */
+.fz-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: .85rem; font-weight: 700; color: var(--text2); }
+.fz-row span { flex: 1; }
+.fz-row b { min-width: 3.2em; text-align: center; color: var(--text); font-variant-numeric: tabular-nums; }
+.fz-btn { border: 1px solid var(--border); background: var(--bg2); color: var(--text); border-radius: 8px; min-width: 40px; min-height: 36px; font-weight: 800; cursor: pointer; }
+.fz-btn:disabled { opacity: .4; cursor: default; }
 
 /* ── Cartes ── */
 .card {
@@ -457,6 +471,6 @@ legend { font-weight: 700; font-size: .9rem; margin-bottom: 8px; color: var(--te
 }
 @media (max-width: 480px) {
   .nav-title { font-size: .92rem; }
-  .profile-chip, .theme-btn { padding: 6px 9px; font-size: .8rem; }
+  .profile-chip, .theme-btn, .nav-chip { padding: 6px 9px; font-size: .8rem; }
   .kpi .v { font-size: 1.3rem; }
 }

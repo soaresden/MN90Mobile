@@ -47,6 +47,28 @@
   // Pose immédiate (avant le rendu de la page)
   document.documentElement.setAttribute('data-theme', read());
 
+  // Taille du texte (boutons A− / A+ du menu 🎨) : agit sur les tailles en rem, pas sur la mise en page
+  const FZ = [0.9, 1, 1.12, 1.25, 1.4];
+  const FZ_KEY = 'mn90-textsize';
+  function readFz() {
+    let v = 1;
+    try { v = parseFloat(localStorage.getItem(FZ_KEY)) || 1; } catch (e) { v = 1; }
+    return FZ.includes(v) ? v : 1;
+  }
+  let fzCur = 1;
+  function applyFz(v, persist) {
+    fzCur = v;
+    document.documentElement.style.setProperty('--fz', String(v));
+    if (persist) { try { localStorage.setItem(FZ_KEY, String(v)); } catch (e) { /* stockage indisponible */ } }
+    document.querySelectorAll('.fz-row').forEach(r => {
+      r.querySelector('b').textContent = Math.round(v * 100) + ' %';
+      r.querySelector('[data-fz="-1"]').disabled = v <= FZ[0];
+      r.querySelector('[data-fz="1"]').disabled = v >= FZ[FZ.length - 1];
+    });
+    if (persist) window.dispatchEvent(new Event('resize'));   // graphiques et barre du haut se recalent
+  }
+  applyFz(readFz(), false);
+
   // Appli installable et hors ligne (PWA) : manifeste + service worker, depuis la racine du site
   try {
     const me = document.currentScript && document.currentScript.src;
@@ -66,14 +88,35 @@
     }
   } catch (e) { /* pas de PWA : le site marche quand même */ }
 
+  // Type d'appareil, pour parler juste : « ce téléphone », « cette tablette », « cet ordinateur »
+  function device() {
+    const ua = navigator.userAgent || '';
+    const touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;          // iPad récent
+    if (/iPad|Tablet/i.test(ua) || touchMac || (/Android/i.test(ua) && !/Mobile/i.test(ua))) return 'cette tablette';
+    if (/Mobi|iPhone|iPod|Android/i.test(ua)) return 'ce téléphone';
+    return 'cet ordinateur';
+  }
+  // Les données (profil, briefing, thème) restent dans le navigateur utilisé
+  const storedWhere = () => `${device()}, dans ce navigateur`;
+
   function init() {
+    document.querySelectorAll('[data-device]').forEach(el => { el.textContent = storedWhere(); });
     document.querySelectorAll('.theme-dropdown').forEach(dd => {
       dd.setAttribute('role', 'menu');
-      dd.innerHTML = THEMES.map(t =>
+      dd.innerHTML = `<div class="fz-row" role="group" aria-label="Taille du texte"><span>🔍 Texte</span>
+          <button type="button" class="fz-btn" data-fz="-1" aria-label="Texte plus petit">A−</button><b></b>
+          <button type="button" class="fz-btn" data-fz="1" aria-label="Texte plus grand">A+</button></div>` + THEMES.map(t =>
         `<button type="button" class="theme-option" role="menuitemradio" data-theme="${t.id}">
            <span class="theme-dot" style="background:${t.dot}"></span>${t.label}
          </button>`).join('');
       dd.addEventListener('click', e => {
+        const fz = e.target.closest('[data-fz]');
+        if (fz) {
+          e.stopPropagation();                       // le menu reste ouvert pour enchaîner les clics
+          const i = FZ.indexOf(fzCur) + +fz.dataset.fz;
+          if (i >= 0 && i < FZ.length) applyFz(FZ[i], true);
+          return;
+        }
         const opt = e.target.closest('.theme-option');
         if (!opt) return;
         apply(opt.dataset.theme, true);
@@ -92,9 +135,10 @@
       document.querySelectorAll('.theme-dropdown.open').forEach(dd => dd.classList.remove('open'));
     });
     apply(read(), false);
+    applyFz(fzCur, false);
   }
 
-  window.MN90Theme = { THEMES, apply: id => apply(id, true), current: read };
+  window.MN90Theme = { THEMES, apply: id => apply(id, true), current: read, device, storedWhere };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
