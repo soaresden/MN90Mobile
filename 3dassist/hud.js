@@ -208,7 +208,7 @@ function triggerDeath(){
   stopLowAirAlarm();
   document.getElementById('c').style.filter='blur(8px) brightness(0.2)';
   _deathScreen('VOUS ÊTES MORT',
-    `Bouteille vide à ${Math.round(depth||0)} m`,'#cc0000','#cc6666');
+    `Bouteille vide à ${Math.round(window._camera?Math.abs(Math.min(0,window._camera.position.y)):0)} m`,'#cc0000','#cc6666');
 }
 
 function triggerSurpressionPulmonaire(){

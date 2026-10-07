@@ -9,7 +9,7 @@
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
     'modeSeg', 'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
-    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax'];
+    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile, H = window.MN90Help;
@@ -30,6 +30,17 @@
       map: null,
       drag: null,
     };
+
+    // Grand écran : tableau de bord sans défilement
+    const DASHBOARD = window.matchMedia('(min-width: 1000px) and (min-height: 600px)');
+    const nav = document.querySelector('.navbar');
+    const setNavH = () => { if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px'); };
+    setNavH();
+
+    function showPane(name) {
+      el.ptabs.querySelectorAll('.ptab').forEach(b => b.classList.toggle('on', b.dataset.pane === name));
+      document.querySelectorAll('.pane[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== name; });
+    }
 
     /* ---------- Lecture des entrées ---------- */
     const gear = () => P.get().gear;
@@ -99,6 +110,8 @@
       el.drawTools.hidden = S.view !== 'draw';
       el.answerCard.hidden = S.view !== 'param';
       el.chart.classList.toggle('drawing', S.view === 'draw');
+      el.mixTab.hidden = S.view !== 'param';
+      if (S.view !== 'param' && el.mixTab.classList.contains('on')) showPane('alerts');
       if (!S.diveMode) S.diveMode = defaultDiveMode();
       setSeg(el.modeSeg, S.diveMode);
       setSeg(el.gasSeg, S.gas);
@@ -118,6 +131,7 @@
       renderAlerts(r);
       renderTableRead(r);
       renderDeco(r);
+      renderEmerg(r);
     }
 
     function setSeg(seg, v) {
@@ -148,15 +162,15 @@
         const [key, T] = pair;
         if (T <= 0) {
           const txt = key === 'noStop' ? `Aucune durée sans palier à cette profondeur${r.nitrox ? ' (lecture à la PEA)' : ''}.` : `Limité par ${LIMIT_TXT(key, r, lim)}.`;
-          return `<div class="ans"><span class="l">${title}</span><span class="v">0 min</span><span class="why">${txt}</span></div>`;
+          return `<div class="ans"><span class="l">${title}</span><div class="ans-row"><span class="v">0 min</span></div><span class="why">${txt}</span></div>`;
         }
         const e = L.evaluate({ bottom: L.squareBottom(r.depth, T), fo2: r.fo2, nitrox: r.nitrox, gear: r.gear });
         const st = L.stopList(e.tab.stops);
         const det = st.length ? st.map(s => `${s} m ${e.tab.stops[s]}′`).join(' + ') + ` · DTR ${e.tab.dtr}′` : `sans palier · DTR ${e.tab.dtr}′`;
-        return `<div class="ans"><span class="l">${title}</span><span class="v">${T} min</span>
+        return `<div class="ans"><span class="l">${title}</span>
+          <div class="ans-row"><span class="v">${T} min</span><button type="button" class="btn btn-outline btn-sm" data-settime="${T}">Utiliser</button></div>
           <span class="why">Limité par ${LIMIT_TXT(key, r, lim)}.</span>
-          <span class="det">${det} · sortie de l’eau à ${Math.round(e.prof.total)}′ avec ${Math.round(e.left)} b</span>
-          ${extra || ''}<button type="button" class="btn btn-outline btn-sm" data-settime="${T}">Utiliser ${T} min</button></div>`;
+          <span class="det">${det} · sortie à ${Math.round(e.prof.total)}′ avec ${Math.round(e.left)} b</span>${extra || ''}</div>`;
       };
       el.answer.className = 'answer' + (block ? ' blocked' : '');
       el.answer.innerHTML = (block ? `<div class="alert danger" style="grid-column:1/-1">⛔ Plongée non permise : ${block}</div>` : '')
@@ -186,8 +200,13 @@
     /* ---------- Courbe SVG ---------- */
     function drawChart(r) {
       const W = Math.max(300, el.chart.clientWidth || 800);
-      let H = Math.round(W < 600 ? W * 0.72 : W * 0.42);
-      if (window.innerHeight < 520) H = Math.min(H, Math.round(window.innerHeight * 0.62));
+      let H;
+      if (DASHBOARD.matches && el.chart.clientHeight > 120) H = el.chart.clientHeight;
+      else {
+        H = Math.round(W < 600 ? W * 0.72 : W * 0.42);
+        if (window.innerHeight > 200 && window.innerHeight < 520) H = Math.min(H, Math.round(window.innerHeight * 0.62));
+        H = Math.max(H, 160);
+      }
       const m = { l: 40, r: 12, t: 26, b: 28 };
       const draw = S.view === 'draw';
       const total = r.prof ? r.prof.total : r.time + 5;
@@ -250,7 +269,7 @@
         S.draw.forEach((p, i) => {
           const last = i === S.draw.length - 1;
           g += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${last ? 9 : 7}" style="fill:var(--surface);stroke:${i === 0 ? 'var(--text2)' : 'var(--c1)'}" stroke-width="3"/>`;
-          if (last && i > 0) g += `<text x="${X(p[0])}" y="${Y(p[1]) - 14}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text)">départ du fond</text>`;
+          if (last && i > 0) { const ly = Y(p[1]) + 26 > H - m.b ? Y(p[1]) - 14 : Y(p[1]) + 26; g += `<text x="${X(p[0])}" y="${ly}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text)">départ du fond</text>`; }
         });
       }
       g += `<line id="cursor" y1="${m.t}" y2="${H - m.b}" style="stroke:var(--text);display:none" stroke-opacity=".4"/>`;
@@ -356,6 +375,9 @@
       }
       if (!A.some(a => a[0] === 'danger' || a[0] === 'warn')) A.unshift(['ok', 'Plongée dans les clous ✓']);
       el.alerts.innerHTML = A.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('');
+      const nD = A.filter(a => a[0] === 'danger').length, nW = A.filter(a => a[0] === 'warn').length;
+      el.alertCount.textContent = nD || nW || '✓';
+      el.alertCount.className = 'n ' + (nD ? '' : nW ? 'warn' : 'ok');
     }
 
     /* ---------- Lecture de la table, justifiée ---------- */
@@ -436,7 +458,33 @@
           <div><em>Sécu paliers</em>${secuOk ? `<b style="color:var(--ok)">OK</b> : au départ du fond tu auras environ ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin} (calcul exact)${secuMarge ? ` et ${r.pdecoRec} avec la marge GP.` : `. <b style="color:var(--warn)">Sous le repère GP de ${r.pdecoRec} b : peu de marge.</b>`}` : `<b style="color:var(--danger)">NON</b> : au départ du fond tu n’auras que ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin}. Raccourcis la plongée.`}</div>
         </div>
         <div class="deco-rows">${rows.map(x => `<div class="deco-row ${x.best ? 'best' : ''}"><span><b>${x.name}</b>${x.best ? '<span class="badge">la plus prudente</span>' : ''}${x.k === 'tito' && titoLow ? '<span class="badge warnb">insuffisante ici</span>' : ''}</span><span class="dv">${fmt(x.v, 0)} b${x.k === 'tito' && titoRound !== x.v ? ` <small style="font-size:.6em;color:var(--text2)">→ ${titoRound}</small>` : ''}</span><span class="dd">${x.d}</span></div>`).join('')}</div>
-        <div class="alert ${r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok'}" style="margin-top:12px">🔑 Contrat : <b>${timeTxt} au fond OU ${r.pdecoRec} b au manomètre</b>, le premier des deux fait décoller.${r.pBottom < r.pdecoRec ? ` Avec environ ${Math.round(r.pBottom)} b au départ du fond, c’est la pression qui décidera avant le temps${r.pBottom < r.pdecoMin ? ' : raccourcis la plongée' : ''}.` : ''}</div>`;
+        <div class="alert ${r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok'}" style="margin-top:12px">🔑 Contrat : <b>${timeTxt} au fond OU ${r.pdecoRec} b au manomètre</b>, le premier des deux fait décoller.${r.pBottom < r.pdecoRec ? ` Avec environ ${Math.round(r.pBottom)} b au départ du fond, c’est la pression qui décidera avant le temps${r.pBottom < r.pdecoMin ? ' : raccourcis la plongée' : ''}.` : ''}</div>` + phasesTable(r);
+    }
+
+    // Consommation phase par phase (repris de l'ancien outil DTR)
+    function phasesTable(r) {
+      const pts = r.prof.pts, g = r.gear;
+      const isStop = (t0, z) => r.prof.segs.some(s => s.depth === z && Math.abs(s.from - t0) < 1e-6);
+      let p = g.press, rows = '';
+      for (let i = 1; i < pts.length; i++) {
+        const [t0, z0] = pts[i - 1], [t1, z1] = pts[i];
+        const dt = t1 - t0;
+        if (dt <= 1e-9) continue;
+        const L_ = L.gasUse([pts[i - 1], pts[i]], g.sac), dp = L_ / g.tank;
+        p -= dp;
+        const name = z1 > z0 ? `Descente → ${fmt(z1, 0)} m` : z1 < z0 ? `Remontée → ${fmt(z1, 0)} m`
+          : isStop(t0, z0) ? `<span class="pd${z0}" style="font-weight:800">Palier ${z0} m</span>` : `Fond à ${fmt(z0, 0)} m`;
+        const cls = p < g.reserve ? 'color:var(--danger);font-weight:800' : '';
+        rows += `<tr><td style="text-align:left">${name}</td><td>${mmss(dt)}</td><td>−${fmt(dp, 1)}</td><td style="${cls}">${Math.round(p)}</td></tr>`;
+      }
+      return `<details style="margin-top:12px"><summary class="muted" style="cursor:pointer;font-weight:700">Consommation phase par phase</summary>
+        <div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th style="text-align:left">Phase</th><th>Durée</th><th>bar</th><th>Reste</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
+    }
+
+    /* ---------- Procédures d'urgence (shared/procedures.js) ---------- */
+    function renderEmerg(r) {
+      const X = window.MN90Procedures;
+      el.emerg.innerHTML = X ? `<h3>🆘 Fiche réflexe accident</h3>${X.reflex()}<h3 style="margin-top:16px"></h3>${X.html(r)}` : '';
     }
 
     /* ---------- Survol de la courbe ---------- */
@@ -546,6 +594,7 @@
       render();
     });
     el.reqs.addEventListener('click', e => { if (e.target.closest('[data-open-profile]')) P.open(); });
+    el.ptabs.addEventListener('click', e => { const b = e.target.closest('.ptab'); if (b) showPane(b.dataset.pane); });
     el.undoPt.addEventListener('click', () => { if (S.draw.length > 2) { S.draw.pop(); render(); } });
     el.clearPts.addEventListener('click', () => { S.draw = [[0, 0], [2, 20], [3, 20]]; render(); });
     el.examplePts.addEventListener('click', () => {
@@ -561,9 +610,19 @@
     el.svg.addEventListener('dblclick', e => { if (S.view === 'draw') { const i = nearest(e); if (i > 0) removePoint(i); } });
     P.onChange(() => { S.diveMode = null; render(); });
     let rz = 0;
-    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(render, 120); });
+    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { setNavH(); render(); }, 120); });
 
+    // Liens directs : #dessin ouvre le dessin libre, #contrat va au contrat de palanquée
+    const hash = (location.hash || '').toLowerCase();
+    if (hash === '#dessin') {
+      S.view = 'draw';
+      document.querySelectorAll('.tab[data-mode]').forEach(x => x.classList.toggle('on', x.dataset.mode === 'draw'));
+    }
     render();
+    if (hash === '#contrat') {
+      showPane('contrat');
+      if (!DASHBOARD.matches) setTimeout(() => el.ptabs.scrollIntoView({ block: 'start' }), 60);
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
