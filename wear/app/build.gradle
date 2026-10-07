@@ -1,0 +1,51 @@
+plugins { id 'com.android.application' }
+
+// Signature : wear/keystore/keystore.properties (jamais commité)
+// -> storeFile, storePassword, keyAlias, keyPassword
+def ksProps = new Properties()
+def ksFile = rootProject.file('keystore/keystore.properties')
+if (ksFile.exists()) { ksFile.withInputStream { ksProps.load(it) } }
+
+android {
+    namespace 'fr.soaresden.mn90wear'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'fr.soaresden.mn90wear'
+        minSdk 30
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+    signingConfigs {
+        release {
+            if (ksFile.exists()) {
+                storeFile rootProject.file(ksProps['storeFile'])
+                storePassword ksProps['storePassword']
+                keyAlias ksProps['keyAlias']
+                keyPassword ksProps['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { checkReleaseBuilds false; abortOnError false }
+    sourceSets {
+        main { assets.srcDirs += [layout.buildDirectory.dir('generated/www')] }
+    }
+}
+
+// Embarque la page montre et la bibliothèque de calcul du site (mêmes fichiers que sur le web)
+def copyWeb = tasks.register('copyWeb', Copy) {
+    from(rootProject.file('../watch')) { into 'www/watch' }
+    from(rootProject.file('../shared/mn90.js')) { into 'www/shared' }
+    into layout.buildDirectory.dir('generated/www')
+}
+tasks.named('preBuild') { dependsOn copyWeb }
