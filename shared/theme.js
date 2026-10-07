@@ -7,11 +7,21 @@
   'use strict';
 
   const THEMES = [
-    { id: 'submarine-light', label: '☀️ Sous-marin clair', dot: '#0077a8' },
-    { id: 'dark',            label: '🌑 Nuit',             dot: '#22d3ee' },
-    { id: 'deep-ocean',      label: '🌊 Grands fonds',     dot: '#2dd4bf' },
-    { id: 'sunset',          label: '🌅 Coucher de soleil', dot: '#c2410c' },
-    { id: 'military',        label: '🎖️ Militaire',        dot: '#a3c940' },
+    { id: 'submarine-light', label: '☀️ Sous-marin clair',   dot: '#006a96' },
+    { id: 'dark',            label: '🌑 Nuit',                dot: '#22d3ee' },
+    { id: 'deep-ocean',      label: '🌊 Grands fonds',        dot: '#2dd4bf' },
+    { id: 'sunset',          label: '🌅 Coucher de soleil',   dot: '#b23c0e' },
+    { id: 'octobre-rose',    label: '🎗️ Octobre rose',        dot: '#db2777' },
+    { id: 'ouistreham',      label: '🏖️ Ouistreham',          dot: '#1f5f7a' },
+    { id: 'tortue',          label: '🐢 Tortue',              dot: '#2f6b3a' },
+    { id: 'hippocampe',      label: '🐉 Hippocampe',          dot: '#f5b83d' },
+    { id: 'crevette',        label: '🦐 Crevette',            dot: '#e8603c' },
+    { id: 'nudibranche',     label: '🐌 Nudibranche',         dot: '#c084fc' },
+    { id: 'poisson-globe',   label: '🐡 Poisson-globe',       dot: '#a07a18' },
+    { id: 'poisson-clown',   label: '🐠 Poisson-clown',       dot: '#ea580c' },
+    { id: 'axolotl',         label: '🦎 Axolotl',             dot: '#c026d3' },
+    { id: 'abysses',         label: '🦑 Créature des abysses', dot: '#5eead4' },
+    { id: 'lochness',        label: '🦕 Loch Ness',           dot: '#9fd18b' },
   ];
   const DEFAULT = 'submarine-light';
   const KEY = 'mn90-theme';

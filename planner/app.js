@@ -9,7 +9,7 @@
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
     'modeSeg', 'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
-    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg'];
+    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile, H = window.MN90Help;
@@ -30,6 +30,17 @@
       map: null,
       drag: null,
     };
+
+    // Grand écran : tableau de bord sans défilement
+    const DASHBOARD = window.matchMedia('(min-width: 1000px) and (min-height: 600px)');
+    const nav = document.querySelector('.navbar');
+    const setNavH = () => { if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px'); };
+    setNavH();
+
+    function showPane(name) {
+      el.ptabs.querySelectorAll('.ptab').forEach(b => b.classList.toggle('on', b.dataset.pane === name));
+      document.querySelectorAll('.pane[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== name; });
+    }
 
     /* ---------- Lecture des entrées ---------- */
     const gear = () => P.get().gear;
@@ -99,6 +110,8 @@
       el.drawTools.hidden = S.view !== 'draw';
       el.answerCard.hidden = S.view !== 'param';
       el.chart.classList.toggle('drawing', S.view === 'draw');
+      el.mixTab.hidden = S.view !== 'param';
+      if (S.view !== 'param' && el.mixTab.classList.contains('on')) showPane('alerts');
       if (!S.diveMode) S.diveMode = defaultDiveMode();
       setSeg(el.modeSeg, S.diveMode);
       setSeg(el.gasSeg, S.gas);
@@ -149,15 +162,15 @@
         const [key, T] = pair;
         if (T <= 0) {
           const txt = key === 'noStop' ? `Aucune durée sans palier à cette profondeur${r.nitrox ? ' (lecture à la PEA)' : ''}.` : `Limité par ${LIMIT_TXT(key, r, lim)}.`;
-          return `<div class="ans"><span class="l">${title}</span><span class="v">0 min</span><span class="why">${txt}</span></div>`;
+          return `<div class="ans"><span class="l">${title}</span><div class="ans-row"><span class="v">0 min</span></div><span class="why">${txt}</span></div>`;
         }
         const e = L.evaluate({ bottom: L.squareBottom(r.depth, T), fo2: r.fo2, nitrox: r.nitrox, gear: r.gear });
         const st = L.stopList(e.tab.stops);
         const det = st.length ? st.map(s => `${s} m ${e.tab.stops[s]}′`).join(' + ') + ` · DTR ${e.tab.dtr}′` : `sans palier · DTR ${e.tab.dtr}′`;
-        return `<div class="ans"><span class="l">${title}</span><span class="v">${T} min</span>
+        return `<div class="ans"><span class="l">${title}</span>
+          <div class="ans-row"><span class="v">${T} min</span><button type="button" class="btn btn-outline btn-sm" data-settime="${T}">Utiliser</button></div>
           <span class="why">Limité par ${LIMIT_TXT(key, r, lim)}.</span>
-          <span class="det">${det} · sortie de l’eau à ${Math.round(e.prof.total)}′ avec ${Math.round(e.left)} b</span>
-          ${extra || ''}<button type="button" class="btn btn-outline btn-sm" data-settime="${T}">Utiliser ${T} min</button></div>`;
+          <span class="det">${det} · sortie à ${Math.round(e.prof.total)}′ avec ${Math.round(e.left)} b</span>${extra || ''}</div>`;
       };
       el.answer.className = 'answer' + (block ? ' blocked' : '');
       el.answer.innerHTML = (block ? `<div class="alert danger" style="grid-column:1/-1">⛔ Plongée non permise : ${block}</div>` : '')
@@ -187,9 +200,13 @@
     /* ---------- Courbe SVG ---------- */
     function drawChart(r) {
       const W = Math.max(300, el.chart.clientWidth || 800);
-      let H = Math.round(W < 600 ? W * 0.72 : W * 0.42);
-      if (window.innerHeight > 200 && window.innerHeight < 520) H = Math.min(H, Math.round(window.innerHeight * 0.62));
-      H = Math.max(H, 160);
+      let H;
+      if (DASHBOARD.matches && el.chart.clientHeight > 120) H = el.chart.clientHeight;
+      else {
+        H = Math.round(W < 600 ? W * 0.72 : W * 0.42);
+        if (window.innerHeight > 200 && window.innerHeight < 520) H = Math.min(H, Math.round(window.innerHeight * 0.62));
+        H = Math.max(H, 160);
+      }
       const m = { l: 40, r: 12, t: 26, b: 28 };
       const draw = S.view === 'draw';
       const total = r.prof ? r.prof.total : r.time + 5;
@@ -358,6 +375,9 @@
       }
       if (!A.some(a => a[0] === 'danger' || a[0] === 'warn')) A.unshift(['ok', 'Plongée dans les clous ✓']);
       el.alerts.innerHTML = A.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('');
+      const nD = A.filter(a => a[0] === 'danger').length, nW = A.filter(a => a[0] === 'warn').length;
+      el.alertCount.textContent = nD || nW || '✓';
+      el.alertCount.className = 'n ' + (nD ? '' : nW ? 'warn' : 'ok');
     }
 
     /* ---------- Lecture de la table, justifiée ---------- */
@@ -641,6 +661,7 @@
       render();
     });
     el.reqs.addEventListener('click', e => { if (e.target.closest('[data-open-profile]')) P.open(); });
+    el.ptabs.addEventListener('click', e => { const b = e.target.closest('.ptab'); if (b) showPane(b.dataset.pane); });
     el.undoPt.addEventListener('click', () => { if (S.draw.length > 2) { S.draw.pop(); render(); } });
     el.clearPts.addEventListener('click', () => { S.draw = [[0, 0], [2, 20], [3, 20]]; render(); });
     el.examplePts.addEventListener('click', () => {
@@ -656,7 +677,7 @@
     el.svg.addEventListener('dblclick', e => { if (S.view === 'draw') { const i = nearest(e); if (i > 0) removePoint(i); } });
     P.onChange(() => { S.diveMode = null; render(); });
     let rz = 0;
-    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(render, 120); });
+    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { setNavH(); render(); }, 120); });
 
     // Liens directs : #dessin ouvre le dessin libre, #contrat va au contrat de palanquée
     const hash = (location.hash || '').toLowerCase();
@@ -666,8 +687,8 @@
     }
     render();
     if (hash === '#contrat') {
-      const c = el.deco.closest('.card');
-      if (c) setTimeout(() => c.scrollIntoView({ block: 'start' }), 60);
+      showPane('contrat');
+      if (!DASHBOARD.matches) setTimeout(() => el.ptabs.scrollIntoView({ block: 'start' }), 60);
     }
   }
 
