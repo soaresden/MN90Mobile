@@ -10,6 +10,7 @@
 <script src="../shared/profile.js" defer></script>
 <script src="../shared/glossary.js" defer></script>
 <script src="../shared/procedures.js" defer></script>
+<script src="../shared/vendor/qrcode.js" defer></script>
 <script src="app.js" defer></script>
 <style>
   /* ===== Mise en page : empilée sur téléphone, tableau de bord sur grand écran ===== */
@@ -179,6 +180,10 @@
   .tI td.hit, .tII td.hit { background: var(--accent); color: var(--on-accent); font-weight: 800; }
   .tI tr.row td:first-child, .tII tr.row td:first-child { font-weight: 800; color: var(--accent); }
   .tI .tbl, .tII .tbl { font-size: .74rem; } .tI .tbl td, .tII .tbl td, .tI .tbl th, .tII .tbl th { padding: 2px 3px; }
+  .share-qr { display: flex; justify-content: center; margin: 8px 0; }
+  .share-qr svg { width: min(260px, 70vw); height: auto; background: #fff; padding: 8px; border-radius: 10px; }
+  .share-row { display: flex; gap: 6px; }
+  .share-row input { flex: 1; min-width: 0; }
   .pane h3 { margin: 12px 0 6px; }
   .pane h3:first-child { margin-top: 0; }
 
@@ -225,6 +230,7 @@
   <span class="nav-title">📈 Planificateur</span>
   <div class="navbar-actions">
     <a class="nav-sos" href="../procedures/index.html" title="Procédures d’urgence"><span aria-hidden="true">🚨</span><span class="nav-sos-txt"> Procédures</span></a>
+    <button type="button" class="profile-chip share-btn" id="shareBtn" title="Partager cette plongée (lien et QR code)">🔗 Partager</button>
     <button type="button" class="profile-chip">🤿 Mon profil</button>
     <div class="theme-picker">
       <button type="button" class="theme-btn" aria-label="Changer de thème">🎨</button>

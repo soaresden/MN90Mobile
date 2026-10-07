@@ -9,7 +9,7 @@
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
     'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'gearArt', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
-    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc', 'layerBar', 'layerSum', 'succ', 'sInt', 'sD2', 'sT2', 'sO2', 'vInt', 'vD2', 'vT2', 'vO22'];
+    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc', 'layerBar', 'layerSum', 'succ', 'sInt', 'sD2', 'sT2', 'sO2', 'vInt', 'vD2', 'vT2', 'vO22', 'shareBtn'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile, H = window.MN90Help;
@@ -711,6 +711,76 @@
       succBack.querySelector('[data-close]').focus();
     }
 
+    /* ---------- Partage d'une plongée : lien et QR code ---------- */
+    function shareUrl() {
+      const u = new URL(location.href.split('#')[0].split('?')[0]);
+      const q = u.searchParams;
+      q.set('v', S.view);
+      q.set('g', S.gas);
+      if (S.gas === 'nx') { q.set('o2', el.o2.value); q.set('pp', String(S.pmax)); }
+      if (S.view === 'draw') q.set('pts', S.draw.map(p => `${+p[0].toFixed(1)}:${+p[1].toFixed(1)}`).join(','));
+      else { q.set('d', el.depth.value); q.set('t', el.time.value); }
+      return u.href;
+    }
+    // Ouverture d'un lien partagé : on recharge la plongée décrite dans l'adresse
+    function readShared() {
+      const q = new URLSearchParams(location.search);
+      if (!q.has('v') && !q.has('d')) return;
+      const num = (k, lo, hi) => { const v = +q.get(k); return Number.isFinite(v) && v >= lo && v <= hi ? v : null; };
+      if (q.get('g') === 'nx') { S.gas = 'nx'; const o = num('o2', 22, 100); if (o) el.o2.value = o; const pp = num('pp', 1.2, 1.6); if (pp) S.pmax = pp; }
+      if (q.get('v') === 'draw' && q.get('pts')) {
+        const pts = q.get('pts').split(',').map(x => x.split(':').map(Number)).filter(p => p.length === 2 && p.every(Number.isFinite) && p[0] >= 0 && p[1] >= 0 && p[1] <= 65);
+        if (pts.length >= 2 && pts[0][0] === 0) {
+          S.draw = pts; S.view = 'draw';
+          document.querySelectorAll('.tab[data-mode]').forEach(x => x.classList.toggle('on', x.dataset.mode === 'draw'));
+          el.scaleZ.value = Math.min(65, Math.max(10, Math.ceil(Math.max(...pts.map(p => p[1])) / 5) * 5 + 5));
+          el.scaleT.value = Math.min(120, Math.max(20, Math.ceil(pts[pts.length - 1][0] / 10) * 10 + 20));
+        }
+      } else {
+        const d = num('d', 6, 65), t = num('t', 1, 120);
+        if (d) el.depth.value = d;
+        if (t) el.time.value = t;
+      }
+    }
+    let shareBack = null;
+    function openShare() {
+      const url = shareUrl();
+      if (!shareBack) {
+        shareBack = document.createElement('div');
+        shareBack.className = 'modal-back';
+        shareBack.hidden = true;
+        shareBack.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="sh-title" style="max-width:420px">
+          <h2 id="sh-title">🔗 Partager cette plongée</h2>
+          <p class="muted small">Ton binôme ou ton DP scanne le QR code ou ouvre le lien : il retrouve exactement la même plongée.</p>
+          <div class="share-qr" id="shareQr"></div>
+          <div class="share-row"><input class="input" id="shareUrl" readonly><button type="button" class="btn btn-outline btn-sm" data-copy>Copier</button></div>
+          <div class="modal-actions"><button type="button" class="btn btn-outline" data-native hidden>Partager…</button><button type="button" class="btn btn-primary" data-close>Fermer</button></div></div>`;
+        document.body.appendChild(shareBack);
+        const close = () => { shareBack.hidden = true; document.documentElement.classList.remove('modal-open'); };
+        shareBack.addEventListener('click', e => {
+          if (e.target === shareBack || e.target.closest('[data-close]')) close();
+          if (e.target.closest('[data-copy]')) {
+            const inp = shareBack.querySelector('#shareUrl'); inp.select();
+            (navigator.clipboard ? navigator.clipboard.writeText(inp.value) : Promise.reject()).catch(() => document.execCommand('copy'));
+            e.target.textContent = 'Copié ✓';
+          }
+          if (e.target.closest('[data-native]') && navigator.share) navigator.share({ title: 'Ma plongée MN90', url: shareBack.querySelector('#shareUrl').value }).catch(() => {});
+        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && shareBack && !shareBack.hidden) close(); });
+      }
+      shareBack.querySelector('#shareUrl').value = url;
+      shareBack.querySelector('[data-copy]').textContent = 'Copier';
+      shareBack.querySelector('[data-native]').hidden = !navigator.share;
+      const box = shareBack.querySelector('#shareQr');
+      if (typeof window.qrcode === 'function') {
+        const qr = window.qrcode(0, 'M'); qr.addData(url); qr.make();
+        box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+      } else box.innerHTML = '<p class="muted">QR code indisponible.</p>';
+      shareBack.hidden = false;
+      document.documentElement.classList.add('modal-open');
+      shareBack.querySelector('[data-close]').focus();
+    }
+
     /* ---------- Table MN90 complète en superposition ---------- */
     let fullBack = null;
     function openFullTable(r) {
@@ -982,6 +1052,8 @@
     let rz = 0;
     window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { setNavH(); render(); }, 120); });
 
+    el.shareBtn.addEventListener('click', openShare);
+    readShared();
     // Liens directs : #dessin ouvre le dessin libre, #contrat va au contrat de palanquée
     const hash = (location.hash || '').toLowerCase();
     if (hash === '#dessin') {

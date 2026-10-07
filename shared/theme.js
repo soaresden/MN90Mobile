@@ -47,6 +47,25 @@
   // Pose immédiate (avant le rendu de la page)
   document.documentElement.setAttribute('data-theme', read());
 
+  // Appli installable et hors ligne (PWA) : manifeste + service worker, depuis la racine du site
+  try {
+    const me = document.currentScript && document.currentScript.src;
+    if (me) {
+      const root = new URL('../', me);
+      if (!document.querySelector('link[rel="manifest"]')) {
+        const l = document.createElement('link'); l.rel = 'manifest'; l.href = new URL('manifest.webmanifest', root).href;
+        document.head.appendChild(l);
+        const m = document.createElement('meta'); m.name = 'theme-color'; m.content = '#006a96';
+        document.head.appendChild(m);
+        const a = document.createElement('link'); a.rel = 'apple-touch-icon'; a.href = new URL('icons/apple-touch-icon.png', root).href;
+        document.head.appendChild(a);
+      }
+      if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+        window.addEventListener('load', () => { navigator.serviceWorker.register(new URL('sw.js', root).href).catch(() => {}); });
+      }
+    }
+  } catch (e) { /* pas de PWA : le site marche quand même */ }
+
   function init() {
     document.querySelectorAll('.theme-dropdown').forEach(dd => {
       dd.setAttribute('role', 'menu');
