@@ -170,8 +170,8 @@ Cinq thèmes, communs à tous les outils et choisis avec le bouton 🎨 :
 | Tables | MN90 FFESSM de 6 à 65 m (62 et 65 m : tables de secours), d’après le document de J.-L. Blanchard et F. Imbert |
 | Lecture | Profondeur et durée **immédiatement supérieures**, sans interpolation |
 | Vitesses | Descente 20 m/min · remontée 15 m/min jusqu’au 1er palier · 6 m/min entre paliers et jusqu’à la surface |
-| PEA | [(P + 10) × FN₂ / 0,8] − 10 (pression absolue, diviseur 0,8 comme dans le cours FFESSM) |
-| MOD | (PpO₂ max / FO₂ − 1) × 10, arrondie vers le bas |
+| PEA | [(P + 10) × %N₂ / 0,8] − 10 (pression absolue, diviseur 0,8 comme dans le cours FFESSM) |
+| MOD | (PpO₂ max / %O₂ − 1) × 10, arrondie vers le bas |
 | Best mix | PpO₂ max / Pabs, arrondi vers le bas |
 | PpO₂ max | Au Nitrox : 1,4 b par défaut (DAN), 1,5 ou 1,6 au choix · à l’air : 1,6 b |
 | Consommation | Conso surface × pression absolue moyenne, segment par segment, paliers compris |

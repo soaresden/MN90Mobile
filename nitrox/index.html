@@ -28,6 +28,18 @@
   .ok-cell { color: var(--ok); font-weight: 800; } .bad-cell { color: var(--danger); font-weight: 800; }
   .mix-tbl td:first-child, .mix-tbl th:first-child { text-align: left; }
   .mix-tbl tr.cur td { font-weight: 800; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .gen-sum td:first-child, .gen-sum th:first-child { text-align: left; }
+  .gen-depth { border: 1px solid var(--border); border-radius: 10px; margin-top: 8px; background: var(--bg2); }
+  .gen-depth summary { cursor: pointer; padding: 8px 10px; font-weight: 700; }
+  .gen-depth .tbl-wrap { padding: 0 8px 8px; }
+  .gain { color: var(--ok); font-weight: 800; }
+  @media print {
+    .navbar, .card:not(#genCard), #genBtn, #printBtn, .help-btn { display: none !important; }
+    body { background: #fff; color: #000; }
+    .wrap { padding: 0; }
+    #genCard { box-shadow: none; border: 0; }
+    .gen-depth { break-inside: avoid; }
+  }
 </style>
 </head>
 <body data-ask-profile>
@@ -85,7 +97,17 @@
       <div class="muted small">Best mix (le plus riche autorisé, arrondi vers le bas)</div>
       <div class="trio" id="bestTrio"></div>
       <div class="tbl-wrap"><table class="tbl mix-tbl" id="mixTbl"></table></div>
-      <p class="hint" style="margin-top:8px">PEA = [(P + 10) × FN₂ / 0,8] − 10, puis ligne de table immédiatement supérieure. Certains supports utilisent 0,79 : le cours FFESSM retient 0,8.</p>
+      <p class="hint" style="margin-top:8px">PEA = [(P + 10) × %N₂ / 0,8] − 10, puis ligne de table immédiatement supérieure. Certains supports utilisent 0,79 : le cours FFESSM retient 0,8.</p>
+    </section>
+
+    <section class="card" id="genCard" style="grid-column:1/-1">
+      <h2>📋 Ma table de plongée pour ce Nitrox</h2>
+      <p class="small muted" style="margin-bottom:10px">La table MN90 réécrite en <b>profondeurs réelles</b> pour ton mélange : chaque profondeur est lue à sa PEA, comme les tables spécifiques Nitrox du cours. La DTR affichée est la DTR <b>réelle</b> (on remonte de la vraie profondeur). Immersion limitée à 2 h.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" id="genBtn">Générer la table</button>
+        <button type="button" class="btn btn-outline" id="printBtn" hidden>🖨️ Imprimer / PDF</button>
+      </div>
+      <div id="genOut" style="margin-top:12px"></div>
     </section>
 
     <section class="card">
