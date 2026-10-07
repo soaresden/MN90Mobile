@@ -1,0 +1,62 @@
+plugins { id 'com.android.application' }
+
+// Signature : wear/keystore/keystore.properties (jamais commité)
+// -> storeFile, storePassword, keyAlias, keyPassword
+def ksProps = new Properties()
+def ksFile = rootProject.file('keystore/keystore.properties')
+if (ksFile.exists()) { ksFile.withInputStream { ksProps.load(it) } }
+
+android {
+    namespace 'fr.soaresden.mn90wear'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'fr.soaresden.mn90wear'
+        minSdk 30
+        targetSdk 35
+        versionCode 2
+        versionName '1.1.0'
+    }
+    signingConfigs {
+        release {
+            if (ksFile.exists()) {
+                storeFile rootProject.file(ksProps['storeFile'])
+                storePassword ksProps['storePassword']
+                keyAlias ksProps['keyAlias']
+                keyPassword ksProps['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { checkReleaseBuilds false; abortOnError false }
+    sourceSets {
+        main { assets.srcDirs += [layout.buildDirectory.dir('generated/www')] }
+    }
+}
+
+// Extrait la table MN90 de shared/mn90.js (seule source des données) vers assets/mn90.json.
+// Pas de WebView : la plupart des montres Wear OS n'en ont pas, l'interface est native (MainActivity).
+def mn90Js = rootProject.file('../shared/mn90.js')
+def genDir = layout.buildDirectory.dir('generated/www')
+def genTable = tasks.register('genTable') {
+    inputs.file mn90Js
+    outputs.dir genDir
+    doLast {
+        def line = mn90Js.readLines('UTF-8').find { it.trim().startsWith('const MN90 = {') }
+        if (line == null) throw new GradleException('Table MN90 introuvable dans shared/mn90.js')
+        def json = line.trim().substring('const MN90 = '.length())
+        if (json.endsWith(';')) json = json.substring(0, json.length() - 1)
+        def out = genDir.get().file('mn90.json').asFile
+        out.parentFile.mkdirs()
+        out.setText(json, 'UTF-8')
+    }
+}
+tasks.named('preBuild') { dependsOn genTable }

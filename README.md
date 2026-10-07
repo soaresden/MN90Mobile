@@ -3,7 +3,7 @@
 **Le hub d’outils de plongée FFESSM, pensé pour le téléphone.**
 Tables MN90, Nitrox, DTR et pression de décollage, procédures d’urgence et simulateur 3D, avec des explications simples pour tous les niveaux.
 
-👉 **[Ouvrir l’application](https://soaresden.github.io/MN90Mobile/)**
+👉 **[Ouvrir l’application](https://soaresden.github.io/MN90Mobile/)** · ⌚ **[Télécharger la version montre (Wear OS)](https://github.com/soaresden/MN90Mobile/releases/latest/download/MN90-Montre.apk)**
 
 > ⚠️ Outil d’entraînement et de préparation. Il ne remplace ni ta formation, ni ton ordinateur de plongée, ni les consignes de ton directeur de plongée.
 
@@ -50,7 +50,18 @@ Un tableau compare d’un coup d’œil l’air, le Nx32, le Nx36 et le Nx40 à 
 
 **📊 La courbe** montre la descente, le fond, la remontée et les paliers, colorés par profondeur. Au Nitrox, elle ajoute la zone interdite sous la MOD et la même plongée à l’air en pointillés. Au survol, tu vois l’heure, la profondeur et la PpO₂.
 
-**Les indicateurs**, chacun avec un bouton **?** qui l’explique simplement et avec tes chiffres : DTR, durée totale, lettre GPS, pression en fin de plongée, pression de décollage, PpO₂, PEA, MOD, narcose (PpN₂).
+**Les indicateurs**, rangés par catégorie :
+
+| Catégorie | Indicateurs |
+|---|---|
+| ⏱️ Temps | DTR, durée totale, lettre GPS |
+| 🫧 Air | pression en fin de plongée, pression de décollage |
+| 🧪 Gaz | PpO₂, PEA, MOD |
+| 🧠 Corps | %SNC, narcose (PpN₂) |
+
+Le bouton **?** d’un indicateur l’explique simplement, avec tes chiffres. **Un clic sur l’indicateur** ouvre l’onglet **🧮 Calculs**, qui détaille son calcul pas à pas : conso phase par phase, %SNC segment par segment, PEA, décollage…
+
+Sur un ordinateur, le planificateur tient dans l’écran sans défiler, sur trois colonnes : réglages, courbe et indicateurs, panneau à onglets (Alertes, Calculs, Table, Contrat, Corps, Urgence, Mélanges).
 
 **🧠 🫁 Ce que l’oxygène fait à ton corps** : deux jauges qui se remplissent.
 
@@ -117,6 +128,8 @@ Les procédures sont calculées pour la plongée affichée, d’après le mode d
   - sinon, rester entre 3 et 6 m jusqu’à la pression de réserve. L’application calcule combien de minutes cela représente.
 - Et toujours : **oxygène, alerte (196 en mer, 112 à terre), évacuation** si le moindre symptôme apparaît.
 
+Les procédures sont **accessibles depuis tous les outils** avec le bouton rouge **🚨 Procédures** de la barre du haut. Il ouvre une page dédiée avec une fiche réflexe accident et les procédures calculées pour la plongée que tu y règles.
+
 <p align="center"><img src="docs/screenshots/07-procedures.jpg" width="260" alt="Procédures d’urgence"></p>
 
 ---
@@ -126,6 +139,13 @@ Les procédures sont calculées pour la plongée affichée, d’après le mode d
 - **Mon mélange** : la MOD à 1,4, 1,5 et 1,6 b, arrondie vers le bas, avec le calcul détaillé et la courbe de MOD selon le % d’O₂.
 - **Ma profondeur** : le **best mix** et la liste des mélanges utilisables, avec leur PpO₂, leur MOD et leur PEA (et la ligne de table retenue).
 - **Toxicité** : le %SNC par minute selon la PpO₂, d’après la table NOAA. On y voit bien le saut entre 1,5 et 1,6 b, d’où l’intérêt de calculer le best mix à 1,5 b.
+- **📋 Ma table de plongée pour ce Nitrox**, en un clic : la MN90 réécrite en **profondeurs réelles** pour ton mélange, jusqu’à sa MOD. Chaque profondeur est lue à sa PEA, comme les tables spécifiques Nitrox du cours. Pour chaque profondeur :
+  - la durée sans palier au Nitrox et à l’air, et le gain ;
+  - toutes les durées avec leurs paliers, la DTR **réelle** et la lettre GPS.
+
+  La table s’imprime ou s’enregistre en PDF.
+
+Le mélange se règle de 21 à 100 % d’O₂. Au-delà de 40 %, la qualification Nitrox Confirmé s’affiche en jaune si tu l’as, en rouge sinon.
 
 <p align="center">
   <img src="docs/screenshots/10-nitrox-mod.jpg" width="260" alt="MOD">
@@ -143,15 +163,54 @@ Un simulateur de sauvetage en temps réel (Three.js), avec 4 sites (Roussay, St-
 
 ---
 
+## ⌚ La version montre (Wear OS)
+
+Sur la montre, **une question, une réponse**. Tu règles les valeurs avec de gros boutons − / +, et le résultat s’affiche en grand :
+
+| Question | Réponse affichée |
+|---|---|
+| ⏱️ Combien de temps je peux rester ? | sans palier · maximum (et ce qui limite) |
+| ⬆️ Quels paliers ? | paliers colorés, DTR, lettre GPS |
+| 🔽 Quand je décolle du fond ? | pression de décollage OU temps au fond |
+| 🧪 Jusqu’où avec mon mélange ? | MOD |
+| 🎯 Quel mélange pour ma profondeur ? | best mix |
+| 🚨 Remontée rapide : que faire ? | demi-profondeur, 5 min, nouveaux paliers |
+| ⚙️ Mon matériel | bloc, pression, conso, réserve (gardés sur la montre) |
+
+L’appli fonctionne **sans téléphone et sans réseau**, et utilise exactement les mêmes calculs que le site. La couronne fait défiler, et le geste retour ramène à la liste des questions. Tu peux aussi l’essayer dans un navigateur : [soaresden.github.io/MN90Mobile/watch/](https://soaresden.github.io/MN90Mobile/watch/).
+
+**Installer l’APK sur la montre** (Wear OS 3 ou plus récent) :
+
+1. Télécharge **[MN90-Montre.apk](https://github.com/soaresden/MN90Mobile/releases/latest/download/MN90-Montre.apk)**.
+2. Active les options développeur sur la montre : **Paramètres → Système → À propos → Versions**, puis touche 7 fois **Numéro de build**.
+3. Dans **Options pour les développeurs**, active **Débogage ADB** et **Débogage sans fil**.
+4. Installe l’APK, au choix :
+   - **depuis le téléphone**, avec une appli comme *Wear Installer 2* ou *Bugjaeger* : choisis le fichier téléchargé, puis entre l’adresse IP affichée par la montre ;
+   - **depuis un PC** : tape `adb connect <ip-de-la-montre>:<port>`, puis `adb install MN90-Montre.apk`.
+
+---
+
 ## 🎨 Thèmes et conventions de couleurs
 
-Cinq thèmes, communs à tous les outils et choisis avec le bouton 🎨 :
+Quinze thèmes, communs à tous les outils et choisis avec le bouton 🎨 :
 
-- **Sous-marin clair** (par défaut)
-- Nuit
-- Grands fonds
-- Coucher de soleil
-- Militaire
+- ☀️ **Sous-marin clair** (par défaut)
+- 🌑 Nuit
+- 🌊 Grands fonds
+- 🌅 Coucher de soleil
+- 🎗️ Octobre rose
+- 🏖️ Ouistreham
+- 🐢 Tortue
+- 🐉 Hippocampe
+- 🦐 Crevette
+- 🐌 Nudibranche
+- 🐡 Poisson-globe
+- 🐠 Poisson-clown
+- 🦎 Axolotl
+- 🦑 Créature des abysses
+- 🦕 Loch Ness
+
+Les couleurs des paliers et des alertes sont les mêmes dans tous les thèmes, pour rester lisibles.
 
 | Paliers | Couleur | | Courbes | Couleur |
 |---|---|---|---|---|
@@ -189,13 +248,18 @@ Du HTML, du CSS et du JavaScript purs : aucune compilation, aucun framework.
 ```
 index.html          menu principal du hub
 shared/
-  style.css         design system et 5 thèmes
+  style.css         design system et 15 thèmes
   theme.js          choix du thème (gardé dans le téléphone)
   mn90.js           tables MN90 et tous les calculs (une seule source)
   profile.js        profil plongeur et prérogatives
   glossary.js       explications simples de chaque terme
-planner/            planificateur (paramètres, dessin libre, contrat, procédures)
-nitrox/             outil Nitrox
+  procedures.js     procédures MN90 et fiche réflexe accident
+planner/            planificateur (paramètres, dessin libre, contrat, calculs)
+nitrox/             outil Nitrox et générateur de table
+procedures/         page Procédures (bouton 🚨)
+watch/              interface montre (une question, une réponse)
+wear/               projet Android Wear OS qui embarque watch/ et mn90.js
+tools/build-wear.ps1  compile l’APK montre (et publie la release avec -Publish)
 3dassist/           simulateur de remontée assistée 3D
 dtr/, decomp/       anciennes adresses, redirigées vers le planificateur
 diverflap/          mini-jeu mis de côté

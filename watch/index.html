@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MN90 Montre</title>
+<script src="../shared/mn90.js"></script>
+<style>
+  /* Écran de montre rond : sombre (OLED), gros caractères, marges pour les bords arrondis */
+  :root { --bg: #000; --card: #12202e; --line: #24394f; --text: #f2f7fb; --muted: #a9bccc; --accent: #22d3ee;
+          --ok: #4ade80; --warn: #fbbf24; --danger: #f87171; --p3: #4ade80; --p6: #fb923c; --p9: #22d3ee; --p12: #a78bfa; --p15: #f472b6; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: system-ui, Roboto, sans-serif; }
+  body { padding: 14vw 11vw 22vw; font-size: 4.6vw; line-height: 1.3; }
+  h1 { font-size: 7vw; text-align: center; color: var(--accent); margin-bottom: 1vw; }
+  .sub { text-align: center; color: var(--muted); font-size: 3.8vw; margin-bottom: 4vw; }
+  .q { display: flex; align-items: center; gap: 3vw; width: 100%; padding: 3.6vw 4vw; margin-bottom: 2.4vw; border: 0;
+       border-radius: 6vw; background: var(--card); color: var(--text); font-size: 4.6vw; font-weight: 700; text-align: left; }
+  .q span { font-size: 6vw; }
+  .q:active { background: var(--line); }
+  .back { display: block; margin: 0 auto 3vw; background: none; border: 0; color: var(--muted); font-size: 4vw; }
+  h2 { font-size: 5.4vw; text-align: center; margin-bottom: 3vw; }
+  .field { display: flex; align-items: center; justify-content: space-between; gap: 2vw; background: var(--card); border-radius: 6vw; padding: 1.6vw; margin-bottom: 2.4vw; }
+  .field .lab { flex: 1; text-align: center; }
+  .field .lab small { display: block; color: var(--muted); font-size: 3.4vw; }
+  .field .lab b { font-size: 6.4vw; font-variant-numeric: tabular-nums; }
+  .step { width: 13vw; height: 13vw; border-radius: 50%; border: 0; background: var(--line); color: var(--text); font-size: 7vw; font-weight: 700; line-height: 1; }
+  .step:active { background: var(--accent); color: #000; }
+  .res { background: var(--card); border: 2px solid var(--accent); border-radius: 7vw; padding: 3.4vw; text-align: center; margin-top: 3vw; }
+  .res .big { font-size: 11vw; font-weight: 800; color: var(--accent); line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .res .lbl { color: var(--muted); font-size: 3.6vw; }
+  .res .line { margin-top: 1.6vw; font-size: 4.2vw; }
+  .res.bad { border-color: var(--danger); } .res.bad .big { color: var(--danger); }
+  .res.warn { border-color: var(--warn); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 2vw; margin-top: 3vw; }
+  .two .res { margin-top: 0; padding: 2.6vw; } .two .res .big { font-size: 8vw; }
+  .stop { font-weight: 800; }
+  .msg { margin-top: 3vw; font-size: 3.8vw; color: var(--muted); text-align: center; }
+  .msg.bad { color: var(--danger); font-weight: 700; }
+  ol { margin: 2vw 0 0 5vw; } ol li { margin-bottom: 1.6vw; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+(function () {
+  'use strict';
+  const L = window.MN90Lib;
+  const app = document.getElementById('app');
+  if (!L || !app) { document.body.textContent = 'Erreur de chargement'; return; }
+  const { fmt } = L;
+
+  // Réglages mémorisés sur la montre
+  const KEY = 'mn90-watch';
+  const DEF = { depth: 20, time: 30, o2: 21, pmax: 1.4, tank: 15, press: 200, sac: 20, reserve: 50 };
+  let V;
+  try { V = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { V = Object.assign({}, DEF); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(V)); } catch (e) { /* rien */ } };
+  const gear = () => ({ tank: V.tank, press: V.press, sac: V.sac, reserve: V.reserve });
+  const gasName = o2 => (o2 <= 21 ? 'Air' : o2 >= 100 ? 'O₂ pur' : 'Nx' + o2);
+  const stopsTxt = stops => { const s = L.stopList(stops); return s.length ? s.map(k => `<span class="stop" style="color:var(--p${k})">${k} m ${stops[k]}′</span>`).join(' + ') : 'aucun palier'; };
+
+  // Champs réglables : [clé, libellé, pas, min, max, unité]
+  const F = {
+    depth: ['depth', 'Profondeur', 1, 6, 60, 'm'],
+    time: ['time', 'Durée', 1, 1, 120, 'min'],
+    o2: ['o2', 'Mélange', 1, 21, 100, '%'],
+    pmax: ['pmax', 'PpO₂ max', 0.1, 1.2, 1.6, 'b'],
+    tank: ['tank', 'Bloc', 1, 6, 24, 'L'],
+    press: ['press', 'Pression', 10, 100, 300, 'b'],
+    sac: ['sac', 'Conso', 1, 10, 40, 'L/min'],
+    reserve: ['reserve', 'Réserve', 10, 20, 100, 'b'],
+  };
+  const show = (k) => k === 'o2' ? gasName(V.o2) : k === 'pmax' ? fmt(V.pmax, 1) + ' b' : V[k] + ' ' + F[k][5];
+  const field = k => `<div class="field"><button class="step" data-k="${k}" data-d="-1" aria-label="moins">−</button>
+    <div class="lab"><small>${F[k][1]}</small><b id="v-${k}">${show(k)}</b></div>
+    <button class="step" data-k="${k}" data-d="1" aria-label="plus">+</button></div>`;
+
+  function dive() {
+    const fo2 = V.o2 / 100, nx = V.o2 > 21;
+    return L.evaluate({ bottom: L.squareBottom(V.depth, V.time), fo2, nitrox: nx, gear: gear() });
+  }
+  function modCheck() {
+    const fo2 = V.o2 / 100, pmax = V.o2 > 21 ? V.pmax : 1.6, mod = L.mod(fo2, pmax);
+    return V.depth > mod + 1e-9 ? `<p class="msg bad">⛔ ${gasName(V.o2)} interdit à ${V.depth} m (MOD ${fmt(mod, 1)} m)</p>` : '';
+  }
+
+  // Les questions : champs + calcul du résultat
+  const Q = [
+    { id: 'temps', icon: '⏱️', title: 'Combien de temps je peux rester ?', fields: ['depth', 'o2'],
+      res() {
+        const nx = V.o2 > 21, lim = L.limits(V.depth, V.o2 / 100, nx, gear());
+        if (!lim) return '<div class="res bad"><div class="big">—</div></div>';
+        return modCheck() + `<div class="two">
+          <div class="res"><div class="lbl">Sans palier</div><div class="big">${lim.maxNoStop[1]}′</div></div>
+          <div class="res"><div class="lbl">Maximum</div><div class="big">${lim.max[1]}′</div></div></div>
+          <p class="msg">Max limité par ${({ gas: 'ton bloc', table: 'la table', snc: 'l’oxygène', time: 'les 2 h' })[lim.max[0]]} · bloc ${V.tank} L, ${V.sac} L/min</p>`;
+      } },
+    { id: 'paliers', icon: '⬆️', title: 'Quels paliers ?', fields: ['depth', 'time', 'o2'],
+      res() {
+        const r = dive();
+        if (!r.prof) return `<div class="res bad"><div class="lbl">${r.tab.err}</div></div>`;
+        return modCheck() + `<div class="res"><div class="lbl">Paliers</div><div class="line">${stopsTxt(r.tab.stops)}</div>
+          <div class="two" style="margin-top:2vw"><div><div class="lbl">DTR</div><b>${r.tab.dtr}′</b></div><div><div class="lbl">GPS</div><b>${r.tab.gps}</b></div></div></div>
+          <p class="msg">Table ${r.tab.d} m / ${r.tab.t}′${V.o2 > 21 ? ` (PEA ${fmt(r.pea, 1)} m)` : ''}</p>`;
+      } },
+    { id: 'deco', icon: '🔽', title: 'Quand je décolle du fond ?', fields: ['depth', 'time', 'o2'],
+      res() {
+        const r = dive();
+        if (!r.prof) return `<div class="res bad"><div class="lbl">${r.tab.err}</div></div>`;
+        const D = L.decollage(r, gear()), rec = Math.ceil(Math.max(D.gp, D.exact) / 10) * 10;
+        const pB = V.press - L.gasUse(L.squareBottom(V.depth, V.time), V.sac) / V.tank;
+        const bad = pB < D.exact;
+        return `<div class="res ${bad ? 'bad' : ''}"><div class="lbl">Décolle à</div><div class="big">${rec} b</div>
+          <div class="line">ou au bout de <b>${V.time}′</b> au fond</div></div>
+          <p class="msg${bad ? ' bad' : ''}">${bad ? `⛔ Tu n’auras que ${Math.round(pB)} b au départ du fond : raccourcis` : `DTR ${D.dtr}′ · le premier des deux fait décoller`}</p>`;
+      } },
+    { id: 'mod', icon: '🧪', title: 'Jusqu’où avec mon mélange ?', fields: ['o2', 'pmax'],
+      res() {
+        const mod = L.mod(V.o2 / 100, V.pmax);
+        return `<div class="res"><div class="lbl">MOD ${gasName(V.o2)}</div><div class="big">${fmt(mod, 1)} m</div></div>
+          <p class="msg">(${fmt(V.pmax, 1)} / ${fmt(V.o2 / 100, 2)} − 1) × 10, arrondi vers le bas${V.o2 > 40 ? ' · Nitrox Confirmé' : ''}</p>`;
+      } },
+    { id: 'mix', icon: '🎯', title: 'Quel mélange pour ma profondeur ?', fields: ['depth', 'pmax'],
+      res() {
+        const b = Math.min(100, L.bestMix(V.depth, V.pmax));
+        return `<div class="res"><div class="lbl">Best mix à ${V.depth} m</div><div class="big">${gasName(b)}</div></div>
+          <p class="msg">${fmt(V.pmax, 1)} / ${fmt(L.pabs(V.depth), 1)} b, arrondi vers le bas</p>`;
+      } },
+    { id: 'urgence', icon: '🚨', title: 'Remontée rapide : que faire ?', fields: ['depth', 'time', 'o2'],
+      res() {
+        const r = dive();
+        const ra = r.prof ? L.rapidAscent(r) : null;
+        if (!ra || ra.err) return `<div class="res bad"><div class="line">Oxygène, alerte 196 / 112, évacuation</div></div>`;
+        return `<div class="res warn"><ol style="text-align:left">
+          <li>Moins de 3 min en surface, plongeur OK</li>
+          <li>Redescendre à <b>${fmt(ra.mid, Number.isInteger(ra.mid) ? 0 : 1)} m</b>, <b>5 min</b></li>
+          <li>Paliers : ${stopsTxt(ra.stops)}</li></ol></div>
+          <p class="msg bad">Le moindre symptôme : O₂, 196 / 112</p>`;
+      } },
+    { id: 'reglages', icon: '⚙️', title: 'Mon matériel', fields: ['tank', 'press', 'sac', 'reserve'], res: () => '<p class="msg">Utilisé pour l’autonomie et le décollage.</p>' },
+  ];
+
+  function home() {
+    app.innerHTML = `<h1>🤿 MN90</h1><p class="sub">Une question, une réponse</p>` +
+      Q.map(q => `<button class="q" data-q="${q.id}"><span>${q.icon}</span>${q.title}</button>`).join('');
+  }
+  function screen(q) {
+    app.innerHTML = `<button class="back" data-home>‹ Questions</button><h2>${q.icon} ${q.title}</h2>` +
+      q.fields.map(field).join('') + `<div id="res"></div>`;
+    update(q);
+  }
+  function update(q) {
+    q.fields.forEach(k => { const e = document.getElementById('v-' + k); if (e) e.textContent = show(k); });
+    const r = document.getElementById('res');
+    if (r) r.innerHTML = q.res();
+  }
+  function route() {
+    const id = location.hash.slice(1);
+    const q = Q.find(x => x.id === id);
+    if (q) screen(q); else home();
+    window.scrollTo(0, 0);
+  }
+
+  // Appui long sur + / − : défilement rapide
+  let timer = 0, rep = 0;
+  function bump(btn) {
+    const k = btn.dataset.k, d = +btn.dataset.d, f = F[k];
+    let v = Math.round((V[k] + d * f[2]) * 10) / 10;
+    v = Math.max(f[3], Math.min(f[4], v));
+    V[k] = v; save();
+    const q = Q.find(x => x.id === location.hash.slice(1));
+    if (q) update(q);
+  }
+  app.addEventListener('click', e => {
+    const q = e.target.closest('[data-q]');
+    if (q) { location.hash = q.dataset.q; return; }
+    if (e.target.closest('[data-home]')) { history.length > 1 ? history.back() : (location.hash = ''); }
+  });
+  app.addEventListener('pointerdown', e => {
+    const b = e.target.closest('.step');
+    if (!b) return;
+    bump(b); rep = 0;
+    timer = setInterval(() => { rep++; if (rep > 3) bump(b); }, 120);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => app.addEventListener(t, () => clearInterval(timer)));
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+</body>
+</html>

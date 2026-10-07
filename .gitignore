@@ -11,3 +11,11 @@ Thumbs.db
 
 # Outils locaux (Claude Code)
 .claude/
+
+# Montre Wear OS : sorties de compilation et clé de signature (jamais commitées)
+wear/.gradle/
+wear/build/
+wear/app/build/
+wear/local.properties
+wear/keystore/
+release/
