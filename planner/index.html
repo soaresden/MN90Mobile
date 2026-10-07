@@ -25,12 +25,12 @@
   .side .answer > .alert, .side .answer > [data-calcopen] { grid-column: 1 / -1; }
   @media (min-width: 1000px) and (min-height: 600px) {
     .side .ans .det, .side .hint { display: none; }
+    .side.drawing .hint { display: block; font-size: .8rem; }
     .side .card { padding: 10px 12px; }
     .side .field { margin-bottom: 6px; }
     .side .tabs { margin-bottom: 8px; }
     .side input[type="range"] { height: 22px; }
     .side { overflow-x: hidden; }
-    .side #answerCard { flex: 1; }
     .side .ans-row { flex-direction: column; align-items: flex-start; gap: 3px; }
     .side .ans-row .btn { padding: 2px 8px; font-size: .7rem; }
     .side .ans .v { white-space: nowrap; font-size: 1.3rem; }
@@ -38,9 +38,14 @@
     .side .ans .why { font-size: .7rem; line-height: 1.25; }
     .side #answerCard h2 { margin-bottom: 6px; }
     .gear-box .gear-line { font-size: .74rem; padding: 6px 8px; gap: 4px; }
-    .gear-box { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; align-items: center; }
-    .gear-box .gear-art svg { max-width: 112px; margin: 0; }
-    .gear-box .gear-line { flex-direction: column; align-items: stretch; text-align: center; }
+    /* Pas de blanc : la carte des réglages prend toute la hauteur libre et le plongeur grandit dedans ;
+       "Combien de temps" garde sa taille minimale, calée en bas */
+    .side > .card:first-child { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    .side #answerCard { flex: 0 0 auto; }
+    .gear-box { flex: 1; min-height: 130px; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+    .gear-box .gear-art { flex: 1; min-height: 110px; position: relative; }
+    .gear-box .gear-art svg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; margin: 0; }
+    .gear-box .gear-line { flex-direction: row; align-items: center; text-align: left; }
   }
   .side .tabs { margin-bottom: 12px; }
   .side .field { margin-bottom: 10px; }
@@ -244,7 +249,7 @@
         <span class="hint">De la mise à l’eau au départ du fond</span></label>
     </div>
     <div id="drawInputs" hidden>
-      <p class="hint" style="margin-bottom:8px">Touche la courbe pour poser un point, glisse-le pour le déplacer, double-touche (ou appui long) pour le supprimer. Le dernier point est ton <b>départ du fond</b>.</p>
+      <p class="hint" style="margin-bottom:8px">✏️ Touche la courbe pour <b>poser un point</b>, glisse un point pour le <b>déplacer</b>, touche un point sans glisser pour l’<b>effacer</b>. Le dernier point est ton <b>départ du fond</b> : remontée et paliers s’ajoutent tout seuls.</p>
       <label class="field"><span class="field-row">Échelle profondeur <b><span id="vScaleZ"></span> m</b></span>
         <input type="range" id="scaleZ" min="10" max="65" step="5" value="40"></label>
       <label class="field"><span class="field-row">Échelle durée <b><span id="vScaleT"></span> min</b></span>

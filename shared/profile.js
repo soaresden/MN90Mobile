@@ -208,6 +208,7 @@
     const g = {};
     modal.querySelectorAll('[data-g]').forEach(i => { g[i.dataset.g] = +i.value; });
     box.innerHTML = gearSvg(g, { o2: 21 });
+    fitSvg(box);
   }
 
   function fillModal(p) {
@@ -277,7 +278,7 @@
     const inner = h - 8;
     const fillH = P / 300 * inner, resH = R / 300 * inner;
     const nBreath = Math.max(1, Math.min(6, Math.round(sac / 7)));
-    let s = `<svg viewBox="0 0 250 ${Math.max(190, bottom + 22)}" role="img" aria-label="Bouteille de ${V} litres à ${P} bars, réserve ${R} bars, consommation ${sac} litres par minute">`;
+    let s = `<svg viewBox="0 0 250 ${Math.max(200, bottom + 20)}" role="img" aria-label="Bouteille de ${V} litres à ${P} bars, réserve ${R} bars, consommation ${sac} litres par minute">`;
     s += `<defs><clipPath id="${id}"><rect x="${bx + 3}" y="${top + 4}" width="${w - 6}" height="${inner}" rx="${(w - 6) / 2}"/></clipPath></defs>`;
     // Plongeur (de profil, face à droite)
     s += `<path d="M110 118 L100 172 L90 180 L110 180 L118 128 M132 118 L142 172 L134 182 L156 182 L148 172 L140 120" style="fill:none;stroke:var(--text2)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -325,14 +326,26 @@
     const dY = Math.max(top + 34, Math.min(bottom - 4 - fillH + 3, bottom - 36));
     s += lab(bx + 2, Math.max(top + 6, bottom - 4 - fillH + 3), bx - 12, dY, 'Départ', `${P} b`, 'end', air);
     s += lab(bx + 2, bottom - 6, bx - 12, bottom - 4, 'Réserve', `${R} b`, 'end', 'var(--danger)');
-    s += lab(176, 34, 186, 22, 'Conso', `${sac} L/min`, 'start', 'var(--text)');
-    s += `<rect x="178" y="${bottom - 26}" width="10" height="10" fill="${O2C}"/><text x="192" y="${bottom - 17}" font-size="10" style="fill:var(--text2)">O₂ ${o2} %</text>`;
-    s += `<rect x="178" y="${bottom - 12}" width="10" height="10" fill="${N2C}"/><text x="192" y="${bottom - 3}" font-size="10" style="fill:var(--text2)">N₂ ${100 - o2} %</text>`;
+    // Conso au-dessus du souffle, légende O₂ / N₂ sous les pieds (le dessin reste compact en largeur)
+    s += `<text x="168" y="12" text-anchor="middle" font-size="10" style="fill:var(--text2)">Conso</text><text x="168" y="24" text-anchor="middle" font-size="11.5" font-weight="800" style="fill:var(--text)">${sac} L/min</text>`;
+    const ly = Math.max(194, bottom + 14);
+    s += `<rect x="${bx - 4}" y="${ly - 9}" width="10" height="10" fill="${O2C}"/><text x="${bx + 9}" y="${ly}" font-size="10" style="fill:var(--text2)">O₂ ${o2} %</text>`;
+    s += `<rect x="${bx + 56}" y="${ly - 9}" width="10" height="10" fill="${N2C}"/><text x="${bx + 69}" y="${ly}" font-size="10" style="fill:var(--text2)">N₂ ${100 - o2} %</text>`;
     s += `</svg>`;
     return s;
   }
 
-  window.MN90Profile = { LEVELS, QUALS, NITROX, get, save, onChange, rights, requirements, label, open, gearSvg };
+  // Recadre un dessin inséré dans la page au plus près de son contenu (le plongeur grandit)
+  function fitSvg(box) {
+    const svg = box && box.querySelector('svg');
+    if (!svg || !svg.getBBox) return;
+    try {
+      const b = svg.getBBox();
+      if (b.width > 0 && b.height > 0) svg.setAttribute('viewBox', `${(b.x - 3).toFixed(1)} ${(b.y - 3).toFixed(1)} ${(b.width + 6).toFixed(1)} ${(b.height + 6).toFixed(1)}`);
+    } catch (e) { /* dessin non affiché : on garde le cadre d'origine */ }
+  }
+
+  window.MN90Profile = { LEVELS, QUALS, NITROX, get, save, onChange, rights, requirements, label, open, gearSvg, fitSvg };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

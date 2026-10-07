@@ -102,6 +102,7 @@
       el.ppSeg.parentElement.hidden = !isNx();
       el.cmpField.hidden = !isNx() || S.view === 'draw';
       el.paramInputs.hidden = S.view !== 'param';
+      el.paramInputs.closest('.side').classList.toggle('drawing', S.view === 'draw');
       el.drawInputs.hidden = S.view !== 'draw';
       el.drawTools.hidden = S.view !== 'draw';
       el.answerCard.hidden = S.view !== 'param';
@@ -113,6 +114,7 @@
       const g = p.gear;
       el.gearTxt.textContent = `Bloc ${g.tank} L · départ ${g.press} b · ${g.sac} L/min · réserve ${g.reserve} b`;
       el.gearArt.innerHTML = P.gearSvg(g, { o2: isNx() ? +el.o2.value : 21 });
+      P.fitSvg(el.gearArt);
 
       const r = compute();
       S.last = r;
@@ -879,7 +881,7 @@
       e.preventDefault();
       const i = nearest(e);
       if (i > 0) {
-        S.drag = { i, x: e.clientX, y: e.clientY, moved: false, timer: setTimeout(() => { if (S.drag && !S.drag.moved) { const k = S.drag.i; S.drag = null; removePoint(k); } }, 650) };
+        S.drag = { i, x: e.clientX, y: e.clientY, moved: false, existing: true, timer: 0 };   // clic simple = suppression (au relâchement)
       } else {
         const { t, z } = svgPoint(e);
         if (t <= 0 || t > S.map.maxT) return;
@@ -911,7 +913,11 @@
     }
 
     function onUp() {
-      if (S.drag) { clearTimeout(S.drag.timer); S.drag = null; }
+      if (!S.drag) return;
+      clearTimeout(S.drag.timer);
+      const d = S.drag;
+      S.drag = null;
+      if (d.existing && !d.moved) removePoint(d.i);   // clic sans glisser sur un point : on l'efface
     }
 
     /* ---------- Événements ---------- */
@@ -964,7 +970,6 @@
     el.svg.addEventListener('pointerup', onUp);
     el.svg.addEventListener('pointercancel', onUp);
     el.svg.addEventListener('pointerleave', () => { if (!S.drag) hideTip(); });
-    el.svg.addEventListener('dblclick', e => { if (S.view === 'draw') { const i = nearest(e); if (i > 0) removePoint(i); } });
     P.onChange(render);
     // La courbe se redessine dès que sa zone change de taille (vignettes, panneau, fenêtre)
     if (window.ResizeObserver) {

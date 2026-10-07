@@ -11,18 +11,24 @@
 <script src="../shared/glossary.js" defer></script>
 <script src="app.js" defer></script>
 <style>
-  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
-  .big { font-size: 2.4rem; font-weight: 800; color: var(--accent); line-height: 1.05; font-variant-numeric: tabular-nums; }
-  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
-  .trio div { border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; background: var(--bg2); }
+  /* Empilé sur téléphone, tableau de bord plein écran sur ordinateur */
+  .nx-app { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 30px; }
+  .nx-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .nx-center { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .nx-panel { display: flex; flex-direction: column; min-width: 0; padding: 10px; }
+  .big { font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; }
+  .trio div { border: 1px solid var(--border); border-radius: 10px; padding: 6px; text-align: center; background: var(--bg2); }
   .trio div.on { border: 2px solid var(--accent); }
-  .trio b { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
-  .trio span { font-size: .78rem; color: var(--text2); }
-  .steps { display: flex; flex-direction: column; gap: 6px; font-size: .9rem; margin-top: 10px; }
-  .steps > div { padding: 7px 9px; border-left: 3px solid var(--accent); background: var(--bg2); }
+  .trio b { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .trio span { font-size: .74rem; color: var(--text2); }
+  .steps { display: flex; flex-direction: column; gap: 6px; font-size: .88rem; }
+  .steps > div { padding: 6px 9px; border-left: 3px solid var(--accent); background: var(--bg2); }
   .steps em { font-style: normal; font-weight: 800; color: var(--text2); margin-right: 4px; }
+  .plot { position: relative; min-height: 200px; }
   .plot svg { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--border); }
-  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .78rem; color: var(--text2); margin-top: 6px; }
+  .plot-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .76rem; color: var(--text2); }
   .legend span { display: inline-flex; align-items: center; gap: 5px; }
   .legend i { display: inline-block; width: 16px; height: 4px; border-radius: 2px; background: var(--c); }
   .ok-cell { color: var(--ok); font-weight: 800; } .bad-cell { color: var(--danger); font-weight: 800; }
@@ -33,11 +39,32 @@
   .gen-depth summary { cursor: pointer; padding: 8px 10px; font-weight: 700; }
   .gen-depth .tbl-wrap { padding: 0 8px 8px; }
   .gain { color: var(--ok); font-weight: 800; }
+  .ptabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .ptab { border: 1px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 999px; padding: 5px 10px; font-weight: 700; font-size: .8rem; cursor: pointer; }
+  .ptab.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .pane[hidden] { display: none !important; }
+  .side-field .field { margin-bottom: 8px; }
+  #lvlSeg button { font-size: .86rem; }
+  .ptab[hidden] { display: none !important; }
+
+  @media (min-width: 1000px) and (min-height: 600px) {
+    html, body { height: 100%; overflow: hidden; }
+    .nx-app { grid-template-columns: 300px minmax(0, 1fr) minmax(330px, 28vw); height: calc(100dvh - var(--nav-h, 58px)); padding: 10px 14px; }
+    .nx-side { overflow-y: auto; }
+    .nx-center { min-height: 0; }
+    .nx-center .card { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; }
+    .plot { flex: 1; min-height: 120px; }
+    .plot svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .nx-panel { min-height: 0; }
+    .pbody { flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
+    .nx-side .hint { display: none; }
+  }
   @media print {
-    .navbar, .card:not(#genCard), #genBtn, #printBtn, .help-btn { display: none !important; }
-    body { background: #fff; color: #000; }
-    .wrap { padding: 0; }
-    #genCard { box-shadow: none; border: 0; }
+    .navbar, .nx-side, .nx-center, .ptabs, .pane:not([data-pane="gen"]), #genBtn, #printBtn, .help-btn { display: none !important; }
+    html, body { height: auto; overflow: visible; background: #fff; color: #000; }
+    .nx-app { display: block; height: auto; }
+    .pbody { overflow: visible; }
+    .pane[data-pane="gen"] { display: block !important; }
     .gen-depth { break-inside: avoid; }
   }
 </style>
@@ -57,10 +84,15 @@
   </div>
 </nav>
 
-<main class="wrap stack">
-  <div class="cols">
-    <section class="card">
-      <h2>🧪 Mon mélange : jusqu’où je peux descendre ? <button type="button" class="help-btn" data-help="mod" aria-label="C’est quoi ?">?</button></h2>
+<main class="nx-app">
+  <!-- ===== Réglages et réponses ===== -->
+  <aside class="nx-side">
+    <div class="seg" id="lvlSeg" role="group" aria-label="Niveau Nitrox">
+      <button type="button" data-v="simple" class="on">⚗️ Nitrox</button>
+      <button type="button" data-v="conf">🎓 Nitrox Confirmé</button>
+    </div>
+    <section class="card side-field">
+      <h2>🧪 Mon mélange <button type="button" class="help-btn" data-help="mod" aria-label="C’est quoi ?">?</button></h2>
       <label class="field"><span class="field-row">Mélange <b>Nx<span id="vO2"></span></b></span>
         <input type="range" id="o2" min="21" max="100" step="1" value="32"></label>
       <div class="field">PpO₂ max retenue
@@ -71,54 +103,101 @@
         </div>
         <span class="hint">1,4 recommandé (DAN) · 1,5 pour limiter le %SNC · 1,6 = limite absolue</span>
       </div>
-      <div class="muted small">MOD (profondeur max d’utilisation)</div>
+      <div class="muted small">MOD : jusqu’où je peux descendre</div>
       <div class="big" id="modBig"></div>
       <div class="trio" id="modTrio"></div>
       <div class="reqs" id="reqMix"></div>
-      <div class="steps" id="modSteps"></div>
     </section>
-
-    <section class="card">
-      <h2>📉 MOD selon le mélange</h2>
-      <div class="plot" id="modPlot"></div>
-      <div class="legend">
-        <span style="--c:var(--c1)"><i></i>PpO₂ 1,4</span>
-        <span style="--c:var(--c2)"><i></i>PpO₂ 1,5</span>
-        <span style="--c:var(--c3)"><i></i>PpO₂ 1,6</span>
-      </div>
-    </section>
-  </div>
-
-  <div class="cols">
-    <section class="card">
-      <h2>🎯 Ma profondeur : quel mélange ? <button type="button" class="help-btn" data-help="pea" aria-label="C’est quoi ?">?</button></h2>
+    <section class="card side-field">
+      <h2>🎯 Ma profondeur <button type="button" class="help-btn" data-help="pea" aria-label="C’est quoi ?">?</button></h2>
       <label class="field"><span class="field-row">Profondeur prévue <b><span id="vDepth"></span> m</b></span>
         <input type="range" id="depth" min="5" max="60" step="1" value="30"></label>
-      <div class="muted small">Best mix (le plus riche autorisé, arrondi vers le bas)</div>
+      <div class="muted small">Best mix (le plus riche autorisé)</div>
       <div class="trio" id="bestTrio"></div>
-      <div class="tbl-wrap"><table class="tbl mix-tbl" id="mixTbl"></table></div>
-      <p class="hint" style="margin-top:8px">PEA = [(P + 10) × %N₂ / 0,8] − 10, puis ligne de table immédiatement supérieure. Certains supports utilisent 0,79 : le cours FFESSM retient 0,8.</p>
     </section>
+  </aside>
 
-    <section class="card" id="genCard" style="grid-column:1/-1">
-      <h2>📋 Ma table de plongée pour ce Nitrox</h2>
-      <p class="small muted" style="margin-bottom:10px">La table MN90 réécrite en <b>profondeurs réelles</b> pour ton mélange : chaque profondeur est lue à sa PEA, comme les tables spécifiques Nitrox du cours. La DTR affichée est la DTR <b>réelle</b> (on remonte de la vraie profondeur). Immersion limitée à 2 h.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn btn-primary" id="genBtn">Générer la table</button>
-        <button type="button" class="btn btn-outline" id="printBtn" hidden>🖨️ Imprimer / PDF</button>
-      </div>
-      <div id="genOut" style="margin-top:12px"></div>
-    </section>
-
+  <!-- ===== Graphiques ===== -->
+  <div class="nx-center">
     <section class="card">
-      <h2>🧠 Toxicité de l’oxygène <button type="button" class="help-btn" data-help="snc" aria-label="C’est quoi ?">?</button></h2>
-      <p class="small muted" style="margin-bottom:8px">Combien de % de la jauge « cerveau » se remplit chaque minute, selon la PpO₂ (table NOAA). Regarde le saut entre 1,5 et 1,6.</p>
+      <div class="plot-title"><h2>📉 MOD selon le mélange</h2>
+        <div class="legend">
+          <span style="--c:var(--c1)"><i></i>PpO₂ 1,4</span>
+          <span style="--c:var(--c2)"><i></i>PpO₂ 1,5</span>
+          <span style="--c:var(--c3)"><i></i>PpO₂ 1,6</span>
+        </div></div>
+      <div class="plot" id="modPlot"></div>
+    </section>
+    <section class="card">
+      <div class="plot-title"><h2>🧠 Toxicité de l’oxygène <button type="button" class="help-btn" data-help="snc" aria-label="C’est quoi ?">?</button></h2>
+        <span class="small muted">%SNC par minute selon la PpO₂ : regarde le saut entre 1,5 et 1,6 <button type="button" class="btn btn-outline btn-sm" data-noaa>📋 Table NOAA</button></span></div>
       <div class="plot" id="sncPlot"></div>
-      <label class="field" style="margin-top:12px"><span class="field-row">Durée à cette PpO₂ <b><span id="vMin"></span> min</b></span>
+      <label class="field" style="margin:0"><span class="field-row">Durée à cette PpO₂ <b><span id="vMin"></span> min</b></span>
         <input type="range" id="minutes" min="5" max="120" step="5" value="30"></label>
-      <div class="steps" id="sncSteps" style="margin-top:0"></div>
     </section>
   </div>
+
+  <!-- ===== Panneau à onglets ===== -->
+  <section class="card nx-panel">
+    <div class="ptabs" id="ntabs" role="tablist">
+      <button type="button" class="ptab on" data-pane="mix">⚗️ Mélanges</button>
+      <button type="button" class="ptab" data-pane="calc">🧮 Calculs</button>
+      <button type="button" class="ptab" data-pane="tox">🧠 Toxicité</button>
+      <button type="button" class="ptab" data-pane="gen">📋 Table Nitrox</button>
+      <button type="button" class="ptab conf-only" data-pane="decogas" hidden>🟢 Gaz de déco</button>
+      <button type="button" class="ptab conf-only" data-pane="o2stops" hidden>⏱️ Paliers O₂</button>
+      <button type="button" class="ptab conf-only" data-pane="gonf" hidden>⛽ Gonflage</button>
+    </div>
+    <div class="pbody">
+      <div class="pane" data-pane="mix">
+        <h3>Les mélanges à <span id="vDepth2"></span> m</h3>
+        <div class="tbl-wrap"><table class="tbl mix-tbl" id="mixTbl"></table></div>
+        <p class="hint" style="margin-top:8px">PEA = [(P + 10) × %N₂ / 0,8] − 10, puis ligne de table immédiatement supérieure. Certains supports utilisent 0,79 : le cours FFESSM retient 0,8.</p>
+      </div>
+      <div class="pane" data-pane="calc" hidden>
+        <h3>Calcul de la MOD</h3>
+        <div class="steps" id="modSteps"></div>
+      </div>
+      <div class="pane" data-pane="tox" hidden>
+        <h3>Ma dose d’oxygène <button type="button" class="btn btn-outline btn-sm" data-noaa>📋 Table NOAA</button></h3>
+        <div class="steps" id="sncSteps"></div>
+      </div>
+      <div class="pane" data-pane="decogas" hidden>
+        <h3>🟢 Mon gaz de déco</h3>
+        <label class="field"><span class="field-row">Mélange de déco <b id="vDeco"></b></span>
+          <input type="range" id="decoO2" min="40" max="100" step="1" value="80"></label>
+        <div id="decoOut"></div>
+      </div>
+      <div class="pane" data-pane="o2stops" hidden>
+        <h3>⏱️ Paliers à l’O₂ pur</h3>
+        <p class="small muted" style="margin-bottom:6px">Cours Nitrox Confirmé : on conserve les <b>2/3 des paliers air</b> de la table MN90, avec un <b>minimum de 5 min</b>. Stabilité impérative au palier de 6 m à l’O₂ (point d’appui).</p>
+        <label class="field"><span class="field-row">Profondeur de la plongée <b><span id="vOd"></span> m</b></span>
+          <input type="range" id="o2Depth" min="12" max="60" step="1" value="40"></label>
+        <label class="field"><span class="field-row">Durée de plongée <b><span id="vOt"></span> min</b></span>
+          <input type="range" id="o2Time" min="5" max="90" step="1" value="25"></label>
+        <div id="o2Out"></div>
+      </div>
+      <div class="pane" data-pane="gonf" hidden>
+        <h3>⛽ Gonflage par pression partielle</h3>
+        <div class="grid2">
+          <label class="field">Pression finale (bar)<input class="input" type="number" id="gPf" value="200" min="50" max="300" step="10"></label>
+          <label class="field">% O₂ visé<input class="input" type="number" id="gFo2" value="32" min="22" max="99" step="1"></label>
+          <label class="field">Reste dans le bloc (bar)<input class="input" type="number" id="gPi" value="0" min="0" max="250" step="10"></label>
+          <label class="field">% O₂ du reste<input class="input" type="number" id="gFi" value="21" min="21" max="100" step="1"></label>
+        </div>
+        <div id="gonfOut"></div>
+      </div>
+      <div class="pane" data-pane="gen" hidden id="genCard">
+        <h3>📋 Ma table de plongée pour ce Nitrox</h3>
+        <p class="small muted" style="margin-bottom:10px">La table MN90 réécrite en <b>profondeurs réelles</b> pour ton mélange : chaque profondeur est lue à sa PEA, comme les tables spécifiques Nitrox du cours. La DTR affichée est la DTR <b>réelle</b>. Immersion limitée à 2 h.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-primary" id="genBtn">Générer la table</button>
+          <button type="button" class="btn btn-outline" id="printBtn" hidden>🖨️ Imprimer / PDF</button>
+        </div>
+        <div id="genOut" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </section>
 </main>
 </body>
 </html>
