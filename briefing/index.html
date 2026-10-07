@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Briefing · MN90 Mobile</title>
+<script src="../shared/theme.js"></script>
+<link rel="stylesheet" href="../shared/style.css">
+<script src="../shared/profile.js" defer></script>
+<style>
+  .bf-app { padding: 12px 16px 30px; max-width: 1800px; margin: 0 auto; }
+  .bf-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .bf-head .seg { min-width: 260px; }
+  .bf-prog { flex: 1; min-width: 200px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .bf-prog .bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+  .bf-prog .bar i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .2s; }
+  .bf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 12px; }
+  .bf-card { padding: 12px; }
+  .bf-card h2 { display: flex; justify-content: space-between; align-items: center; }
+  .bf-card h2 small { font-size: .78rem; color: var(--text2); text-transform: none; letter-spacing: 0; }
+  .bf-card.done { border-color: var(--ok); }
+  .bf-item { display: flex; gap: 9px; align-items: flex-start; padding: 6px 4px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: .92rem; }
+  .bf-item:last-child { border-bottom: 0; }
+  .bf-item input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--ok); flex-shrink: 0; }
+  .bf-item.on span { color: var(--text2); text-decoration: line-through; }
+  .bf-item b { color: var(--accent); }
+  .bf-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-back" href="../index.html">← Accueil</a>
+  <span class="nav-title">🗣️ Briefing</span>
+  <div class="navbar-actions">
+    <a class="nav-sos" href="../procedures/index.html" title="Procédures d’urgence"><span aria-hidden="true">🚨</span><span class="nav-sos-txt"> Procédures</span></a>
+    <button type="button" class="profile-chip">🤿 Mon profil</button>
+    <div class="theme-picker">
+      <button type="button" class="theme-btn" aria-label="Changer de thème">🎨</button>
+      <div class="theme-dropdown"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="bf-app">
+  <div class="bf-head">
+    <div class="seg" id="lvl">
+      <button type="button" data-v="n2">Briefing Niveau 2</button>
+      <button type="button" data-v="n3">Briefing Niveau 3</button>
+    </div>
+    <div class="bf-prog"><span id="progTxt"></span><div class="bar"><i id="progBar"></i></div></div>
+    <div class="bf-actions">
+      <a class="btn btn-outline btn-sm" href="../planner/index.html#contrat">⏱️ Calculer DTR, décollage, mi-pression</a>
+      <button type="button" class="btn btn-outline btn-sm" id="reset">↺ Tout décocher</button>
+    </div>
+  </div>
+  <div class="bf-grid" id="grid"></div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  // Briefings de la planche mémo (N2 et N3), étape par étape
+  const BRIEF = {
+    n2: [
+      ['🤝 Social', ['Expérience : dernière plongée ? Combien ?', 'Expérience : souvent ?', 'Où ça ? (selon l’endroit, on ne réagit pas pareil)', 'Première de la journée ?', 'Niveau ?', 'Consommation d’air ? Qui limite ?']],
+      ['🧰 Matériel', ['Matériel de location ou perso ?', 'Où sont les purges ?', 'Lestage : ceinture ou poches ?', 'Buddy check : <b>Bouée, Air, Lestage, Largage, OK</b>', 'Ordinateur de plongée ?', 'Combinaison perso ou location ?', 'Gestes PADI ou FFESSM ?']],
+      ['🌊 Immersion', ['Rappel des directives du DP : xx minutes / xx m', 'Immersion : saut droit ou phoque ?', 'Bubble check à 5 m ? (bulles, ordi, respiration, oreilles)', 'On se retrouve où ?']],
+      ['🧭 Explo', ['Quel trajet ? Objectif ?', 'On évolue comment ? Triangle, stick together ? Signe ?', 'On est à un écart de bras', 'Si on se perd : remontée de 2 m, 360° pendant 1 min, puis parachute si besoin et surface', 'À <b>mi-pression</b>, on fait demi-tour', 'Palier de sécurité ?', 'Qui tire le parachute ? À 8 m ?']],
+      ['🏁 Sortie', ['Débriefing']],
+    ],
+    n3: [
+      ['🤝 Social', ['État physique et psychique', 'Niveau / expérience / historique', 'Intérêt : pourquoi 60 m ?', 'Consommation et oreilles', 'Matériel (sans changement)', 'Ordinateur (planification, pré-dive pour les paliers)', 'Topo du site / points d’intérêt', '<b>BALAO</b> : Bouée, Air, Lestage, Accessoires, OK ?']],
+      ['🌊 Mise à l’eau et descente', ['Technique (saut droit / bascule arrière)', 'Rassemblement ? Où ?', 'Selon la mer : positif ou négatif', 'Descente phoque ou canard / avec ou sans bout', 'Check à 6 m (air, ordi, phare, bulles)', 'Stop à 40 m (check mano, narcose)', 'Descente toujours en se surveillant et à la même vitesse']],
+      ['⚓ Fond', ['Narcose / froid / effort / panne d’air', 'Position de la palanquée / déplacement', 'Perte de palanquée / trajet / topo', 'Communication (gestes)']],
+      ['⏱️ Décollage', ['<b>DTR</b> / <b>pression de décollage</b> (à combien on décolle), qui sera notre réserve / <b>mi-pression</b>', 'Paliers profonds / paliers de sécurité']],
+      ['⬆️ Remontée', ['Remontée toujours en se surveillant, à la même vitesse', 'Vitesse ordi', 'Signes du 1er (le plus profond)', 'Parachute et paliers : entre 6 et 7 m, entre 4 et 5 m ? 360° ?', 'OK de surface', 'Mains sur les purges pour une réimmersion d’urgence', 'Détendeur et masque sur le visage', 'Remontée sur le bateau']],
+      ['💬 Feedback', ['Mi-pression / DTR / pression de réserve', 'Vitesse de remontée', 'Perte de palanquée']],
+    ],
+  };
+  const KEY = 'mn90-briefing';
+  let st;
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { st = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* rien */ } };
+
+  function init() {
+    const grid = document.getElementById('grid'), lvl = document.getElementById('lvl');
+    const progTxt = document.getElementById('progTxt'), progBar = document.getElementById('progBar');
+    if (!grid || !lvl || !progTxt || !progBar) return;
+    const P = window.MN90Profile;
+    const lv = P ? P.get().level : '';
+    let cur = st.cur || (['N3', 'N4', 'MF'].includes(lv) ? 'n3' : 'n2');
+    function render() {
+      lvl.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === cur));
+      const done = st[cur] || {};
+      let n = 0, ok = 0;
+      grid.innerHTML = BRIEF[cur].map(([title, items], si) => {
+        const c = items.filter((_, ii) => done[si + '.' + ii]).length;
+        n += items.length; ok += c;
+        return `<section class="card bf-card${c === items.length ? ' done' : ''}"><h2>${title} <small>${c}/${items.length}</small></h2>` +
+          items.map((it, ii) => `<label class="bf-item${done[si + '.' + ii] ? ' on' : ''}"><input type="checkbox" data-k="${si}.${ii}"${done[si + '.' + ii] ? ' checked' : ''}><span>${it}</span></label>`).join('') + '</section>';
+      }).join('');
+      progTxt.textContent = `${ok} / ${n} vérifiés`;
+      progBar.style.width = (n ? ok / n * 100 : 0) + '%';
+    }
+    lvl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { cur = b.dataset.v; st.cur = cur; save(); render(); } });
+    grid.addEventListener('change', e => {
+      const k = e.target.dataset && e.target.dataset.k;
+      if (!k) return;
+      st[cur] = st[cur] || {};
+      if (e.target.checked) st[cur][k] = 1; else delete st[cur][k];
+      save(); render();
+    });
+    document.getElementById('reset').addEventListener('click', () => { st[cur] = {}; save(); render(); });
+    render();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body>
+</html>
