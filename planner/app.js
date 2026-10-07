@@ -272,8 +272,18 @@
     }
 
     /* ---------- Indicateurs ---------- */
+    // Barre de valeur : zones [[jusqu'à, 'ok'|'warn'|'danger'], ...] de min à max, repère sur la valeur
+    function rangeBar(v, min, max, zones) {
+      const span = max - min || 1;
+      let prev = min;
+      const segs = zones.map(([to, c]) => { const w = Math.max(0, (Math.min(to, max) - prev) / span * 100); prev = Math.max(prev, Math.min(to, max)); return `<i class="${c}" style="width:${w.toFixed(1)}%"></i>`; }).join('');
+      const pos = Math.max(0, Math.min(100, (v - min) / span * 100));
+      return `<div class="rbar" aria-hidden="true">${segs}<b style="left:${pos.toFixed(1)}%"></b></div>`;
+    }
+
     function renderKpis(r) {
-      const T = (key, l, v, sub, cls, help, ex) => ({ key, l, v, sub, cls, help, ex });
+      const T = (key, l, v, sub, cls, help, ex, bar) => ({ key, l, v, sub, cls, help, ex, bar });
+      const pm = r.nitrox ? r.pmax : 1.6, press = r.gear.press;
       const has = !!r.prof;
       const ppCls = r.ppo2 > r.pmax + 1e-9 ? 'danger' : r.nitrox && r.ppo2 > 1.4 ? 'warn' : 'ok';
       const res = r.gear.reserve;
@@ -281,25 +291,32 @@
       const groups = [
         ['⏱️ Temps', [
           T('dtr', 'DTR', has ? `${r.tab.dtr}′` : '—', 'remontée (table)', '', 'dtr', has ? `${r.tab.dtr} min pour remonter de ${r.depth} m.` : ''),
-          T('total', 'Durée totale', has ? `${Math.round(r.prof.total)}′` : '—', 'immersion → sortie', has && r.prof.total > L.LIMITS.immersion ? 'danger' : '', 'dtr', has ? `sortie de l’eau à ${Math.round(r.prof.total)} min.` : ''),
+          T('total', 'Durée totale', has ? `${Math.round(r.prof.total)}′` : '—', 'immersion → sortie', has && r.prof.total > L.LIMITS.immersion ? 'danger' : '', 'dtr', has ? `sortie de l’eau à ${Math.round(r.prof.total)} min.` : '',
+            has ? rangeBar(r.prof.total, 0, 150, [[100, 'ok'], [120, 'warn'], [150, 'danger']]) : ''),
           T('gps', 'GPS', has ? (r.tab.gps === '*' ? '—' : r.tab.gps) : '—', has && r.tab.gps === '*' ? 'pas de successive' : 'lettre de sortie', '', 'gps', has ? `tu sors avec la lettre ${r.tab.gps}.` : ''),
         ]],
         ['🫧 Air', [
-          T('fin', 'Fin de plongée', has ? `${Math.round(r.left)} b` : '—', has ? `conso ${Math.round(r.gasL)} L` : '', has ? (r.left < res ? 'danger' : r.left < res + 20 ? 'warn' : 'ok') : '', 'autonomie', has ? `il te reste ${Math.round(r.left)} b en sortant.` : ''),
-          T('deco', 'Décollage', has ? `${r.pdecoRec} b` : '—', 'quitter le fond à', has ? (r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok') : '', 'pdeco', has ? `quitte le fond à ${r.pdecoRec} b au plus tard.` : ''),
+          T('fin', 'Fin de plongée', has ? `${Math.round(r.left)} b` : '—', has ? `conso ${Math.round(r.gasL)} L` : '', has ? (r.left < res ? 'danger' : r.left < res + 20 ? 'warn' : 'ok') : '', 'autonomie', has ? `il te reste ${Math.round(r.left)} b en sortant.` : '',
+            has ? rangeBar(r.left, 0, press, [[res, 'danger'], [res + 20, 'warn'], [press, 'ok']]) : ''),
+          T('deco', 'Décollage', has ? `${r.pdecoRec} b` : '—', 'quitter le fond à', has ? (r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok') : '', 'pdeco', has ? `quitte le fond à ${r.pdecoRec} b au plus tard.` : '',
+            has ? rangeBar(r.pBottom, 0, press, [[r.pdecoMin, 'danger'], [r.pdecoRec, 'warn'], [press, 'ok']]) : ''),
         ]],
         ['🧪 Gaz', [
-          T('ppo2', 'PpO₂ fond', `${fmt(r.ppo2, 2)} b`, `max ${fmt(r.pmax, 1)} b`, ppCls, 'ppo2', `${fmt(L.pabs(r.depth), 1)} × ${fmt(r.fo2, 2)} = ${fmt(r.ppo2, 2)} b.`),
+          T('ppo2', 'PpO₂ fond', `${fmt(r.ppo2, 2)} b`, `max ${fmt(r.pmax, 1)} b`, ppCls, 'ppo2', `${fmt(L.pabs(r.depth), 1)} × ${fmt(r.fo2, 2)} = ${fmt(r.ppo2, 2)} b.`,
+            rangeBar(r.ppo2, 0, 1.8, [[Math.min(1.4, pm), 'ok'], [pm, 'warn'], [1.8, 'danger']])),
           T('pea', 'PEA', r.nitrox ? `${fmt(r.pea, 1)} m` : `${r.depth} m`, r.nitrox ? `table ${r.tab.d ?? '—'} m` : 'à l’air = réelle', '', 'pea', r.nitrox ? `compte comme ${fmt(r.pea, 1)} m à l’air.` : ''),
-          T('mod', 'MOD', `${fmt(r.mod, 1)} m`, r.nitrox ? `Nx${Math.round(r.fo2 * 100)} à ${fmt(r.pmax, 1)} b` : 'air à 1,6 b', r.depth > r.mod ? 'danger' : 'ok', 'mod', `ne dépasse jamais ${fmt(r.mod, 1)} m.`),
+          T('mod', 'MOD', `${fmt(r.mod, 1)} m`, r.nitrox ? `Nx${Math.round(r.fo2 * 100)} à ${fmt(r.pmax, 1)} b` : 'air à 1,6 b', r.depth > r.mod ? 'danger' : 'ok', 'mod', `ne dépasse jamais ${fmt(r.mod, 1)} m.`,
+            rangeBar(r.depth, 0, Math.max(r.mod + 10, r.depth + 5), [[Math.max(0, r.mod - 3), 'ok'], [r.mod, 'warn'], [Math.max(r.mod + 10, r.depth + 5), 'danger']])),
         ]],
         ['🧠 Corps', [
-          T('snc', '%SNC', has ? `${fmt(snc, 0)} %` : '—', 'jauge cerveau', snc > L.LIMITS.sncMax ? 'danger' : snc > L.LIMITS.sncWarn ? 'warn' : 'ok', 'snc', has ? `${fmt(snc, 0)} % de la dose max du jour.` : ''),
-          T('narc', 'Narcose', `${fmt(r.ppn2, 1)} b`, 'PpN₂ au fond', r.ppn2 > 5.6 ? 'danger' : r.ppn2 > 3.2 ? 'warn' : 'ok', 'narcose', `PpN₂ ${fmt(r.ppn2, 1)} b.`),
+          T('snc', '%SNC', has ? `${fmt(snc, 0)} %` : '—', 'jauge cerveau', snc > L.LIMITS.sncMax ? 'danger' : snc > L.LIMITS.sncWarn ? 'warn' : 'ok', 'snc', has ? `${fmt(snc, 0)} % de la dose max du jour.` : '',
+            rangeBar(snc, 0, 100, [[L.LIMITS.sncWarn, 'ok'], [L.LIMITS.sncMax, 'warn'], [100, 'danger']])),
+          T('narc', 'Narcose 🥴', `${fmt(r.ppn2, 1)} b`, 'PpN₂ au fond', r.ppn2 > 5.6 ? 'danger' : r.ppn2 > 3.2 ? 'warn' : 'ok', 'narcose', `PpN₂ ${fmt(r.ppn2, 1)} b.`,
+            rangeBar(r.ppn2, 0, 6.5, [[3.2, 'ok'], [5.6, 'warn'], [6.5, 'danger']])),
         ]],
       ];
       el.kpis.innerHTML = groups.map(([title, tiles]) => `<div class="kgroup"><div class="gt">${title}</div><div class="row" style="--n:${tiles.length}">` +
-        tiles.map(t => `<div class="kpi ${t.cls}" data-calc="${t.key}" title="Voir le calcul">${H.btn(t.help, t.ex)}<div class="l">${t.l}</div><div class="v">${t.v}</div><div class="s">${t.sub}</div></div>`).join('') +
+        tiles.map(t => `<div class="kpi ${t.cls}" data-calc="${t.key}" title="Voir le calcul">${H.btn(t.help, t.ex)}<div class="l">${t.l}</div><div class="v">${t.v}</div>${t.bar || ''}<div class="s">${t.sub}</div></div>`).join('') +
         '</div></div>').join('');
     }
 
@@ -384,32 +401,43 @@
     }
 
     /* ---------- Jauges cerveau / poumons ---------- */
-    const BRAIN = 'M50 16C42 8 27 10 25 22 13 24 9 38 17 46 11 56 19 70 31 68 35 78 47 80 50 72 53 80 65 78 69 68 81 70 89 56 83 46 91 38 87 24 75 22 73 10 58 8 50 16Z';
-    const LUNGS = 'M45 26C45 18 39 15 34 20 22 32 14 52 14 72 14 86 23 92 34 88 42 85 45 78 45 68ZM55 26C55 18 61 15 66 20 78 32 86 52 86 72 86 86 77 92 66 88 58 85 55 78 55 68Z';
-    function gaugeSvg(id, path, pct, color) {
-      const h = Math.max(0, Math.min(100, pct));
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="${id}"><rect x="0" y="${96 - h * 0.86}" width="100" height="100"/></clipPath></defs>
-        <path d="${path}" style="fill:var(--surface);stroke:var(--text2)" stroke-width="3"/>
-        <path d="${path}" clip-path="url(#${id})" style="fill:${color}"/>
-        ${id === 'gLungs' ? '<path d="M50 4V40M50 34L44 42M50 34L56 42" style="stroke:var(--text2)" stroke-width="3" fill="none" stroke-linecap="round"/>' : '<path d="M50 16V72" style="stroke:var(--text2)" stroke-width="2" fill="none"/>'}
-      </svg>`;
-    }
     function renderGauges(r) {
       if (!r.prof) { el.gauges.innerHTML = ''; return; }
       const snc = r.tox.snc, otu = r.tox.otu;
-      const sColor = snc > L.LIMITS.sncMax ? 'var(--danger)' : snc > L.LIMITS.sncWarn ? 'var(--warn)' : 'var(--ok)';
-      const oPct = otu / L.LIMITS.otuDay * 100;
-      const oColor = oPct > 100 ? 'var(--danger)' : oPct > 60 ? 'var(--warn)' : 'var(--ok)';
-      const airNote = !r.nitrox && snc < 10 ? ' À l’air, aucun risque à ces profondeurs.' : '';
-      el.gauges.innerHTML = `
-        <div class="gauge">${gaugeSvg('gBrain', BRAIN, snc, sColor)}<div>
-          <div class="gh">Cerveau · %SNC ${H.btn('snc', `${fmt(snc, 0)} % de la dose max de la journée.`)}</div>
-          <div class="gv" style="color:${sColor}">${fmt(snc, 0)} %</div>
-          <div class="gt">Dose d’oxygène reçue par le cerveau. Alerte à ${L.LIMITS.sncWarn} %, limite ${L.LIMITS.sncMax} %.${airNote}</div></div></div>
-        <div class="gauge">${gaugeSvg('gLungs', LUNGS, oPct, oColor)}<div>
-          <div class="gh">Poumons · OTU ${H.btn('otu', `${fmt(otu, 0)} OTU sur ${L.LIMITS.otuDay} possibles aujourd’hui.`)}</div>
-          <div class="gv" style="color:${oColor}">${fmt(otu, 0)} <small style="font-size:.55em">/ ${L.LIMITS.otuDay}</small></div>
-          <div class="gt">Irritation des poumons par l’oxygène sur la journée.</div></div></div>`;
+      const p = Math.max(0, Math.min(1, snc / 100));
+      const hue = Math.round(120 * (1 - Math.min(1, snc / L.LIMITS.sncMax)));   // vert → rouge à 80 %
+      const brain = `hsl(${hue} 75% 45%)`;
+      const oP = Math.max(0, Math.min(1, otu / L.LIMITS.otuDay));
+      const lungs = `hsl(${Math.round(120 * (1 - oP))} 70% 45%)`;
+      const narc = r.ppn2 > 3.2;
+      // Camembert du %SNC dans la tête
+      const cx = 75, cy = 42, R = 24, a = p * 2 * Math.PI;
+      const pie = p >= 0.999 ? `<circle cx="${cx}" cy="${cy}" r="${R}" style="fill:${brain}"/>`
+        : p <= 0 ? '' : `<path d="M${cx} ${cy}L${cx} ${cy - R}A${R} ${R} 0 ${a > Math.PI ? 1 : 0} 1 ${(cx + R * Math.sin(a)).toFixed(2)} ${(cy - R * Math.cos(a)).toFixed(2)}Z" style="fill:${brain}"/>`;
+      const lh = 52 * oP;
+      const svg = `<svg viewBox="0 0 150 230" role="img" aria-label="Silhouette : cerveau ${Math.round(snc)} % SNC, poumons ${Math.round(otu)} OTU">
+        <defs><clipPath id="lungClip"><rect x="0" y="${142 - lh}" width="150" height="${lh + 1}"/></clipPath></defs>
+        <path d="M58 72Q75 80 92 72L112 84Q120 90 122 104L126 150Q127 158 119 158L112 158 108 112 104 156 106 226 86 226 76 168 74 168 64 226 44 226 46 156 42 112 38 158 31 158Q23 158 24 150L28 104Q30 90 38 84Z" style="fill:var(--surface2);stroke:var(--text2)" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="${cx}" cy="${cy}" r="30" style="fill:var(--surface2);stroke:var(--text2)" stroke-width="2.5"/>
+        <circle cx="${cx}" cy="${cy}" r="${R}" style="fill:var(--surface);stroke:var(--border)" stroke-width="1.5"/>
+        ${pie}
+        <text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="13" font-weight="800" style="fill:var(--text);paint-order:stroke;stroke:var(--surface);stroke-width:3px">${Math.round(snc)}%</text>
+        <path d="M71 92C71 86 66 84 61 89 52 99 48 116 48 132 48 142 55 145 62 142 69 139 71 134 71 126ZM79 92C79 86 84 84 89 89 98 99 102 116 102 132 102 142 95 145 88 142 81 139 79 134 79 126Z" style="fill:var(--surface);stroke:var(--text2)" stroke-width="2"/>
+        <path d="M71 92C71 86 66 84 61 89 52 99 48 116 48 132 48 142 55 145 62 142 69 139 71 134 71 126ZM79 92C79 86 84 84 89 89 98 99 102 116 102 132 102 142 95 145 88 142 81 139 79 134 79 126Z" clip-path="url(#lungClip)" style="fill:${lungs}"/>
+        ${narc ? `<text x="118" y="22" font-size="24">🥴</text>` : ''}
+      </svg>`;
+      const zoneTxt = snc > L.LIMITS.sncMax ? 'au-delà de la limite' : snc > L.LIMITS.sncWarn ? 'zone d’alerte' : 'zone normale';
+      el.gauges.innerHTML = `<div class="body-wrap">${svg}<div class="body-legend">
+        <div class="bl"><div class="bh">🧠 Cerveau · %SNC ${H.btn('snc', `${fmt(snc, 0)} % de la dose max de la journée.`)}</div>
+          <div class="bv" style="color:${brain}">${fmt(snc, 0)} %</div>${rangeBar(snc, 0, 100, [[L.LIMITS.sncWarn, 'ok'], [L.LIMITS.sncMax, 'warn'], [100, 'danger']])}
+          <div class="bt">Dose d’oxygène reçue par le cerveau : ${zoneTxt} (alerte ${L.LIMITS.sncWarn} %, limite ${L.LIMITS.sncMax} %).</div></div>
+        <div class="bl"><div class="bh">🫁 Poumons · OTU ${H.btn('otu', `${fmt(otu, 0)} OTU sur ${L.LIMITS.otuDay} possibles aujourd’hui.`)}</div>
+          <div class="bv" style="color:${lungs}">${fmt(otu, 0)} <small style="font-size:.6em;color:var(--text2)">/ ${L.LIMITS.otuDay}</small></div>${rangeBar(otu, 0, L.LIMITS.otuDay, [[500, 'ok'], [700, 'warn'], [L.LIMITS.otuDay, 'danger']])}
+          <div class="bt">Irritation des poumons par l’oxygène sur la journée.</div></div>
+        <div class="bl"><div class="bh">🥴 Narcose · PpN₂ ${H.btn('narcose', `PpN₂ ${fmt(r.ppn2, 1)} b au fond.`)}</div>
+          <div class="bv" style="color:${r.ppn2 > 5.6 ? 'var(--danger)' : narc ? 'var(--warn)' : 'var(--ok)'}">${fmt(r.ppn2, 1)} b</div>${rangeBar(r.ppn2, 0, 6.5, [[3.2, 'ok'], [5.6, 'warn'], [6.5, 'danger']])}
+          <div class="bt">${narc ? 'Narcose probable : l’azote agit comme l’alcool, reste vigilant.' : 'Pas de narcose attendue à cette profondeur.'}</div></div>
+      </div></div>`;
     }
 
     /* ---------- Paliers et alertes ---------- */

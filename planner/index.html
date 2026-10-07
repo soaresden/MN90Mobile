@@ -51,7 +51,27 @@
   .kgroup { border: 1px solid var(--border); border-radius: 12px; padding: 6px; background: var(--surface); min-width: 0; }
   .kgroup .gt { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text2); margin: 0 0 4px 4px; }
   .kgroup .row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; }
-  .kpi { padding: 7px 10px; cursor: pointer; }
+  .center { container-type: inline-size; }
+  .kpi { padding: 6px 8px; cursor: pointer; display: flex; flex-direction: column; min-width: 0; }
+  .kpi .l { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 22px; }
+  .kpi .v { white-space: nowrap; font-size: 1.2rem; }
+  .kpi .s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .help-btn { top: 5px; right: 5px; width: 19px; height: 19px; font-size: .7rem; }
+  /* Barre de valeur façon analyse de sang : zones vert / orange / rouge + repère */
+  .rbar { position: relative; display: flex; height: 6px; border-radius: 3px; margin: 6px 0 3px; }
+  .rbar i { display: block; height: 100%; opacity: .55; }
+  .rbar i:first-child { border-radius: 3px 0 0 3px; } .rbar i:last-child { border-radius: 0 3px 3px 0; }
+  .rbar i.ok { background: var(--ok); } .rbar i.warn { background: var(--warn); } .rbar i.danger { background: var(--danger); }
+  .rbar b { position: absolute; top: -4px; width: 4px; height: 14px; border-radius: 2px; background: var(--text); transform: translateX(-50%); box-shadow: 0 0 0 1.5px var(--surface); }
+  /* Silhouette : cerveau (%SNC), poumons (OTU), narcose */
+  .body-wrap { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; align-items: center; }
+  .body-wrap svg { width: 150px; height: auto; }
+  .body-legend { display: flex; flex-direction: column; gap: 10px; }
+  .body-legend .bl { border: 1px solid var(--border); border-radius: 10px; padding: 7px 9px; background: var(--bg2); }
+  .body-legend .bh { display: flex; align-items: center; gap: 6px; font-weight: 800; }
+  .body-legend .bv { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .body-legend .bt { font-size: .78rem; color: var(--text2); }
+  @media (max-width: 420px) { .body-wrap { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
   .kpi:hover { border-color: var(--accent); }
   .calc-item { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: var(--bg2); }
   .calc-item h4 { font-size: .9rem; margin-bottom: 4px; }
@@ -59,7 +79,7 @@
   .calc-item.flash { outline: 3px solid var(--accent); }
   .calc-item .tbl { font-size: .8rem; }
   @media (max-width: 700px) { .kgroups { grid-template-columns: minmax(0, 1fr); } }
-  @media (min-width: 1650px) { .kgroups { grid-template-columns: 3fr 2fr 3fr 2fr; } }
+  @container (min-width: 1250px) { .kgroups { grid-template-columns: 3fr 2fr 3fr 2fr; } }
   .kpi .v { font-size: 1.3rem; }
   .kpi .s { font-size: .72rem; }
 
