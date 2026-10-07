@@ -1,4 +1,6 @@
-# 🤿 MN90 Mobile
+<p align="center"><img src="icons/logo.svg" width="140" alt="Logo MN90 Mobile : un plongeur cartoon et son poisson-clown"></p>
+
+<h1 align="center">MN90 Mobile</h1>
 
 **Mon hub d’outils de plongée, construit au fil de mon parcours de plongeur FFESSM.**
 
@@ -16,7 +18,23 @@ J’ai commencé ce projet pour moi. Chaque fois qu’une formation m’a appris
 
 ---
 
+## 🐰 À l’ouverture
+
+Chaque ouverture de l’accueil lance une petite animation de 8 secondes. Pour la passer, il suffit de toucher l’écran.
+
+- Le plongeur fait un saut droit depuis le ponton, suivi de près par le **lapin plongeur de la section plongée de l’Olympic Garennois Natation**, mon club. Les deux entrées dans l’eau font jaillir l’éclaboussure bleue du club.
+- Ils descendent tête la première jusqu’à l’épave **OGN**, au milieu d’un récif : raies, poissons-clowns, hippocampes, tortues, poissons-globes, crevettes…
+- Les animaux viennent tourner autour d’eux. Le plongeur respire sur son détendeur et finit par un 👌. Le lapin, lui, fait coucou.
+
+C’est mon hommage au club et à sa section plongée, qu’on retrouve aussi en bas de l’accueil.
+
+<p align="center"><img src="docs/screenshots/17-intro.jpg" width="640" alt="Fin de l’animation : le plongeur et le lapin au-dessus de l’épave OGN"></p>
+
+---
+
 ## 🧰 Les outils du hub
+
+Sur l’accueil, les vignettes sont rangées en quatre blocs : **🧭 Préparer ma plongée**, **📚 Comprendre**, **🚨 Sécurité et entraînement** et **⌚ Au poignet**.
 
 | Outil | À quoi il sert |
 |---|---|
@@ -172,6 +190,7 @@ La page reprend le graphique du cours « éléments de tables et saturation » e
 - **Un curseur de temps** (ou ▶ pour l’animation) parcourt la plongée. Les **barres des compartiments** montrent à chaque instant où en est chaque tissu : les 16 compartiments Bühlmann en % de leur gradient, ou les 12 compartiments MN90 en % de leur seuil.
 - **Comparer les GF** : la même plongée avec 100/100, 90/90, 85/85, 80/80, 70/70 et 50/50. Pour chaque paire : DTR, premier palier, palier de 3 m, part de la remontée passée dans les 10 derniers mètres. Avec la plongée du cours (50 m, 15 min, air), on retrouve le tableau du cours à une ou deux minutes près.
 - **Facteur Q** : Q = profondeur × √temps, et le risque statistique d’accident correspondant.
+- **🎬 Visite guidée** : en 9 étapes, la courbe se trace au rythme de la plongée et la ligne expliquée s’allume. Des images simples aident à comprendre : l’éponge qui se remplit au fond, la bouteille de soda qu’on ouvre trop vite, la marge de sécurité des GF. Des bulles animées montrent le tissu qui se vide.
 
 <p align="center"><img src="docs/screenshots/15-saturation-gf.jpg" width="260" alt="Tension et pression absolue, compartiments"></p>
 
@@ -296,10 +315,12 @@ Du HTML, du CSS et du JavaScript purs : aucune compilation, aucun framework.
 ```
 index.html            menu principal du hub
 manifest.webmanifest  appli installable (PWA)
+icons/logo.svg        le logo (plongeur cartoon), décliné en icônes PNG
 sw.js                 service worker : hors ligne, réseau d'abord
 shared/
   style.css           design system, 15 thèmes, taille du texte
   theme.js            thème, taille du texte, PWA, type d'appareil
+  intro.js            animation d'ouverture de l'accueil
   mn90.js             tables MN90 et tous les calculs (une seule source)
   buhlmann.js         modèle Bühlmann ZHL-16C et facteurs de gradient
   profile.js          profil plongeur, prérogatives, dessin du bloc
@@ -315,7 +336,6 @@ watch/                interface montre en version web
 wear/                 appli Wear OS native (Java)
 tools/build-wear.ps1  compile l'APK montre (et publie la release avec -Publish)
 3dassist/             simulateur de remontée assistée 3D
-icons/                icônes de l'appli installée
 dtr/, decomp/         anciennes adresses, redirigées vers le planificateur
 diverflap/            mini-jeu mis de côté
 ```

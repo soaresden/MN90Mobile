@@ -3,17 +3,15 @@
    Un plongeur fait un saut droit depuis un ponton, descend vite jusqu'à
    une épave au milieu d'un récif plein de vie. Les animaux viennent
    tourner autour de lui, il respire sur son détendeur et finit par un 👌.
-   Jouée une fois par ouverture de l'appli (sessionStorage).
+   Jouée à chaque ouverture de l'accueil.
    À charger en haut de <body>, sans defer.
    ============================================================ */
 (function () {
   'use strict';
 
-  const KEY = 'mn90-intro-seen';
-  // ?introAt=4000 : image figée à 4 s (pour vérifier une étape) ; ?intro : rejouer
+  // Jouée à chaque ouverture de l'accueil. ?introAt=4000 : image figée à 4 s (pour vérifier une étape)
   const Q = new URLSearchParams(location.search);
   const FREEZE = Q.has('introAt') ? Math.max(0, +Q.get('introAt') || 0) : null;
-  try { if (FREEZE === null && !Q.has('intro') && sessionStorage.getItem(KEY)) return; sessionStorage.setItem(KEY, '1'); } catch (e) { /* stockage indisponible : on joue */ }
   if (!document.body) return;
 
   const TXT = {
@@ -39,13 +37,13 @@
   const CREW = [
     ['ray', -80, 1380, 1.1, 0.5, 0], ['ray', 470, 1560, 0.8, 0.6, 0],
     ['clown', 110, 1590, 1, 1.1, 1], ['clown', 300, 1560, 0.9, 1.3, 1], ['clown', 60, 1740, 0.8, 1, 0],
-    ['horse', 30, 1770, 1, 0.6, 0], ['horse', 375, 1745, 0.9, 0.7, 0],
+    ['horse', 30, 1770, 1, 0.6, 0], ['horse', 418, 1745, 0.9, 0.7, 0],
     ['🐢', 340, 1610, 34, 0.5, 1], ['🐢', -30, 1500, 28, 0.4, 0],
     ['🐡', 260, 1690, 26, 0.8, 1], ['🐡', 70, 1640, 22, 0.9, 0], ['🐡', 420, 1450, 24, 0.7, 0],
     ['🦐', 150, 1830, 20, 0.9, 1], ['🦐', 330, 1835, 18, 1.1, 0], ['🦐', 250, 1600, 18, 1.2, 1],
     ['🐠', 180, 1520, 24, 1.2, 1], ['🐠', 380, 1690, 22, 1.4, 0], ['🐠', 20, 1580, 22, 1.1, 0], ['🐠', 240, 1460, 20, 1.5, 1],
     ['🐟', 300, 1480, 22, 1.4, 0], ['🐟', 140, 1700, 20, 1.6, 1], ['🐟', 200, 960, 18, 1.6, 0], ['🐟', 90, 1180, 20, 1.3, 0],
-    ['🐙', 250, 1800, 28, 0.4, 0], ['🦀', 120, 1842, 22, 0.8, 0], ['🦑', 430, 1380, 28, 0.7, 0],
+    ['🐙', 395, 1812, 28, 0.25, 0], ['🦀', 120, 1842, 22, 0.8, 0], ['🦑', 430, 1380, 28, 0.7, 0],
     ['🪼', 330, 720, 26, 0.5, 0], ['🪼', 60, 880, 20, 0.6, 0], ['🐬', -60, 520, 36, 0.9, 0], ['🐳', 480, 1050, 46, 0.3, 0],
     ['🐚', 300, 1850, 18, 0, 0], ['🪸', 40, 1838, 34, 0, 0], ['🪸', 360, 1842, 30, 0, 0], ['🪸', 200, 1850, 26, 0, 0],
   ];
@@ -131,7 +129,17 @@
         <rect x="250" y="${BOTTOM - 95}" width="60" height="25" rx="6" fill="#8e7aa1" stroke="#0b2545" stroke-width="3"/>
         <line x1="170" y1="${BOTTOM - 110}" x2="160" y2="${BOTTOM - 230}" stroke="#4a5a66" stroke-width="6"/>
         <line x1="160" y1="${BOTTOM - 200}" x2="215" y2="${BOTTOM - 190}" stroke="#4a5a66" stroke-width="4"/>
-        ${[90, 140, 190, 240, 290, 330].map(x => `<circle cx="${x}" cy="${BOTTOM - 45}" r="8" fill="#bdf0ff" stroke="#0b2545" stroke-width="3"/>`).join('')}
+        ${[86, 124, 162].map(x => `<circle cx="${x}" cy="${BOTTOM - 45}" r="8" fill="#bdf0ff" stroke="#0b2545" stroke-width="3"/>`).join('')}
+        <!-- Nom de l'épave : OGN, avec le badge du lapin plongeur du club -->
+        <text x="248" y="${BOTTOM - 31}" font-size="30" font-weight="900" text-anchor="middle" fill="#ffffff" stroke="#0b2545" stroke-width="3" paint-order="stroke" font-family="Arial Black, Arial, sans-serif" letter-spacing="2">OGN</text>
+        <g transform="translate(322 ${BOTTOM - 42})" stroke="#0b2545" stroke-width="2.2" stroke-linejoin="round">
+          <circle r="19" fill="#ff6b6b"/>
+          <ellipse cx="-5" cy="-13" rx="3.4" ry="9" fill="#fff" transform="rotate(-12 -5 -6)"/>
+          <ellipse cx="5" cy="-13" rx="3.4" ry="9" fill="#fff" transform="rotate(12 5 -6)"/>
+          <circle cx="0" cy="2" r="9" fill="#fff"/>
+          <rect x="-8" y="-3" width="16" height="7" rx="3.5" fill="#bdf0ff" stroke="#1b8a80" stroke-width="1.8"/>
+          <circle cx="7" cy="8" r="2.4" fill="#b8c2cc" stroke-width="1.2"/>
+        </g>
         <path d="M60 ${BOTTOM - 70} q20 -10 40 0 q20 10 40 0 q20 -10 40 0" stroke="#2f9e6b" stroke-width="3" fill="none"/>
         <circle cx="300" cy="${BOTTOM - 72}" r="9" fill="#ff6fae"/><circle cx="318" cy="${BOTTOM - 74}" r="6" fill="#ffd166"/><circle cx="96" cy="${BOTTOM - 74}" r="7" fill="#c77dff"/>
       </g>
@@ -142,6 +150,32 @@
       ? `<g class="cr" transform="translate(${x} ${y})"><g transform="scale(${s})">${SHAPES[e]}</g></g>`
       : `<text class="cr" x="${x}" y="${y}" font-size="${Math.round(s * 1.5)}" text-anchor="middle" dominant-baseline="middle">${e}</text>`).join('')}</g>
     <g id="in-hearts"></g>
+    <!-- Le lapin plongeur, mascotte de la section plongée du club -->
+    <g id="in-rabbit">
+      <g stroke="#0b2545" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+        <g id="in-ears">
+          <ellipse cx="-5" cy="-60" rx="6" ry="17" fill="#ffffff" transform="rotate(-14 -5 -46)"/>
+          <ellipse cx="-5" cy="-60" rx="2.6" ry="11" fill="#ffb3c6" stroke="none" transform="rotate(-14 -5 -46)"/>
+          <ellipse cx="9" cy="-62" rx="6" ry="17" fill="#ffffff" transform="rotate(12 9 -46)"/>
+          <ellipse cx="9" cy="-62" rx="2.6" ry="11" fill="#ffb3c6" stroke="none" transform="rotate(12 9 -46)"/>
+        </g>
+        <rect x="-19" y="-20" width="10" height="28" rx="5" fill="#2ec4b6"/>
+        <rect x="-8" y="6" width="7" height="18" rx="3.5" fill="#ffffff"/>
+        <rect x="1" y="6" width="7" height="18" rx="3.5" fill="#ffffff"/>
+        <g id="in-rfins"><path d="M-9 22 q -5 12 -1 20 q 5 2 9 0 q 1 -10 0 -20 Z" fill="#ff5d8f"/><path d="M0 22 q -1 10 0 20 q 5 2 9 0 q 3 -8 -2 -20 Z" fill="#ff5d8f"/></g>
+        <rect x="-10" y="-22" width="20" height="32" rx="10" fill="#ffffff"/>
+        <path d="M-9 -2 h 18" stroke="#2ec4b6" stroke-width="3.5"/>
+        <circle cx="2" cy="-33" r="15" fill="#ffffff"/>
+        <rect x="-3" y="-44" width="20" height="13" rx="6" fill="#bdf0ff" stroke="#1b8a80" stroke-width="2.6"/>
+        <circle cx="3" cy="-37.5" r="3.4" fill="#fff" stroke-width="1.3"/><circle cx="11" cy="-37.5" r="3.4" fill="#fff" stroke-width="1.3"/>
+        <circle id="in-reye" cx="4" cy="-37" r="1.6" fill="#0b2545" stroke="none"/><circle cx="12" cy="-37" r="1.6" fill="#0b2545" stroke="none"/>
+        <circle cx="16" cy="-27" r="2.2" fill="#ff8fab" stroke="none"/>
+        <path d="M9 -24 h 4 v 4 h -4 Z" fill="#ffffff" stroke-width="1.4"/>
+        <path d="M12 -27 l 9 -2 M12 -25 l 9 1" stroke-width="1.2"/>
+        <circle cx="19" cy="-22" r="3.6" fill="#b8c2cc"/>
+        <g id="in-rarm"><rect x="2" y="-18" width="7" height="16" rx="3.5" fill="#ffffff"/><circle cx="5.5" cy="0" r="3.4" fill="#ffffff"/></g>
+      </g>
+    </g>
     <g id="in-diver">
       <g stroke="#0b2545" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
         <!-- Bloc : gros, jaune, avec sa robinetterie -->
@@ -176,6 +210,7 @@
   const $ = s => world.querySelector(s);
   const diver = $('#in-diver'), fins = $('#in-fins'), arm = $('#in-arm'), ok = $('#in-ok');
   const wave = $('#in-wave'), splash = $('#in-splash'), hearts = $('#in-hearts');
+  const rabbit = $('#in-rabbit'), ears = $('#in-ears'), rfins = $('#in-rfins'), rarm = $('#in-rarm');
   const crewEls = [...world.querySelectorAll('#in-crew .cr')], weeds = [...world.querySelectorAll('.in-weed')];
 
   // Bulles et cœurs réutilisés
@@ -209,15 +244,37 @@
     const cam = Math.max(0, Math.min(BOTTOM + 60 - vh, y - vh * 0.42));
     return { x, y, a, cam };
   }
+  const RLAG = 350;
+  function rabbitPose(t) {
+    const P = pose(t - RLAG);
+    const wob = t > 1900 ? Math.sin(t / 380) * 6 : 0;          // il nage en ondulant
+    return { x: P.x - 58 + wob, y: P.y + 17, a: P.a };
+  }
+  // Éclaboussure aux couleurs du club : des vagues bleues qui s'enroulent, et des gouttes
+  function splashAt(x, k) {
+    const sc = 0.4 + k * 1.2, op = Math.max(0, 1 - k);
+    const curl = (dx, r, c, flip) => `<path d="M${dx} 0 a ${r} ${r} 0 1 ${flip ? 0 : 1} ${flip ? -r * 1.6 : r * 1.6} ${-r * 0.9} a ${r * 0.5} ${r * 0.5} 0 0 ${flip ? 0 : 1} ${flip ? r * 0.5 : -r * 0.5} ${r * 0.6}" fill="none" stroke="${c}" stroke-width="${7 - k * 3}" stroke-linecap="round"/>`;
+    return `<g transform="translate(${x} ${SURF}) scale(${sc})" opacity="${op.toFixed(2)}">` +
+      curl(-6, 14, '#29b6f6', true) + curl(6, 14, '#29b6f6', false) + curl(-14, 22, '#81d4fa', true) + curl(14, 22, '#81d4fa', false) +
+      [-30, -16, 0, 16, 30].map((dx, j) => `<circle cx="${dx * (1 + k)}" cy="${-Math.sin(k * Math.PI) * (28 + (j % 2) * 18)}" r="3.5" fill="#e1f5fe" stroke="#29b6f6" stroke-width="1.5"/>`).join('') + '</g>';
+  }
 
   const t0 = performance.now();
-  let raf = 0, lastPuff = 0, lastLove = 0, done = false;
+  let raf = 0, lastPuff = 0, lastRPuff = 0, lastLove = 0, done = false;
   function frame(now) {
     const t = FREEZE !== null ? FREEZE : reduce ? DUR - 1 : now - t0;
     const P = pose(t);
     svg.setAttribute('viewBox', `${(400 - vw) / 2} ${P.cam} ${vw} ${vh}`);
     diver.setAttribute('transform', `translate(${P.x} ${P.y}) rotate(${P.a}) scale(1.3)`);
     fins.setAttribute('transform', t > 1550 && t < 6000 ? `rotate(${Math.sin(t / 90) * 14} 0 30)` : `rotate(${Math.sin(t / 400) * 5} 0 30)`);
+    const RP = rabbitPose(t);
+    rabbit.setAttribute('transform', `translate(${RP.x.toFixed(1)} ${RP.y.toFixed(1)}) rotate(${RP.a.toFixed(1)}) scale(1.15)`);
+    // Oreilles qui flottent dans l'eau, palmes qui battent, petit coucou de la patte à la fin
+    ears.setAttribute('transform', `rotate(${(t > 1900 ? Math.sin(t / 240) * 9 : Math.sin(t / 500) * 3).toFixed(1)} 2 -46)`);
+    rfins.setAttribute('transform', t > 1900 && t < 6300 ? `rotate(${Math.sin(t / 85 + 1) * 16} 0 24)` : '');
+    const wave2 = ease(seg(t, 6200, 6600));
+    rarm.setAttribute('transform', `rotate(${(-wave2 * 140 + (wave2 >= 1 ? Math.sin(t / 120) * 18 : 0)).toFixed(1)} 5 -16)`);
+    $('#in-reye').setAttribute('r', t > 7100 && t < 7350 ? '0.4' : '1.6');
     // Le 👌 final : le bras se lève vers toi
     const okK = ease(seg(t, 6000, 6500));
     arm.setAttribute('transform', `rotate(${-okK * 125} 6 -18)`);
@@ -231,17 +288,17 @@
     for (let x = -600; x <= 1000; x += 20) d += ` L ${x} ${SURF + Math.sin(x / 30 + t / 400) * 3}`;
     wave.setAttribute('d', d + ` L 2400 ${SURF} L 2400 ${SURF + 6} L -2000 ${SURF + 6} Z`);
     // Éclaboussure
-    if (!reduce && t > 1450 && t < 2300) {
-      const k = seg(t, 1450, 2300);
-      splash.setAttribute('opacity', String(1 - k));
-      splash.innerHTML = [-1, 1].map(s => `<ellipse cx="${205 + s * 6}" cy="${SURF}" rx="${10 + k * 60}" ry="${3 + k * 8}" fill="none" stroke="#fff" stroke-width="3"/>`).join('') +
-        [-24, -12, 0, 12, 24].map((dx, j) => `<circle cx="${205 + dx * (1 + k * 2)}" cy="${SURF - Math.sin(k * Math.PI) * (30 + j % 2 * 20)}" r="${Math.max(0.5, 4 - k * 3)}" fill="#fff"/>`).join('');
+    if (!reduce && t > 1450 && t < 2300 + RLAG) {
+      splash.setAttribute('opacity', '1');
+      splash.innerHTML = (t < 2300 ? splashAt(205, seg(t, 1450, 2300)) : '') + (t > 1450 + RLAG ? splashAt(147, seg(t, 1450 + RLAG, 2300 + RLAG)) : '');
     } else splash.setAttribute('opacity', '0');
     // Respiration sur le détendeur : 1,1 s d'inspiration, puis une salve de bulles à l'expiration
     const r = P.a * Math.PI / 180, cos = Math.cos(r), sin = Math.sin(r);
     const regX = P.x + 1.3 * (22 * cos + 31 * sin), regY = P.y + 1.3 * (22 * sin - 31 * cos);
     const phase = (t % 1900) / 1900;
     if (t > 1550 && phase > 0.58 && now - lastPuff > 55) { lastPuff = now; puff(regX, regY); }
+    const rr = RP.a * Math.PI / 180, rph = ((t + 900) % 1700) / 1700;
+    if (t > 1900 && rph > 0.62 && now - lastRPuff > 70) { lastRPuff = now; puff(RP.x + 1.15 * (19 * Math.cos(rr) + 22 * Math.sin(rr)), RP.y + 1.15 * (19 * Math.sin(rr) - 22 * Math.cos(rr))); }
     BUB.forEach(b => {
       if (b.life <= 0) { b.el.setAttribute('r', '0'); return; }
       b.y -= 1.8 + b.r * 0.25; b.x += Math.sin(b.y / 11) * 0.7; b.life -= 0.01;

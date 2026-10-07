@@ -20,7 +20,10 @@
 </script>
 <style>
   .hero { padding: 26px 0 8px; text-align: center; }
-  .hero-logo { font-size: 2.6rem; }
+  .hero-logo { width: 104px; height: 104px; border-radius: 26px; box-shadow: var(--shadow); display: block; margin: 0 auto; }
+  .navbar-brand img { width: 28px; height: 28px; border-radius: 8px; }
+  .ogn { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; font-size: .84rem; color: var(--text2); }
+  .ogn svg { width: 64px; height: 40px; flex-shrink: 0; }
   .hero h1 { color: var(--accent); margin: 4px 0 6px; }
   .hero p { color: var(--text2); max-width: 420px; margin: 0 auto; }
   .section-label { font-size: .76rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text2); padding: 18px 0 2px; }
@@ -42,7 +45,7 @@
 <script src="shared/intro.js"></script>
 
 <nav class="navbar">
-  <a class="navbar-brand" href="index.html">🤿<span class="brand-txt"> MN90 Mobile</span></a>
+  <a class="navbar-brand" href="index.html"><img src="icons/logo.svg" alt="" width="28" height="28"><span class="brand-txt">MN90 Mobile</span></a>
   <div class="navbar-actions">
     <a class="nav-sos" href="procedures/index.html" title="Procédures d’urgence"><span aria-hidden="true">🚨</span><span class="nav-sos-txt"> Procédures</span></a>
     <button type="button" class="profile-chip">🤿 Mon profil</button>
@@ -55,7 +58,7 @@
 
 <main class="container home">
   <div class="hero">
-    <div class="hero-logo">🌊</div>
+    <img class="hero-logo" src="icons/logo.svg" alt="" width="104" height="104">
     <h1>Outils plongée MN90</h1>
     <p>Tables FFESSM · Nitrox · DTR et décollage · Saturation et GF · Briefing · Procédures · Simulateur 3D</p>
   </div>
@@ -147,6 +150,22 @@
 </main>
 
 <footer>
+  <div class="ogn">
+    <svg viewBox="0 0 64 40" aria-hidden="true">
+      <g fill="none" stroke-linecap="round" stroke-width="4">
+        <path d="M6 30 a 12 12 0 1 1 18 -14 a 6 6 0 0 1 -8 6" stroke="#29b6f6"/>
+        <path d="M16 34 a 9 9 0 1 1 14 -10" stroke="#81d4fa"/>
+      </g>
+      <g transform="translate(46 21)" stroke="#0b2545" stroke-width="1.6" stroke-linejoin="round">
+        <circle r="15" fill="#ff6b6b"/>
+        <ellipse cx="-4" cy="-10" rx="2.8" ry="7" fill="#fff" transform="rotate(-12 -4 -5)"/>
+        <ellipse cx="4" cy="-10" rx="2.8" ry="7" fill="#fff" transform="rotate(12 4 -5)"/>
+        <circle cx="0" cy="2" r="7" fill="#fff"/>
+        <rect x="-6.5" y="-2.5" width="13" height="5.5" rx="2.7" fill="#bdf0ff" stroke="#1b8a80" stroke-width="1.4"/>
+      </g>
+    </svg>
+    <span>En hommage à l’<b>Olympic Garennois Natation</b> et à sa <b>section plongée</b> 🐰</span>
+  </div>
   MN90 Mobile · Tables FFESSM MN90 · Soaresden · 2025-2026<br>
   Outil d’entraînement : il ne remplace ni ta formation, ni ton ordinateur, ni les consignes de ton directeur de plongée.
 </footer>

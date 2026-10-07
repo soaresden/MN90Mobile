@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MN90 Mobile">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3cc6e8"/>
+      <stop offset=".55" stop-color="#0f7fae"/>
+      <stop offset="1" stop-color="#0a3d62"/>
+    </linearGradient>
+    <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#sea)"/>
+    <!-- rayons de lumière -->
+    <polygon points="60,0 120,0 230,512 130,512" fill="url(#ray)"/>
+    <polygon points="300,0 345,0 470,512 395,512" fill="url(#ray)"/>
+    <!-- fond de sable -->
+    <path d="M0 470 Q 140 440 260 468 T 512 462 V 512 H 0 Z" fill="#f6d98b" stroke="#0b2545" stroke-width="8"/>
+    <g stroke="#0b2545" stroke-width="10" stroke-linejoin="round" stroke-linecap="round">
+      <!-- bloc -->
+      <rect x="92" y="250" width="78" height="230" rx="36" fill="#ffd23f"/>
+      <rect x="112" y="214" width="38" height="44" rx="10" fill="#b8c2cc"/>
+      <!-- tuyau du détendeur -->
+      <path d="M150 232 C 200 150, 330 160, 386 262" fill="none" stroke-width="12"/>
+      <!-- corps -->
+      <rect x="150" y="300" width="210" height="260" rx="90" fill="#1d3557"/>
+      <path d="M160 392 H 352" stroke="#4fd1c5" stroke-width="20"/>
+      <!-- tête : cagoule, visage, masque, grands yeux -->
+      <circle cx="250" cy="214" r="112" fill="#1d3557"/>
+      <circle cx="300" cy="238" r="70" fill="#ffd6b0" stroke-width="9"/>
+      <rect x="236" y="128" width="168" height="96" rx="44" fill="#bdf0ff"/>
+      <circle cx="288" cy="176" r="27" fill="#ffffff" stroke-width="7"/>
+      <circle cx="352" cy="176" r="27" fill="#ffffff" stroke-width="7"/>
+      <circle cx="297" cy="180" r="13" fill="#0b2545" stroke="none"/>
+      <circle cx="361" cy="180" r="13" fill="#0b2545" stroke="none"/>
+      <path d="M254 150 l 18 -9" stroke="#ffffff" stroke-width="9"/>
+      <!-- sourire et détendeur -->
+      <path d="M276 266 q 34 26 70 0" fill="none" stroke-width="9"/>
+      <circle cx="386" cy="266" r="30" fill="#b8c2cc"/>
+      <circle cx="386" cy="266" r="11" fill="#7d8a96" stroke-width="6"/>
+      <!-- joues -->
+      <circle cx="262" cy="248" r="13" fill="#ff9aa2" stroke="none" opacity=".75"/>
+    </g>
+    <!-- bulles -->
+    <g fill="none" stroke="#ffffff" stroke-width="9">
+      <circle cx="440" cy="200" r="16"/>
+      <circle cx="458" cy="130" r="24"/>
+      <circle cx="420" cy="62" r="13"/>
+    </g>
+    <g fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"><path d="M444 118 a 13 13 0 0 1 12 -8"/><path d="M432 194 a 8 8 0 0 1 7 -6"/></g>
+    <!-- poisson-clown -->
+    <g transform="translate(420 392)" stroke="#0b2545" stroke-width="7" stroke-linejoin="round">
+      <path d="M-44 0 L-70 -22 L-70 22 Z" fill="#ff7b1c"/>
+      <ellipse cx="0" cy="0" rx="48" ry="30" fill="#ff7b1c"/>
+      <path d="M14 -28 q -12 28 0 56" stroke="#ffffff" stroke-width="12" fill="none"/>
+      <path d="M-16 -29 q -12 29 0 58" stroke="#ffffff" stroke-width="12" fill="none"/>
+      <circle cx="28" cy="-8" r="9" fill="#ffffff" stroke-width="4"/>
+      <circle cx="31" cy="-8" r="4.5" fill="#0b2545" stroke="none"/>
+    </g>
+  </g>
+</svg>

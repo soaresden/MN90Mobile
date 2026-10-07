@@ -79,6 +79,8 @@
         document.head.appendChild(l);
         const m = document.createElement('meta'); m.name = 'theme-color'; m.content = '#006a96';
         document.head.appendChild(m);
+        const fi = document.createElement('link'); fi.rel = 'icon'; fi.type = 'image/svg+xml'; fi.href = new URL('icons/logo.svg', root).href;
+        document.head.appendChild(fi);
         const a = document.createElement('link'); a.rel = 'apple-touch-icon'; a.href = new URL('icons/apple-touch-icon.png', root).href;
         document.head.appendChild(a);
       }
