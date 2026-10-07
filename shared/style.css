@@ -258,11 +258,11 @@ button, input, select { font: inherit; color: inherit; }
   .nav-back { font-size: .82rem; }
   .navbar-brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 }
-.profile-chip, .theme-btn, .nav-chip {
+.profile-chip, .theme-btn, .nav-chip, .lang-btn {
   background: var(--surface2); border: 1px solid var(--border); color: var(--text);
   border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: .85rem; font-weight: 600; white-space: nowrap;
 }
-.profile-chip:hover, .theme-btn:hover, .nav-chip:hover { border-color: var(--accent); }
+.profile-chip:hover, .theme-btn:hover, .nav-chip:hover, .lang-btn:hover { border-color: var(--accent); }
 .nav-sos {
   display: inline-flex; align-items: center; gap: 2px; text-decoration: none; white-space: nowrap;
   border: 1.5px solid var(--danger); color: var(--danger); background: var(--danger-bg);
@@ -273,10 +273,45 @@ button, input, select { font: inherit; color: inherit; }
 .theme-picker { position: relative; }
 .theme-dropdown {
   display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 200;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-  overflow-y: auto; box-shadow: var(--shadow); min-width: 220px; max-height: 70vh;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  overflow-y: auto; box-shadow: var(--shadow); width: min(352px, calc(100vw - 20px)); max-height: 80vh;
 }
-.theme-dropdown.open { display: block; }
+/* Vignettes de thème : chacune s'affiche avec les couleurs de son propre thème */
+.th-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 10px; }
+.th-row { display: flex; gap: 7px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; }
+.th-row .th-tile { flex: 0 0 96px; }
+.th-tile {
+  position: relative; display: flex; flex-direction: column; gap: 5px; padding: 6px; cursor: pointer; text-align: left;
+  background: var(--bg); background-image: var(--deco, none); background-size: 46px 46px;
+  border: 2px solid var(--border); border-radius: 12px; color: var(--text); font: inherit; min-width: 0;
+}
+.th-tile:hover { transform: translateY(-1px); }
+.th-tile.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.th-tile.on::after { content: '✓'; position: absolute; top: 4px; right: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: .7rem; font-weight: 900; display: grid; place-items: center; }
+.th-prev { display: grid; gap: 3px; height: 34px; }
+.th-bar { display: block; height: 7px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); }
+.th-card { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 3px 5px; border-radius: 5px; background: var(--surface); border: 1px solid var(--border); }
+.th-card b { display: block; height: 3px; border-radius: 2px; background: var(--text2); width: 80%; }
+.th-card b:first-child { background: var(--accent); width: 55%; }
+.th-dot { display: none; }
+.th-name { font-size: .72rem; font-weight: 800; line-height: 1.15; color: var(--text); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.th-foot { position: sticky; bottom: 0; display: flex; justify-content: flex-end; padding: 8px 10px; background: var(--surface); border-top: 1px solid var(--border); }
+.pf-theme { margin-bottom: 4px; }
+.pf-theme-lbl { display: block; font-size: .82rem; font-weight: 800; color: var(--text2); margin-bottom: 4px; }
+.theme-dropdown.open, .lang-dropdown.open { display: block; }
+/* Menu des langues (🌐), même allure que le menu des thèmes */
+.lang-dropdown {
+  display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 200;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  overflow-y: auto; box-shadow: var(--shadow); min-width: 210px; max-height: 70vh;
+}
+.lang-code { display: inline-block; min-width: 2.2em; font-size: .75rem; color: var(--text2); }
+/* Traduction en cours : la page reste cachée un instant pour ne pas clignoter */
+html.i18n-wait body { visibility: hidden; }
+.pf-lang { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 2px 0 8px; }
+.pf-lang-btn { border: 1px solid var(--border); background: var(--bg2); color: var(--text); border-radius: 999px; padding: 4px 10px; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.pf-lang-btn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+@media (max-width: 560px) { .lang-btn span { display: none; } }
 .theme-option {
   display: flex; width: 100%; align-items: center; gap: 10px; padding: 11px 14px;
   background: none; border: 0; text-align: left; cursor: pointer; color: var(--text); font-size: .9rem;
@@ -471,6 +506,6 @@ legend { font-weight: 700; font-size: .9rem; margin-bottom: 8px; color: var(--te
 }
 @media (max-width: 480px) {
   .nav-title { font-size: .92rem; }
-  .profile-chip, .theme-btn, .nav-chip { padding: 6px 9px; font-size: .8rem; }
+  .profile-chip, .theme-btn, .nav-chip, .lang-btn { padding: 6px 9px; font-size: .8rem; }
   .kpi .v { font-size: 1.3rem; }
 }

@@ -32,15 +32,19 @@
     return THEMES.some(t => t.id === id) ? id : DEFAULT;
   }
 
+  // Vignettes d'aperçu : chaque vignette porte data-theme, elle s'affiche donc avec les couleurs de son thème
+  function tiles(cur) {
+    return THEMES.map(t => `<button type="button" class="th-tile${t.id === cur ? ' on' : ''}" data-theme="${t.id}" data-theme-pick="${t.id}" aria-pressed="${t.id === cur}">
+        <span class="th-prev" aria-hidden="true"><i class="th-bar"></i><i class="th-card"><b></b><b></b></i><i class="th-dot"></i></span>
+        <span class="th-name">${t.label}</span></button>`).join('');
+  }
+  const markTiles = id => document.querySelectorAll('[data-theme-pick]').forEach(b => { const on = b.dataset.themePick === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+
   function apply(id, persist) {
     if (!THEMES.some(t => t.id === id)) id = DEFAULT;
     document.documentElement.setAttribute('data-theme', id);
     if (persist) { try { localStorage.setItem(KEY, id); } catch (e) { /* stockage indisponible */ } }
-    document.querySelectorAll('.theme-option').forEach(el => {
-      const on = el.dataset.theme === id;
-      el.classList.toggle('active', on);
-      el.setAttribute('aria-checked', on ? 'true' : 'false');
-    });
+    markTiles(id);
     document.dispatchEvent(new CustomEvent('mn90:theme', { detail: id }));
   }
 
@@ -68,6 +72,49 @@
     if (persist) window.dispatchEvent(new Event('resize'));   // graphiques et barre du haut se recalent
   }
   applyFz(readFz(), false);
+
+  // Langue de l'interface : choisie dans le menu 🌐 ou la fenêtre profil, sinon celle du navigateur
+  const LANGS = [
+    { id: 'fr', label: 'Français', short: 'FR' },
+    { id: 'en', label: 'English', short: 'EN' },
+    { id: 'es', label: 'Español', short: 'ES' },
+    { id: 'it', label: 'Italiano', short: 'IT' },
+    { id: 'pt-BR', label: 'Português (Brasil)', short: 'BR' },
+    { id: 'pl', label: 'Polski', short: 'PL' },
+  ];
+  const LANG_KEY = 'mn90-lang';
+  function readLang() {
+    let id = null;
+    try { id = localStorage.getItem(LANG_KEY); } catch (e) { id = null; }
+    if (LANGS.some(l => l.id === id)) return id;
+    const nav = String(navigator.language || 'fr').toLowerCase();
+    const hit = LANGS.find(l => nav === l.id.toLowerCase()) || LANGS.find(l => nav.startsWith(l.id.slice(0, 2)));
+    return hit ? hit.id : 'fr';
+  }
+  // Changer de langue : on enregistre et on recharge la page (rien n'est perdu, tout est gardé dans le navigateur)
+  function setLang(id) {
+    if (!LANGS.some(l => l.id === id)) return;
+    try { localStorage.setItem(LANG_KEY, id); } catch (e) { /* stockage indisponible */ }
+    location.reload();
+  }
+  const LANG = readLang();
+  const COLLECT = /[?&]i18n=collect\b/.test(location.search);
+  document.documentElement.lang = LANG;
+  document.documentElement.setAttribute('data-lang', LANG);
+  if (COLLECT) document.documentElement.setAttribute('data-i18n-collect', '');
+  try {
+    const me = document.currentScript && document.currentScript.src;
+    if (me && (LANG !== 'fr' || COLLECT)) {
+      // Page masquée le temps de la traduction (2,5 s au plus, au cas où un fichier manque)
+      if (LANG !== 'fr') {
+        document.documentElement.classList.add('i18n-wait');
+        setTimeout(() => document.documentElement.classList.remove('i18n-wait'), 2500);
+      }
+      const add = src => { const sc = document.createElement('script'); sc.src = new URL(src, me).href; sc.async = false; document.head.appendChild(sc); };
+      add('i18n.js');
+      if (LANG !== 'fr') add(`lang/${LANG}.js`);
+    }
+  } catch (e) { document.documentElement.classList.remove('i18n-wait'); }
 
   // Appli installable et hors ligne (PWA) : manifeste + service worker, depuis la racine du site
   try {
@@ -101,28 +148,48 @@
   // Les données (profil, briefing, thème) restent dans le navigateur utilisé
   const storedWhere = () => `${device()}, dans ce navigateur`;
 
+  // Menu 🌐 placé à côté du 🎨 dans chaque barre du haut
+  function langMenu() {
+    document.querySelectorAll('.navbar .theme-picker:not(.lang-picker)').forEach(tp => {
+      if (tp.parentElement.querySelector('.lang-picker')) return;
+      const cur = LANGS.find(l => l.id === LANG) || LANGS[0];
+      const box = document.createElement('div');
+      box.className = 'theme-picker lang-picker';
+      box.innerHTML = `<button type="button" class="lang-btn" aria-haspopup="true" aria-label="Langue · Language" title="Langue · Language"><span aria-hidden="true">🌐</span> ${cur.short}</button>
+        <div class="lang-dropdown notranslate" role="menu">${LANGS.map(l => `<button type="button" class="theme-option${l.id === LANG ? ' active' : ''}" role="menuitemradio" aria-checked="${l.id === LANG}" data-lang="${l.id}"><b class="lang-code">${l.short}</b>${l.label}</button>`).join('')}</div>`;
+      tp.parentElement.insertBefore(box, tp);
+      const dd = box.querySelector('.lang-dropdown');
+      box.querySelector('.lang-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        document.querySelectorAll('.theme-dropdown.open').forEach(x => x.classList.remove('open'));
+        dd.classList.toggle('open');
+      });
+      dd.addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b && b.dataset.lang !== LANG) setLang(b.dataset.lang); else dd.classList.remove('open'); });
+    });
+  }
+
   function init() {
+    langMenu();
     document.querySelectorAll('[data-device]').forEach(el => { el.textContent = storedWhere(); });
     document.querySelectorAll('.theme-dropdown').forEach(dd => {
       dd.setAttribute('role', 'menu');
       dd.innerHTML = `<div class="fz-row" role="group" aria-label="Taille du texte"><span>🔍 Texte</span>
           <button type="button" class="fz-btn" data-fz="-1" aria-label="Texte plus petit">A−</button><b></b>
-          <button type="button" class="fz-btn" data-fz="1" aria-label="Texte plus grand">A+</button></div>` + THEMES.map(t =>
-        `<button type="button" class="theme-option" role="menuitemradio" data-theme="${t.id}">
-           <span class="theme-dot" style="background:${t.dot}"></span>${t.label}
-         </button>`).join('');
+          <button type="button" class="fz-btn" data-fz="1" aria-label="Texte plus grand">A+</button></div>
+        <div class="th-grid">${tiles(read())}</div>
+        <div class="th-foot"><button type="button" class="btn btn-primary btn-sm" data-th-ok>✓ Valider</button></div>`;
+      // Les clics dans le menu ne le ferment pas : on essaie les thèmes, puis on valide
       dd.addEventListener('click', e => {
+        e.stopPropagation();
         const fz = e.target.closest('[data-fz]');
         if (fz) {
-          e.stopPropagation();                       // le menu reste ouvert pour enchaîner les clics
           const i = FZ.indexOf(fzCur) + +fz.dataset.fz;
           if (i >= 0 && i < FZ.length) applyFz(FZ[i], true);
           return;
         }
-        const opt = e.target.closest('.theme-option');
-        if (!opt) return;
-        apply(opt.dataset.theme, true);
-        dd.classList.remove('open');
+        const tile = e.target.closest('[data-theme-pick]');
+        if (tile) { apply(tile.dataset.themePick, true); return; }
+        if (e.target.closest('[data-th-ok]')) dd.classList.remove('open');
       });
     });
     document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -133,14 +200,18 @@
         if (dd) dd.classList.toggle('open');
       });
     });
+    // Le menu des thèmes reste ouvert tant qu'on n'a pas validé (ou Échap) ; celui des langues se ferme au clic dehors
     document.addEventListener('click', () => {
-      document.querySelectorAll('.theme-dropdown.open').forEach(dd => dd.classList.remove('open'));
+      document.querySelectorAll('.lang-dropdown.open').forEach(dd => dd.classList.remove('open'));
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') document.querySelectorAll('.theme-dropdown.open, .lang-dropdown.open').forEach(dd => dd.classList.remove('open'));
     });
     apply(read(), false);
     applyFz(fzCur, false);
   }
 
-  window.MN90Theme = { THEMES, apply: id => apply(id, true), current: read, device, storedWhere };
+  window.MN90Theme = { THEMES, apply: id => apply(id, true), current: read, device, storedWhere, LANGS, lang: LANG, setLang, tiles };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

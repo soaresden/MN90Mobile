@@ -139,6 +139,20 @@
   /* ---------- Fenêtre de saisie ---------- */
   let modal = null;
 
+  // Langue en tête du profil : c'est la première chose qu'on choisit au premier lancement
+  function langRow() {
+    const T = window.MN90Theme;
+    if (!T || !T.LANGS) return '';
+    return `<div class="pf-lang notranslate" role="group" aria-label="Langue · Language"><span aria-hidden="true">🌐</span>${T.LANGS.map(l => `<button type="button" class="pf-lang-btn${l.id === T.lang ? ' on' : ''}" data-lang="${l.id}" aria-pressed="${l.id === T.lang}">${l.label}</button>`).join('')}</div>`;
+  }
+
+  // Thème choisi dès le premier lancement, appliqué tout de suite
+  function themeRow() {
+    const T = window.MN90Theme;
+    if (!T || !T.tiles) return '';
+    return `<div class="pf-theme" role="group" aria-label="Thème"><span class="pf-theme-lbl">🎨 Thème</span><div class="th-row">${T.tiles(T.current())}</div></div>`;
+  }
+
   function buildModal() {
     if (modal) return modal;
     modal = document.createElement('div');
@@ -147,6 +161,8 @@
     modal.innerHTML = `
       <div class="modal pf-modal" role="dialog" aria-modal="true" aria-labelledby="pf-title">
         <h2 id="pf-title">🤿 Mon profil plongeur</h2>
+        ${langRow()}
+        ${themeRow()}
         <p class="muted">Gardé uniquement sur ${window.MN90Theme && window.MN90Theme.storedWhere ? window.MN90Theme.storedWhere() : 'cet appareil'} (rien n’est envoyé). Il sert à vérifier tes prérogatives et à calculer ton autonomie dans tous les outils.</p>
         <div class="pf-cols"><div>
         <fieldset><legend>Mon niveau</legend><div class="pills" data-pf="level">
@@ -175,6 +191,13 @@
     document.body.appendChild(modal);
     modal.addEventListener('click', e => {
       if (e.target === modal) close();
+      const th = e.target.closest('[data-theme-pick]');
+      if (th && window.MN90Theme) {
+        window.MN90Theme.apply(th.dataset.themePick);
+        return;
+      }
+      const lg = e.target.closest('[data-lang]');
+      if (lg && window.MN90Theme && lg.dataset.lang !== window.MN90Theme.lang) { window.MN90Theme.setLang(lg.dataset.lang); return; }
       const act = e.target.closest('[data-act]');
       if (!act) return;
       if (act.dataset.act === 'save') { save(readModal()); close(); }

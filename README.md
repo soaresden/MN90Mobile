@@ -48,13 +48,15 @@ Sur l’accueil, les vignettes sont rangées en quatre blocs : **🧭 Préparer 
 | ⌚ **Montre** | Une question, une réponse, sur une montre Wear OS, sans téléphone ni réseau |
 | 🦺 **Remontée assistée 3D** | Simulateur de sauvetage en temps réel |
 
+🌐 **6 langues** : français, English, Español, Italiano, Português (Brasil) et Polski. On change de langue avec le bouton 🌐 en haut de chaque page, ou dans le profil au premier lancement. Toute l’interface est traduite, y compris les calculs affichés, avec le vocabulaire de plongée de chaque langue. Les sigles des tables MN90 (DTR, lettre GPS) restent ceux qu’on lit dans la table.
+
 L’application s’**installe** comme une appli (PWA) et marche **hors ligne** une fois ouverte. Sur le téléphone : menu du navigateur → *Ajouter à l’écran d’accueil*.
 
 ---
 
 ## 🤿 Ton profil plongeur
 
-Au premier lancement, l’application te demande ton profil. Il est gardé **sur ton appareil, dans ton navigateur**, et rien n’est envoyé. Le message dit d’ailleurs « ce téléphone », « cette tablette » ou « cet ordinateur » selon l’appareil. Le profil sert dans tous les outils :
+Au premier lancement, l’application te demande ton profil. Tu choisis d’abord ta **langue** et ton **thème** (en vignettes d’aperçu), puis le reste. Il est gardé **sur ton appareil, dans ton navigateur**, et rien n’est envoyé. Le message dit d’ailleurs « ce téléphone », « cette tablette » ou « cet ordinateur » selon l’appareil. Le profil sert dans tous les outils :
 
 - ton **niveau** (N1, N2, N3, N4/GP, moniteur) et tes **qualifications** en plus (PA12, PE40, PA40, PE60) ;
 - ta qualification **Nitrox** ou **Nitrox Confirmé** ;
@@ -272,7 +274,7 @@ Un simulateur de sauvetage en temps réel (Three.js), avec 4 sites (Roussay, St-
 Le bouton 🎨 donne accès à deux réglages, communs à tous les outils :
 
 - **🔍 Taille du texte** : boutons **A− / A+**, de 90 % à 140 %. C’est pratique sur téléphone, et la mise en page suit.
-- **15 thèmes** : ☀️ Sous-marin clair (par défaut), 🌑 Nuit, 🌊 Grands fonds, 🌅 Coucher de soleil, 🎗️ Octobre rose, ⛵ Ouistreham, 🐢 Tortue, 🐉 Hippocampe, 🦐 Crevette, 🐌 Nudibranche, 🐡 Poisson-globe, 🐠 Poisson-clown, 🦎 Axolotl, 🦑 Créature des abysses, 🦕 Loch Ness. Les thèmes animaux ont leurs emojis en filigrane.
+- **15 thèmes**, présentés en **vignettes d’aperçu** aux vraies couleurs de chaque thème. Le menu reste ouvert pendant que tu les essaies, jusqu’à ce que tu valides : ☀️ Sous-marin clair (par défaut), 🌑 Nuit, 🌊 Grands fonds, 🌅 Coucher de soleil, 🎗️ Octobre rose, ⛵ Ouistreham, 🐢 Tortue, 🐉 Hippocampe, 🦐 Crevette, 🐌 Nudibranche, 🐡 Poisson-globe, 🐠 Poisson-clown, 🦎 Axolotl, 🦑 Créature des abysses, 🦕 Loch Ness. Les thèmes animaux ont leurs emojis en filigrane.
 
 Les couleurs des paliers et des alertes sont les mêmes dans tous les thèmes, pour rester lisibles.
 
@@ -319,7 +321,9 @@ icons/logo.svg        le logo (plongeur cartoon), décliné en icônes PNG
 sw.js                 service worker : hors ligne, réseau d'abord
 shared/
   style.css           design system, 15 thèmes, taille du texte
-  theme.js            thème, taille du texte, PWA, type d'appareil
+  theme.js            thème, taille du texte, langue (menu 🌐), PWA, type d'appareil
+  i18n.js             moteur de traduction de l'interface
+  lang/               dictionnaires en, es, it, pt-BR, pl
   intro.js            animation d'ouverture de l'accueil
   mn90.js             tables MN90 et tous les calculs (une seule source)
   buhlmann.js         modèle Bühlmann ZHL-16C et facteurs de gradient
