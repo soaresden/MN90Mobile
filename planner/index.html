@@ -11,67 +11,113 @@
 <script src="../shared/glossary.js" defer></script>
 <script src="app.js" defer></script>
 <style>
-  .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 14px; align-items: start; }
-  .side { position: sticky; top: 70px; }
-  .gear-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .85rem; color: var(--text2); background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
-  .chk { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--text2); cursor: pointer; margin-bottom: 8px; }
+  /* ===== Mise en page : empilée sur téléphone, tableau de bord sur grand écran ===== */
+  .app { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 30px; }
+  .side, .center, .panel { min-width: 0; }
+  .center { display: flex; flex-direction: column; gap: 12px; }
+  .side .tabs { margin-bottom: 12px; }
+  .side .field { margin-bottom: 10px; }
+  .gear-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .82rem; color: var(--text2); background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; }
+  .chk { display: flex; gap: 8px; align-items: center; font-size: .86rem; color: var(--text2); cursor: pointer; margin-bottom: 10px; }
 
   /* Réponse directe */
   .answer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .ans { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--bg2); display: flex; flex-direction: column; gap: 4px; }
-  .ans .l { font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text2); }
-  .ans .v { font-size: 2rem; font-weight: 800; line-height: 1.05; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .ans .why { font-size: .84rem; color: var(--text); }
-  .ans .det { font-size: .8rem; color: var(--text2); }
-  .ans .btn { align-self: flex-start; margin-top: 4px; }
+  .ans { border: 1px solid var(--border); border-radius: 12px; padding: 9px 12px; background: var(--bg2); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .ans .l { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text2); }
+  .ans-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ans .v { font-size: 1.8rem; font-weight: 800; line-height: 1.05; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .ans .why { font-size: .82rem; color: var(--text); }
+  .ans .det { font-size: .78rem; color: var(--text2); }
   .answer.blocked .v { color: var(--danger); }
-  .mix-tbl td:first-child, .mix-tbl th:first-child { text-align: left; }
-  .mix-tbl tr.cur td { font-weight: 800; }
+  .reqs { margin-top: 8px; gap: 5px; }
+  .req { padding: 5px 9px; font-size: .84rem; }
 
   /* Courbe */
+  .chart-card { display: flex; flex-direction: column; gap: 8px; }
   .chart { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--water1); }
   .chart svg { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
   .chart.drawing { touch-action: none; cursor: crosshair; }
-  .tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; font-size: .8rem; box-shadow: var(--shadow); white-space: nowrap; }
-  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: .78rem; color: var(--text2); margin-top: 8px; }
-  .legend span { display: inline-flex; align-items: center; gap: 5px; }
-  .legend i { display: inline-block; width: 16px; height: 4px; border-radius: 2px; background: var(--c); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; font-size: .8rem; box-shadow: var(--shadow); white-space: nowrap; z-index: 2; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: .74rem; color: var(--text2); }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; background: var(--c); }
   .legend i.dash { background: none; border-top: 2px dashed var(--c); height: 0; }
-  .draw-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .draw-tools { display: flex; flex-wrap: wrap; gap: 6px; }
 
-  /* Jauges */
-  .gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* Indicateurs compacts */
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+  .kpi { padding: 7px 10px; }
+  .kpi .v { font-size: 1.3rem; }
+  .kpi .s { font-size: .72rem; }
+
+  /* Panneau à onglets */
+  .panel { display: flex; flex-direction: column; padding: 10px; }
+  .ptabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .ptab { border: 1px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 999px; padding: 5px 10px; font-weight: 700; font-size: .8rem; cursor: pointer; white-space: nowrap; }
+  .ptab.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .ptab .n { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 999px; font-size: .72rem; background: var(--danger); color: #fff; }
+  .ptab .n.warn { background: var(--warn); color: #1a1200; }
+  .ptab .n.ok { background: var(--ok); color: #04210f; }
+  .pbody { min-height: 0; }
+  .pane[hidden] { display: none !important; }
+
+  /* Contenu des onglets */
+  .gauges { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .gauge { display: flex; gap: 10px; align-items: center; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--bg2); }
   .gauge svg { width: 64px; height: 64px; flex-shrink: 0; }
   .gauge .gv { font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
   .gauge .gt { font-size: .8rem; color: var(--text2); }
   .gauge .gh { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: .9rem; }
-
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .steps { display: flex; flex-direction: column; gap: 6px; font-size: .9rem; margin-top: 10px; }
-  .steps > div { padding: 7px 9px; border-left: 3px solid var(--accent); background: var(--bg2); }
+  .steps { display: flex; flex-direction: column; gap: 6px; font-size: .88rem; margin-top: 10px; }
+  .steps > div { padding: 6px 9px; border-left: 3px solid var(--accent); background: var(--bg2); }
   .steps em { font-style: normal; font-weight: 800; color: var(--text2); margin-right: 4px; }
   .depth-lines { font-size: .82rem; color: var(--text2); margin-bottom: 6px; }
   .depth-lines b { color: var(--accent); }
   .deco-rows { display: flex; flex-direction: column; gap: 8px; }
   .deco-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
-  .deco-row .dv { font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .deco-row .dd { grid-column: 1 / -1; font-size: .82rem; color: var(--text2); }
+  .deco-row .dv { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .deco-row .dd { grid-column: 1 / -1; font-size: .8rem; color: var(--text2); }
   .deco-row.best { border: 2px solid var(--accent); }
   .badge { font-size: .7rem; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: var(--surface2); border: 1px solid var(--border); margin-left: 6px; vertical-align: middle; }
   .badge.warnb { background: var(--warn-bg); border-color: var(--warn); }
+  .mix-tbl td:first-child, .mix-tbl th:first-child { text-align: left; }
+  .mix-tbl tr.cur td { font-weight: 800; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .pane h3 { margin: 12px 0 6px; }
+  .pane h3:first-child { margin-top: 0; }
 
-  @media (max-width: 900px) {
-    .layout { grid-template-columns: minmax(0, 1fr); }
-    .side { position: static; }
-    .two { grid-template-columns: minmax(0, 1fr); }
-  }
   @media (max-width: 420px) {
-    .answer, .gauges { grid-template-columns: minmax(0, 1fr); }
+    .answer { grid-template-columns: minmax(0, 1fr); }
   }
-  @media (orientation: landscape) and (max-height: 520px) {
-    .layout { grid-template-columns: 280px minmax(0, 1fr); }
-    .side { position: sticky; top: 56px; max-height: calc(100vh - 66px); overflow-y: auto; }
+
+  /* ===== Grand écran : tout tient dans l'écran, sans défiler ===== */
+  /* Écran moyen : réglages à gauche, le reste à droite, panneau dessous */
+  @media (min-width: 760px) {
+    .app { grid-template-columns: 270px minmax(0, 1fr); align-items: start; }
+    .side { position: sticky; top: calc(var(--nav-h, 58px) + 10px); max-height: calc(100vh - var(--nav-h, 58px) - 20px); overflow-y: auto; }
+    .panel { grid-column: 2; }
+  }
+  @media (min-width: 1000px) and (min-height: 600px) {
+    html, body { height: 100%; overflow: hidden; }
+    .app {
+      grid-template-columns: 270px minmax(0, 1fr) minmax(300px, 27vw);
+      align-items: stretch;
+      height: calc(100dvh - var(--nav-h, 58px));
+      padding: 10px 14px; gap: 12px;
+    }
+    .side { position: static; max-height: none; overflow-y: auto; }
+    .center { min-height: 0; gap: 10px; }
+    .panel { grid-column: auto; }
+    .chart-card { flex: 1; min-height: 0; padding: 10px; }
+    .chart { flex: 1; min-height: 160px; }
+    .chart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .panel { min-height: 0; }
+    .pbody { flex: 1; overflow-y: auto; padding-right: 4px; }
+  }
+  /* Paysage sur téléphone : colonne de réglages à gauche */
+  @media (orientation: landscape) and (max-height: 520px) and (min-width: 700px) {
+    .app { grid-template-columns: 260px minmax(0, 1fr); }
+    .side { position: sticky; top: 50px; align-self: start; max-height: calc(100vh - 60px); overflow-y: auto; }
+    .panel { grid-column: 1 / -1; }
   }
 </style>
 </head>
@@ -89,129 +135,126 @@
   </div>
 </nav>
 
-<main class="wrap">
-  <div class="tabs" role="tablist">
-    <button class="tab on" data-mode="param" role="tab">🎯 Paramètres</button>
-    <button class="tab" data-mode="draw" role="tab">✏️ Je dessine ma plongée</button>
+<main class="app">
+  <!-- ===== Réglages ===== -->
+  <aside class="side card">
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-mode="param" role="tab">🎯 Paramètres</button>
+      <button class="tab" data-mode="draw" role="tab">✏️ Dessin</button>
+    </div>
+    <div id="paramInputs">
+      <label class="field"><span class="field-row">Profondeur max <b><span id="vDepth"></span> m</b></span>
+        <input type="range" id="depth" min="6" max="65" step="1" value="30"></label>
+      <label class="field"><span class="field-row">Durée de plongée <b><span id="vTime"></span> min</b></span>
+        <input type="range" id="time" min="1" max="120" step="1" value="25">
+        <span class="hint">De la mise à l’eau au départ du fond</span></label>
+    </div>
+    <div id="drawInputs" hidden>
+      <p class="hint" style="margin-bottom:8px">Touche la courbe pour poser un point, glisse-le pour le déplacer, double-touche (ou appui long) pour le supprimer. Le dernier point est ton <b>départ du fond</b>.</p>
+      <label class="field"><span class="field-row">Échelle profondeur <b><span id="vScaleZ"></span> m</b></span>
+        <input type="range" id="scaleZ" min="10" max="65" step="5" value="40"></label>
+      <label class="field"><span class="field-row">Échelle durée <b><span id="vScaleT"></span> min</b></span>
+        <input type="range" id="scaleT" min="20" max="120" step="10" value="60"></label>
+    </div>
+    <div class="field">Palanquée
+      <div class="seg" id="modeSeg">
+        <button type="button" data-v="enc">Encadré</button>
+        <button type="button" data-v="auto">Autonome</button>
+      </div>
+    </div>
+    <div class="field">Gaz
+      <div class="seg" id="gasSeg">
+        <button type="button" data-v="air" class="on">Air</button>
+        <button type="button" data-v="nx">Nitrox</button>
+      </div>
+    </div>
+    <label class="field" id="o2Field" hidden><span class="field-row">Mélange <b>Nx<span id="vO2"></span></b></span>
+      <input type="range" id="o2" min="22" max="40" step="1" value="32"></label>
+    <div class="field">PpO₂ max retenue
+      <div class="seg" id="ppSeg">
+        <button type="button" data-v="1.4" class="on">1,4</button>
+        <button type="button" data-v="1.5">1,5</button>
+        <button type="button" data-v="1.6">1,6</button>
+      </div>
+      <span class="hint">1,4 recommandé (DAN) · 1,6 = limite absolue</span>
+    </div>
+    <label class="chk" id="cmpField" hidden><input type="checkbox" id="compare" checked> Comparer avec la même plongée à l’air</label>
+    <div class="gear-line"><span id="gearTxt"></span><button type="button" class="btn btn-outline btn-sm" id="gearEdit">Modifier</button></div>
+  </aside>
+
+  <!-- ===== Centre : réponse, courbe, indicateurs ===== -->
+  <div class="center">
+    <section class="card" id="topCard" style="padding:10px 12px">
+      <div id="answerCard">
+        <h2 style="margin-bottom:8px">⏱️ Combien de temps je peux rester ?</h2>
+        <div class="answer" id="answer"></div>
+      </div>
+      <div class="reqs" id="reqs"></div>
+    </section>
+
+    <section class="card chart-card">
+      <div class="draw-tools" id="drawTools" hidden>
+        <button type="button" class="btn btn-outline btn-sm" id="undoPt">↶ Annuler le dernier point</button>
+        <button type="button" class="btn btn-outline btn-sm" id="clearPts">Effacer</button>
+        <button type="button" class="btn btn-outline btn-sm" id="examplePts">Exemple multi-niveaux</button>
+      </div>
+      <div class="chart" id="chart">
+        <svg id="svg" role="img" aria-label="Profil de la plongée"></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <div class="legend">
+        <span style="--c:var(--c1)"><i></i>Ma plongée</span>
+        <span style="--c:var(--c4)" id="lgGhost"><i class="dash"></i>Même plongée à l’air</span>
+        <span style="--c:var(--p15)"><i></i>15 m</span>
+        <span style="--c:var(--p12)"><i></i>12 m</span>
+        <span style="--c:var(--p9)"><i></i>9 m</span>
+        <span style="--c:var(--p6)"><i></i>6 m</span>
+        <span style="--c:var(--p3)"><i></i>3 m</span>
+        <span style="--c:var(--danger)"><i class="dash"></i>MOD / remontée trop rapide</span>
+      </div>
+    </section>
+
+    <div class="kpis" id="kpis"></div>
   </div>
 
-  <div class="layout">
-    <!-- ===== Entrées ===== -->
-    <aside class="side stack">
-      <section class="card">
-        <h2>Ma plongée</h2>
-        <div id="paramInputs">
-          <label class="field"><span class="field-row">Profondeur max <b><span id="vDepth"></span> m</b></span>
-            <input type="range" id="depth" min="6" max="65" step="1" value="30"></label>
-          <label class="field"><span class="field-row">Durée de plongée <b><span id="vTime"></span> min</b></span>
-            <input type="range" id="time" min="1" max="120" step="1" value="25">
-            <span class="hint">De la mise à l’eau au départ du fond</span></label>
-        </div>
-        <div id="drawInputs" hidden>
-          <p class="hint" style="margin-bottom:10px">Touche le graphique pour poser un point, fais-le glisser pour le déplacer, double-touche (ou appui long) pour le supprimer. Le dernier point est ton <b>départ du fond</b> : la remontée et les paliers s’ajoutent tout seuls.</p>
-          <label class="field"><span class="field-row">Échelle profondeur <b><span id="vScaleZ"></span> m</b></span>
-            <input type="range" id="scaleZ" min="10" max="65" step="5" value="40"></label>
-          <label class="field"><span class="field-row">Échelle durée <b><span id="vScaleT"></span> min</b></span>
-            <input type="range" id="scaleT" min="20" max="120" step="10" value="60"></label>
-        </div>
-        <div class="field">Palanquée
-          <div class="seg" id="modeSeg">
-            <button type="button" data-v="enc">Encadré</button>
-            <button type="button" data-v="auto">Autonome</button>
-          </div>
-        </div>
-        <div class="field">Gaz
-          <div class="seg" id="gasSeg">
-            <button type="button" data-v="air" class="on">Air</button>
-            <button type="button" data-v="nx">Nitrox</button>
-          </div>
-        </div>
-        <label class="field" id="o2Field" hidden><span class="field-row">Mélange <b>Nx<span id="vO2"></span></b></span>
-          <input type="range" id="o2" min="22" max="40" step="1" value="32"></label>
-        <div class="field">PpO₂ max retenue
-          <div class="seg" id="ppSeg">
-            <button type="button" data-v="1.4" class="on">1,4</button>
-            <button type="button" data-v="1.5">1,5</button>
-            <button type="button" data-v="1.6">1,6</button>
-          </div>
-          <span class="hint">1,4 recommandé (DAN) · 1,6 = limite absolue</span>
-        </div>
-        <label class="chk" id="cmpField" hidden><input type="checkbox" id="compare" checked> Comparer avec la même plongée à l’air</label>
-        <div class="gear-line"><span id="gearTxt"></span><button type="button" class="btn btn-outline btn-sm" id="gearEdit">Modifier</button></div>
-      </section>
-    </aside>
-
-    <!-- ===== Résultats ===== -->
-    <div class="stack">
-      <section class="card" id="answerCard">
-        <h2>⏱️ Combien de temps je peux rester ?</h2>
-        <div class="answer" id="answer"></div>
-        <details style="margin-top:10px" id="mixDetails">
-          <summary class="muted" style="cursor:pointer;font-weight:700">Comparer les mélanges à cette profondeur</summary>
-          <div class="tbl-wrap" style="margin-top:8px"><table class="tbl mix-tbl" id="mixTbl"></table></div>
-        </details>
-      </section>
-
-      <section class="card">
-        <h2>🎖️ Qualifications requises</h2>
-        <div class="reqs" id="reqs"></div>
-      </section>
-
-      <section class="card">
-        <div class="draw-tools" id="drawTools" hidden>
-          <button type="button" class="btn btn-outline btn-sm" id="undoPt">↶ Annuler le dernier point</button>
-          <button type="button" class="btn btn-outline btn-sm" id="clearPts">Effacer</button>
-          <button type="button" class="btn btn-outline btn-sm" id="examplePts">Exemple multi-niveaux</button>
-        </div>
-        <div class="chart" id="chart">
-          <svg id="svg" role="img" aria-label="Profil de la plongée"></svg>
-          <div class="tip" id="tip" hidden></div>
-        </div>
-        <div class="legend">
-          <span style="--c:var(--c1)"><i></i>Ma plongée</span>
-          <span style="--c:var(--c4)" id="lgGhost"><i class="dash"></i>Même plongée à l’air</span>
-          <span style="--c:var(--p15)"><i></i>15 m</span>
-          <span style="--c:var(--p12)"><i></i>12 m</span>
-          <span style="--c:var(--p9)"><i></i>9 m</span>
-          <span style="--c:var(--p6)"><i></i>6 m</span>
-          <span style="--c:var(--p3)"><i></i>3 m</span>
-          <span style="--c:var(--danger)"><i class="dash"></i>MOD / remontée trop rapide</span>
-        </div>
-      </section>
-
-      <div class="kpis" id="kpis"></div>
-
-      <section class="card">
-        <h2>🧠 🫁 Ce que l’oxygène fait à ton corps</h2>
-        <div class="gauges" id="gauges"></div>
-      </section>
-
-      <div class="two">
-        <section class="card">
-          <h2>Paliers et alertes</h2>
-          <div id="stops"></div>
-          <div class="alerts" id="alerts" style="margin-top:12px"></div>
-        </section>
-        <section class="card">
-          <h2>📖 Lecture de la table</h2>
-          <div id="tableRead"></div>
-        </section>
+  <!-- ===== Panneau à onglets ===== -->
+  <section class="panel card">
+    <div class="ptabs" id="ptabs" role="tablist">
+      <button type="button" class="ptab on" data-pane="alerts">⚠️ Alertes<span class="n" id="alertCount"></span></button>
+      <button type="button" class="ptab" data-pane="table">📖 Table</button>
+      <button type="button" class="ptab" data-pane="contrat">🤝 Contrat</button>
+      <button type="button" class="ptab" data-pane="corps">🧠 Corps</button>
+      <button type="button" class="ptab" data-pane="urgence">🚨 Urgence</button>
+      <button type="button" class="ptab" data-pane="mix" id="mixTab">⚗️ Mélanges</button>
+    </div>
+    <div class="pbody">
+      <div class="pane" data-pane="alerts">
+        <div id="stops"></div>
+        <div class="alerts" id="alerts" style="margin-top:10px"></div>
       </div>
-
-      <section class="card">
-        <h2>🤝 Contrat de palanquée : DTR et décollage <button type="button" class="help-btn" data-help="pdeco" aria-label="C’est quoi ?">?</button></h2>
-        <label class="field" style="max-width:320px">DTR max convenue avec le DP (facultatif)
+      <div class="pane" data-pane="table" hidden>
+        <div id="tableRead"></div>
+      </div>
+      <div class="pane" data-pane="contrat" hidden>
+        <h3>🤝 Contrat de palanquée <button type="button" class="help-btn" data-help="pdeco" aria-label="C’est quoi ?">?</button></h3>
+        <label class="field">DTR max convenue avec le DP (facultatif)
           <input class="input" type="number" inputmode="numeric" id="dtrMax" min="1" max="120" placeholder="ex. 12">
         </label>
         <div id="deco"></div>
-      </section>
-
-      <section class="card">
-        <h2>🚨 Si ça tourne mal : procédures MN90</h2>
+      </div>
+      <div class="pane" data-pane="corps" hidden>
+        <h3>🧠 🫁 Ce que l’oxygène fait à ton corps</h3>
+        <div class="gauges" id="gauges"></div>
+      </div>
+      <div class="pane" data-pane="urgence" hidden>
         <div id="emerg"></div>
-      </section>
+      </div>
+      <div class="pane" data-pane="mix" hidden>
+        <h3>⚗️ Les mélanges à cette profondeur</h3>
+        <div class="tbl-wrap"><table class="tbl mix-tbl" id="mixTbl"></table></div>
+      </div>
     </div>
-  </div>
+  </section>
 </main>
 </body>
 </html>

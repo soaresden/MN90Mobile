@@ -7,12 +7,22 @@
 <title>Remontée Assistée — Simulateur de Sauvetage</title>
 <script src="../shared/theme.js"></script>
 <style>
-/* Accent de l'interface : suit le thème du Hub (le jeu reste sombre, il se passe sous l'eau) */
-:root,[data-theme="submarine-light"]{--ga:#4cc9f0;--ga-rgb:76,201,240}
-[data-theme="dark"]{--ga:#22d3ee;--ga-rgb:34,211,238}
-[data-theme="deep-ocean"]{--ga:#00e5cc;--ga-rgb:0,229,204}
-[data-theme="sunset"]{--ga:#fb923c;--ga-rgb:251,146,60}
-[data-theme="military"]{--ga:#a3c940;--ga-rgb:163,201,64}
+/* Accent et fond de l'interface : suivent le thème du Hub (le jeu reste sombre, il se passe sous l'eau) */
+:root,[data-theme="submarine-light"]{--ga:#4cc9f0;--ga-rgb:76,201,240;--gbg1:#001a2e;--gbg2:#003049}
+[data-theme="dark"]{--ga:#22d3ee;--ga-rgb:34,211,238;--gbg1:#000a18;--gbg2:#001428}
+[data-theme="deep-ocean"]{--ga:#00e5cc;--ga-rgb:0,229,204;--gbg1:#00121a;--gbg2:#002230}
+[data-theme="sunset"]{--ga:#fb923c;--ga-rgb:251,146,60;--gbg1:#1a0a04;--gbg2:#2e1408}
+[data-theme="octobre-rose"]{--ga:#f472b6;--ga-rgb:244,114,182;--gbg1:#1f0614;--gbg2:#3a0c26}
+[data-theme="ouistreham"]{--ga:#7fb8cc;--ga-rgb:127,184,204;--gbg1:#10181c;--gbg2:#1f2c33}
+[data-theme="tortue"]{--ga:#7ccf6b;--ga-rgb:124,207,107;--gbg1:#061a0c;--gbg2:#0f2d17}
+[data-theme="hippocampe"]{--ga:#f5b83d;--ga-rgb:245,184,61;--gbg1:#06212a;--gbg2:#0a3340}
+[data-theme="crevette"]{--ga:#ff8a65;--ga-rgb:255,138,101;--gbg1:#1f0a06;--gbg2:#33140c}
+[data-theme="nudibranche"]{--ga:#fb923c;--ga-rgb:251,146,60;--gbg1:#170d2b;--gbg2:#2a1550}
+[data-theme="poisson-globe"]{--ga:#e9c46a;--ga-rgb:233,196,106;--gbg1:#1a1606;--gbg2:#2b250c}
+[data-theme="poisson-clown"]{--ga:#ff8c42;--ga-rgb:255,140,66;--gbg1:#0a0a0a;--gbg2:#1f1208}
+[data-theme="axolotl"]{--ga:#f0abfc;--ga-rgb:240,171,252;--gbg1:#1f0a24;--gbg2:#33113d}
+[data-theme="abysses"]{--ga:#5eead4;--ga-rgb:94,234,212;--gbg1:#000000;--gbg2:#05030f}
+[data-theme="lochness"]{--ga:#9fd18b;--ga-rgb:159,209,139;--gbg1:#0a120b;--gbg2:#16221a}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -103,7 +113,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 /* ===== ÉCRAN TITRE ===== */
 #start-screen{
   position:absolute;inset:0;
-  background:linear-gradient(160deg,#000a18 0%,#001428 50%,#000d20 100%);
+  background:linear-gradient(160deg,var(--gbg1) 0%,var(--gbg2) 50%,var(--gbg1) 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   gap:0;pointer-events:all;z-index:200;
   overflow-y:auto;overflow-x:hidden;
@@ -112,7 +122,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 /* Lignes de scan animées */
 #start-screen::before{
   content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,180,160,0.015) 2px,rgba(0,180,160,0.015) 4px);
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(var(--ga-rgb),0.015) 2px,rgba(var(--ga-rgb),0.015) 4px);
   pointer-events:none;
 }
 /* Halo central */
@@ -120,7 +130,7 @@ canvas{display:block;position:absolute;top:0;left:0}
   content:'';position:absolute;top:35%;left:50%;
   transform:translate(-50%,-50%);
   width:500px;height:500px;border-radius:50%;
-  background:radial-gradient(circle,rgba(0,180,160,0.08) 0%,transparent 65%);
+  background:radial-gradient(circle,rgba(var(--ga-rgb),0.08) 0%,transparent 65%);
   pointer-events:none;
 }
 
