@@ -30,7 +30,8 @@
   .ans .why { font-size: .82rem; color: var(--text); }
   .ans .det { font-size: .78rem; color: var(--text2); }
   .answer.blocked .v { color: var(--danger); }
-  .reqs { margin-top: 8px; gap: 5px; }
+  .reqs { margin-top: 8px; gap: 5px; flex-direction: row; flex-wrap: wrap; }
+  .reqs .req { flex: 1 1 320px; }
   .req { padding: 5px 9px; font-size: .84rem; }
 
   /* Courbe */
@@ -45,9 +46,20 @@
   .legend i.dash { background: none; border-top: 2px dashed var(--c); height: 0; }
   .draw-tools { display: flex; flex-wrap: wrap; gap: 6px; }
 
-  /* Indicateurs compacts */
-  .kpis { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
-  .kpi { padding: 7px 10px; }
+  /* Vignettes rangées par catégorie (nombre fixe : la hauteur ne bouge pas) */
+  .kgroups { display: grid; grid-template-columns: 3fr 2fr; gap: 8px; }
+  .kgroup { border: 1px solid var(--border); border-radius: 12px; padding: 6px; background: var(--surface); min-width: 0; }
+  .kgroup .gt { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text2); margin: 0 0 4px 4px; }
+  .kgroup .row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; }
+  .kpi { padding: 7px 10px; cursor: pointer; }
+  .kpi:hover { border-color: var(--accent); }
+  .calc-item { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: var(--bg2); }
+  .calc-item h4 { font-size: .9rem; margin-bottom: 4px; }
+  .calc-item .f { font-family: ui-monospace, Consolas, monospace; font-size: .84rem; }
+  .calc-item.flash { outline: 3px solid var(--accent); }
+  .calc-item .tbl { font-size: .8rem; }
+  @media (max-width: 700px) { .kgroups { grid-template-columns: minmax(0, 1fr); } }
+  @media (min-width: 1650px) { .kgroups { grid-template-columns: 3fr 2fr 3fr 2fr; } }
   .kpi .v { font-size: 1.3rem; }
   .kpi .s { font-size: .72rem; }
 
@@ -158,12 +170,6 @@
       <label class="field"><span class="field-row">Échelle durée <b><span id="vScaleT"></span> min</b></span>
         <input type="range" id="scaleT" min="20" max="120" step="10" value="60"></label>
     </div>
-    <div class="field">Palanquée
-      <div class="seg" id="modeSeg">
-        <button type="button" data-v="enc">Encadré</button>
-        <button type="button" data-v="auto">Autonome</button>
-      </div>
-    </div>
     <div class="field">Gaz
       <div class="seg" id="gasSeg">
         <button type="button" data-v="air" class="on">Air</button>
@@ -216,13 +222,14 @@
       </div>
     </section>
 
-    <div class="kpis" id="kpis"></div>
+    <div class="kgroups" id="kpis"></div>
   </div>
 
   <!-- ===== Panneau à onglets ===== -->
   <section class="panel card">
     <div class="ptabs" id="ptabs" role="tablist">
       <button type="button" class="ptab on" data-pane="alerts">⚠️ Alertes<span class="n" id="alertCount"></span></button>
+      <button type="button" class="ptab" data-pane="calc">🧮 Calculs</button>
       <button type="button" class="ptab" data-pane="table">📖 Table</button>
       <button type="button" class="ptab" data-pane="contrat">🤝 Contrat</button>
       <button type="button" class="ptab" data-pane="corps">🧠 Corps</button>
@@ -233,6 +240,10 @@
       <div class="pane" data-pane="alerts">
         <div id="stops"></div>
         <div class="alerts" id="alerts" style="margin-top:10px"></div>
+      </div>
+      <div class="pane" data-pane="calc" hidden>
+        <p class="hint" style="margin-bottom:8px">Touche une vignette pour aller directement à son calcul.</p>
+        <div id="calc"></div>
       </div>
       <div class="pane" data-pane="table" hidden>
         <div id="tableRead"></div>
