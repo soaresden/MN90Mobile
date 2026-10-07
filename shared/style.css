@@ -84,14 +84,30 @@
   --water1: #fde7f1; --water2: #f6c6dc; --grid: rgba(59,10,34, .10);
 }
 
-/* ── Ouistreham : sable et Manche ── */
+/* ── Ouistreham (comme le planning IFS : marine, phare rouge et blanc, sable) ── */
 [data-theme="ouistreham"] {
-  --bg: #f4efe4; --bg2: #faf7f0; --surface: #ffffff; --surface2: #ebe3d2; --border: #cfc2a6;
-  --accent: #1f5f7a; --accent2: #2f7f96; --on-accent: #ffffff;
-  --text: #1c2a33; --text2: #3f4f58; --text3: #5d6b72;
-  --shadow: 0 2px 10px rgba(28,42,51, .08);
-  --water1: #e3ecef; --water2: #b9cdd3; --grid: rgba(28,42,51, .10);
+  --bg: #FAF6EE; --bg2: #FDFAF4; --surface: #ffffff; --surface2: #F7F1E4; --border: #D8CCB2;
+  --accent: #1D4E89; --accent2: #2C7DA0; --on-accent: #ffffff;
+  --text: #1D2B44; --text2: #3E4E66; --text3: #5B6A80;
+  --shadow: 0 2px 10px rgba(29, 43, 68, .10);
+  --water1: #E3EEF6; --water2: #B9D2E6; --grid: rgba(29, 43, 68, .10);
 }
+/* Barre du haut : marine, vagues et phare, liseré rayé rouge et blanc */
+[data-theme="ouistreham"] .navbar {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='52'%3E%3Cpath d='M15 50 L17 14 L23 14 L25 50 Z' fill='%23fff' fill-opacity='.85'/%3E%3Cpath d='M15.6 40 L24.4 40 L24.8 46 L15.2 46 Z M16.4 26 L23.6 26 L24 32 L16 32 Z' fill='%23C8102E'/%3E%3Crect x='16' y='8' width='8' height='6' fill='%23FFD166'/%3E%3Cpath d='M14 8 L20 3 L26 8 Z' fill='%23C8102E'/%3E%3C/svg%3E") right 46% bottom / auto 88% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='22'%3E%3Cpath d='M0 11 Q16 1 32 11 T64 11' fill='none' stroke='%23fff' stroke-opacity='.2' stroke-width='2'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #1D4E89 0, #1D4E89 70%, #2C7DA0);
+  border-bottom: 0; color: #fff; position: sticky;
+}
+[data-theme="ouistreham"] .navbar::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 5px;
+  background: repeating-linear-gradient(90deg, #C8102E 0 18px, #fff 18px 36px);
+}
+[data-theme="ouistreham"] .navbar-brand, [data-theme="ouistreham"] .nav-title { color: #fff; }
+[data-theme="ouistreham"] .nav-back { color: #DCE7F3; }
+[data-theme="ouistreham"] .nav-back:hover { color: #fff; }
+[data-theme="ouistreham"] .tab.on, [data-theme="ouistreham"] .seg button.on { box-shadow: inset 0 -3px 0 #C8102E; }
 
 /* ── Tortue de mer ── */
 [data-theme="tortue"] {

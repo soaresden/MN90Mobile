@@ -115,8 +115,8 @@
       el.lgGhost.hidden = !r.air;
       renderAnswer(r);
       renderReqs(r);
+      renderKpis(r);   // avant la courbe : sa hauteur dépend de la place laissée par les vignettes
       drawChart(r);
-      renderKpis(r);
       renderGauges(r);
       renderStops(r);
       renderAlerts(r);
@@ -715,6 +715,14 @@
     el.svg.addEventListener('pointerleave', () => { if (!S.drag) hideTip(); });
     el.svg.addEventListener('dblclick', e => { if (S.view === 'draw') { const i = nearest(e); if (i > 0) removePoint(i); } });
     P.onChange(render);
+    // La courbe se redessine dès que sa zone change de taille (vignettes, panneau, fenêtre)
+    if (window.ResizeObserver) {
+      let lastSize = '';
+      new ResizeObserver(() => {
+        const size = el.chart.clientWidth + 'x' + el.chart.clientHeight;
+        if (size !== lastSize && S.last) { lastSize = size; drawChart(S.last); }
+      }).observe(el.chart);
+    }
     let rz = 0;
     window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { setNavH(); render(); }, 120); });
 
