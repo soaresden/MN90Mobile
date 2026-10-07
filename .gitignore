@@ -8,3 +8,6 @@ Thumbs.db
 # Éditeurs
 .vscode/
 *.swp
+
+# Outils locaux (Claude Code)
+.claude/
