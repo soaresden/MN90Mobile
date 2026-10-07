@@ -28,11 +28,16 @@
   .bf-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   /* Calcul intégré : on reste sur le briefing */
   .bf-calc { padding: 12px; margin-bottom: 12px; }
-  .bf-calc h2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .bf-in { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin: 8px 0 10px; }
-  .bf-in label { display: flex; flex-direction: column; gap: 3px; font-size: .8rem; font-weight: 700; color: var(--text2); }
-  .bf-in input { width: 100%; font-size: 1rem; }
-  .bf-out { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 8px; }
+  .bf-calc summary { list-style: none; cursor: pointer; }
+  .bf-calc summary::-webkit-details-marker { display: none; }
+  .bf-calc summary h2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0; }
+  .bf-calc summary h2::after { content: '▾'; font-size: 1.1rem; color: var(--text2); transition: transform .2s; }
+  .bf-calc:not([open]) summary h2::after { transform: rotate(-90deg); }
+  .bf-in { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px 8px; margin: 8px 0 10px; }
+  .bf-in label { display: flex; flex-direction: column; justify-content: space-between; gap: 2px; font-size: .74rem; font-weight: 700; color: var(--text2); }
+  .bf-in input { width: 100%; font-size: .95rem; padding: 6px 8px; min-height: 0; }
+  .bf-out { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(46%, 170px), 1fr)); gap: 6px; }
+  @media (max-width: 560px) { .bf-out b.v { font-size: 1.25rem; } .bf-out small { font-size: .74rem; } }
   .bf-out > div { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: var(--bg2); }
   .bf-out > div.key { border: 2px solid var(--accent); }
   .bf-out span { display: block; font-size: .75rem; color: var(--text2); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
@@ -68,19 +73,19 @@
       <button type="button" class="btn btn-outline btn-sm" id="reset">↺ Tout décocher</button>
     </div>
   </div>
-  <section class="card bf-calc" id="calc">
-    <h2>🧮 DTR, décollage et mi-pression <small class="muted" style="font-weight:600;text-transform:none;letter-spacing:0">calculé ici, sans quitter le briefing</small></h2>
+  <details class="card bf-calc" id="calc" open>
+    <summary><h2>🧮 DTR, décollage, mi-pression</h2></summary>
     <div class="bf-in">
-      <label>Profondeur (m)<input class="input" type="number" inputmode="numeric" data-c="depth" min="6" max="65" step="1"></label>
-      <label>Durée au fond (min)<input class="input" type="number" inputmode="numeric" data-c="time" min="1" max="120" step="1"></label>
-      <label>% O₂ (21 = air)<input class="input" type="number" inputmode="numeric" data-c="o2" min="21" max="40" step="1"></label>
+      <label>Prof. (m)<input class="input" type="number" inputmode="numeric" data-c="depth" min="6" max="65" step="1"></label>
+      <label>Fond (min)<input class="input" type="number" inputmode="numeric" data-c="time" min="1" max="120" step="1"></label>
+      <label title="21 = air">% O₂<input class="input" type="number" inputmode="numeric" data-c="o2" min="21" max="40" step="1"></label>
       <label>Bloc (L)<input class="input" type="number" inputmode="numeric" data-c="tank" min="3" max="40" step="1"></label>
-      <label>Pression départ (b)<input class="input" type="number" inputmode="numeric" data-c="press" min="50" max="300" step="10"></label>
+      <label>Départ (b)<input class="input" type="number" inputmode="numeric" data-c="press" min="50" max="300" step="10"></label>
       <label>Conso (L/min)<input class="input" type="number" inputmode="numeric" data-c="sac" min="5" max="60" step="1"></label>
       <label>Réserve (b)<input class="input" type="number" inputmode="numeric" data-c="reserve" min="0" max="150" step="10"></label>
     </div>
     <div id="calcOut"></div>
-  </section>
+  </details>
   <div class="bf-grid" id="grid"></div>
 </main>
 
@@ -184,6 +189,9 @@
         <p class="bf-note">🔑 Contrat à annoncer : <b>${c.time} min au fond OU ${pdeco} b au manomètre</b>, le premier des deux fait décoller.</p>`;
     }
     box.addEventListener('input', calc);
+    // Replié ou ouvert : on retient le choix
+    if (st.calcOpen === false) box.open = false;
+    box.addEventListener('toggle', () => { st.calcOpen = box.open; save(); });
     calc();
   }
 
