@@ -54,6 +54,17 @@
   .bars-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .bars-head .seg { min-width: 230px; }
   .side-field select { width: 100%; }
+  /* Visite guidée */
+  .tour { border: 2px solid var(--accent); border-radius: 12px; background: var(--surface); padding: 10px 12px; box-shadow: var(--shadow); animation: tour-in .25s ease-out; }
+  .tour-txt { font-size: .95rem; line-height: 1.45; min-height: 4.4em; }
+  .tour-nav { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .tour-dots { flex: 1; display: flex; justify-content: center; gap: 5px; }
+  .tour-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .tour-dots i.done { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .tour-dots i.on { background: var(--accent); transform: scale(1.3); }
+  .plot.tour-hl svg { outline: 3px solid var(--accent); outline-offset: 2px; }
+  @keyframes tour-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .tour { animation: none; } }
 
   @media (min-width: 1000px) and (min-height: 600px) {
     html, body { height: 100%; overflow: hidden; }
@@ -62,6 +73,8 @@
     .sx-center { min-height: 0; gap: 8px; }
     .sx-center .card { min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; }
     .sx-center .card.grow { flex: 1.5; }
+    body.touring:not(.tour-bars) .sx-center .card.grow2 { display: none; }
+    body.touring.tour-bars .sx-center .card.grow { flex: 1; }
     .sx-center .card.grow2 { flex: 1; }
     .plot { flex: 1; min-height: 120px; }
     .plot svg { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -118,6 +131,7 @@
   <div class="sx-center">
     <section class="card grow">
       <div class="plot-title"><h2>📈 Tension et pression absolue <button type="button" class="help-btn" data-help="mvalue" aria-label="C’est quoi ?">?</button></h2>
+        <button type="button" class="btn btn-primary btn-sm tour-btn" data-tour>🎬 Visite guidée</button>
         <div class="legend">
           <span style="--c:var(--text2)"><i></i>Pression absolue</span>
           <span style="--c:var(--danger)"><i></i>M-value</span>
@@ -129,6 +143,15 @@
         <button type="button" class="play" id="play" aria-label="Lecture">▶</button>
         <input type="range" id="tCur" min="0" max="100" step="0.1" value="100" aria-label="Moment de la plongée">
         <b id="vCur"></b>
+      </div>
+      <div class="tour" id="tour" hidden role="region" aria-live="polite" aria-label="Visite guidée du graphique">
+        <div class="tour-txt" id="tourTxt"></div>
+        <div class="tour-nav">
+          <button type="button" class="btn btn-outline btn-sm" id="tourPrev">◀</button>
+          <span class="tour-dots" id="tourDots"></span>
+          <button type="button" class="btn btn-primary btn-sm" id="tourNext">Suivant ▶</button>
+          <button type="button" class="btn btn-outline btn-sm" id="tourClose" aria-label="Fermer la visite">✕</button>
+        </div>
       </div>
     </section>
     <section class="card grow2">

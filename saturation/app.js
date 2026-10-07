@@ -7,7 +7,7 @@
   'use strict';
 
   const NEEDED = ['depth', 'time', 'o2', 'vDepth', 'vTime', 'vGas', 'presets', 'gfLow', 'gfHigh', 'vLow', 'vHigh', 'duo', 'gfHint',
-    'comp', 'pPlot', 'play', 'tCur', 'vCur', 'model', 'bPlot', 'tabs', 'cmpTbl', 'cmpNotes', 'zPlot', 'profSteps', 'readSteps', 'qSteps', 'qTbl'];
+    'comp', 'pPlot', 'play', 'tCur', 'vCur', 'model', 'bPlot', 'tabs', 'cmpTbl', 'cmpNotes', 'zPlot', 'profSteps', 'readSteps', 'qSteps', 'qTbl', 'tour', 'tourTxt', 'tourDots', 'tourPrev', 'tourNext', 'tourClose'];
   const PRESETS = [[30, 80], [50, 80], [70, 85], [85, 85], [100, 100]];
   // Tableau du cours : même plongée (50 m, 15 min, air) avec différents GF
   const PAIRS = [[100, 100], [90, 90], [85, 85], [80, 80], [70, 70], [50, 50]];
@@ -23,6 +23,8 @@
     const { fmt } = L;
     const S = { model: 'zh', comp: 'auto', playing: null };
     let R = null;                                   // résultats du dernier calcul
+    // Visite guidée : éléments mis en avant et courbe tracée jusqu'à l'instant choisi
+    const TOUR = { on: false, step: 0, hl: [], anim: null };
 
     el.comp.innerHTML = '<option value="auto">Directeur (automatique)</option>' +
       B.ZHL16C.map((c, i) => `<option value="${i}">C${i + 1} · période ${fmt(c[0], 1)} min</option>`).join('');
@@ -122,6 +124,7 @@
 
     // Grand écran : le graphique prend la taille de sa zone
     const DASH = window.matchMedia('(min-width: 1000px) and (min-height: 600px)');
+    const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
     function plotSize(box, w, h) {
       if (DASH.matches && box.clientWidth > 200 && box.clientHeight > 100) return [box.clientWidth, box.clientHeight];
       return [Math.max(280, Math.min(box.clientWidth || w, 700)), h];
@@ -138,31 +141,38 @@
       const Y = v => H - m.b - Math.min(v, tMaxY) / tMaxY * (H - m.t - m.b);
       const line = f => { const pts = []; for (let p = 0; p <= pMax + 1e-9; p += pMax / 60) pts.push(`${X(p).toFixed(1)},${Y(f(p)).toFixed(1)}`); return pts.join(' '); };
       let g = `<rect width="${W}" height="${H}" style="fill:var(--water1)"/>`;
+      // En visite guidée, ce qui n'est pas expliqué s'efface
+      const op = k => (TOUR.on && !TOUR.hl.includes(k) ? ' opacity=".15"' : '');
+      const glow = k => (TOUR.on && TOUR.hl.includes(k) ? ' filter="url(#glow)"' : '');
+      g += '<defs><filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
       // Zones : sous la pression ambiante (le tissu se charge), entre ambiante et M-value (désaturation), au-dessus (bulles)
       const poly = (f1, f2) => { const up = [], dn = []; for (let p = 0; p <= pMax + 1e-9; p += pMax / 60) { up.push(`${X(p)},${Y(f1(p))}`); dn.unshift(`${X(p)},${Y(f2(p))}`); } return up.concat(dn).join(' '); };
-      g += `<polygon points="${poly(p => p, () => 0)}" style="fill:var(--c4)" fill-opacity=".10"/>`;
-      g += `<polygon points="${poly(p => B.mValue(i, p), p => p)}" style="fill:var(--ok)" fill-opacity=".10"/>`;
-      g += `<polygon points="${poly(() => tMaxY, p => B.mValue(i, p))}" style="fill:var(--danger)" fill-opacity=".10"/>`;
+      const zo = k => (TOUR.on && TOUR.hl.includes(k) ? '.28' : '.10');
+      g += `<polygon points="${poly(p => p, () => 0)}" style="fill:var(--c4)" fill-opacity="${zo('zsat')}"/>`;
+      g += `<polygon points="${poly(p => B.mValue(i, p), p => p)}" style="fill:var(--ok)" fill-opacity="${zo('zdes')}"/>`;
+      g += `<polygon points="${poly(() => tMaxY, p => B.mValue(i, p))}" style="fill:var(--danger)" fill-opacity="${zo('zbul')}"/>`;
       for (let v = 0; v <= tMaxY; v += 1) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" style="stroke:var(--grid)"/>${svgText(m.l - 5, Y(v) + 4, v, { anchor: 'end' })}`;
       for (let p = 0; p <= pMax; p += 1) g += `<line x1="${X(p)}" x2="${X(p)}" y1="${m.t}" y2="${H - m.b}" style="stroke:var(--grid)"/>${svgText(X(p), H - 12, p, { anchor: 'middle' })}`;
       g += svgText(W - m.r, H - 2, 'Pression absolue (bar)', { anchor: 'end', fs: 10 });
       g += svgText(m.l + 4, m.t + 10, 'Tension N₂ (bar)', { fs: 10 });
       // Lignes de référence
-      g += `<polyline points="${line(p => p)}" fill="none" style="stroke:var(--text2)" stroke-width="2"/>`;
-      g += `<polyline points="${line(p => B.mValue(i, p))}" fill="none" style="stroke:var(--danger)" stroke-width="2.5"/>`;
-      g += `<polyline points="${line(p => B.gfLine(i, p, gl))}" fill="none" style="stroke:var(--accent)" stroke-width="1.3" stroke-dasharray="5 4" opacity=".75"/>`;
+      g += `<g${op('amb')}${glow('amb')}><polyline points="${line(p => p)}" fill="none" style="stroke:var(--text2)" stroke-width="${TOUR.on && TOUR.hl.includes('amb') ? 3.5 : 2}"/></g>`;
+      g += `<g${op('mv')}${glow('mv')}><polyline points="${line(p => B.mValue(i, p))}" fill="none" style="stroke:var(--danger)" stroke-width="${TOUR.on && TOUR.hl.includes('mv') ? 4 : 2.5}"/></g>`;
+      g += `<g${op('gf')}><polyline points="${line(p => B.gfLine(i, p, gl))}" fill="none" style="stroke:var(--accent)" stroke-width="1.3" stroke-dasharray="5 4" opacity=".75"/>`;
       if (gh !== gl) g += `<polyline points="${line(p => B.gfLine(i, p, gh))}" fill="none" style="stroke:var(--accent)" stroke-width="1.3" stroke-dasharray="2 4" opacity=".75"/>`;
+      g += '</g>';
       // Ligne GF réellement suivie : du GF bas au 1er palier au GF haut en surface
       const pf = R.plan.first ? B.pabs(R.plan.first) : 1;
-      g += `<line x1="${X(pf)}" y1="${Y(B.gfLine(i, pf, gl))}" x2="${X(1)}" y2="${Y(B.gfLine(i, 1, gh))}" style="stroke:var(--accent)" stroke-width="4" stroke-linecap="round"/>`;
+      g += `<g${op('gf')}${glow('gf')}><line x1="${X(pf)}" y1="${Y(B.gfLine(i, pf, gl))}" x2="${X(1)}" y2="${Y(B.gfLine(i, 1, gh))}" style="stroke:var(--accent)" stroke-width="${TOUR.on && TOUR.hl.includes('gf') ? 6 : 4}" stroke-linecap="round"/></g>`;
       g += svgText(X(pMax) - 4, Y(B.mValue(i, pMax)) + 14, 'M-value', { anchor: 'end', c: 'var(--danger)', fw: 800 });
       g += svgText(X(pMax) - 4, Y(B.gfLine(i, pMax, gl)) + 14, `GF bas ${R.gl} %`, { anchor: 'end', c: 'var(--accent)', fw: 700, fs: 10 });
       g += svgText(X(pMax) - 4, Y(pMax) + 14, 'Pression absolue', { anchor: 'end', fw: 700, fs: 10 });
       g += svgText(X(pMax * 0.3), Y(tMaxY) + 16, '💥 Bulles', { c: 'var(--danger)', fw: 800 });
       g += svgText(X(pMax * 0.62), Y(pMax * 0.62 * 0.45), '⬇ Saturation (le tissu se charge)', { c: 'var(--c4)', fw: 700, fs: 10, anchor: 'middle' });
       // Trajet du tissu suivi
-      const path = R.tr.map(s => `${X(s.p).toFixed(1)},${Y(s.T[i]).toFixed(1)}`).join(' ');
-      g += `<polyline points="${path}" fill="none" style="stroke:var(--c1)" stroke-width="3" stroke-linejoin="round"/>`;
+      const tNow = +el.tCur.value;
+      const path = R.tr.filter(s => !TOUR.on || s.t <= tNow + 1e-9).map(s => `${X(s.p).toFixed(1)},${Y(s.T[i]).toFixed(1)}`).join(' ');
+      g += `<g${op('path')}><polyline points="${path}" fill="none" style="stroke:var(--c1)" stroke-width="${TOUR.on ? 4 : 3}" stroke-linejoin="round"/></g>`;
       // Repères du cours : 1 fond, 2 premier palier, 3 dernier palier
       const marks = [];
       marks.push([at(R.tr, R.time), '1']);
@@ -179,9 +189,18 @@
       g += `<line x1="${X(s.p)}" x2="${X(s.p)}" y1="${Y(s.p)}" y2="${Y(s.T[i])}" style="stroke:var(--text)" stroke-width="1.5" stroke-dasharray="3 3"/>`;
       g += `<circle cx="${X(s.p)}" cy="${Y(s.T[i])}" r="13" style="fill:var(--c1)" fill-opacity=".35"/>`;
       marks.forEach(([s, n]) => {
+        if (TOUR.on && s.t > tNow + 1e-9) return;
         g += `<circle cx="${X(s.p)}" cy="${Y(s.T[i])}" r="9" style="fill:var(--surface);stroke:var(--c1)" stroke-width="2"/><text x="${X(s.p)}" y="${Y(s.T[i]) + 4}" font-size="11" font-weight="800" text-anchor="middle" style="fill:var(--text)">${n}</text>`;
       });
       g += `<circle cx="${X(s.p)}" cy="${Y(s.T[i])}" r="5" style="fill:var(--c1);stroke:var(--surface)" stroke-width="2"/>`;
+      // Le tissu se vide : petites bulles qui montent, d'autant plus nombreuses qu'on approche de la ligne rouge
+      if (gr > 20 && !RM.matches) {
+        const n = gr > 90 ? 6 : gr > 60 ? 4 : 2, cx = X(s.p), cy = Y(s.T[i]);
+        for (let k = 0; k < n; k++) {
+          const dx = (k % 3 - 1) * 7 + (k > 2 ? 3 : 0), d = (1.2 + k * 0.25).toFixed(2);
+          g += `<circle cx="${cx + dx}" cy="${cy}" r="${2 + k % 2}" fill="none" style="stroke:${gr > 100 ? 'var(--danger)' : 'var(--c4)'}" stroke-width="1.5"><animate attributeName="cy" from="${cy}" to="${cy - 34}" dur="${d}s" begin="${(k * 0.2).toFixed(1)}s" repeatCount="indefinite"/><animate attributeName="opacity" from="1" to="0" dur="${d}s" begin="${(k * 0.2).toFixed(1)}s" repeatCount="indefinite"/></circle>`;
+        }
+      }
       g += svgText(Math.min(X(s.p) + 10, W - 150), Math.max(Y(s.T[i]) - 10, m.t + 24), `C${i + 1} : ${fmt(s.T[i], 2)} b · ${gr >= 0 ? fmt(gr, 0) + ' % du gradient' : 'se charge'}`, { c: 'var(--text)', fw: 800, fs: 12 });
       return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tension du compartiment selon la pression absolue">${g}</svg>`;
     }
@@ -284,7 +303,7 @@
 
     function renderRead() {
       const i = R.comp, c = B.ZHL16C[i];
-      el.readSteps.innerHTML = [
+      el.readSteps.innerHTML = `<button type="button" class="btn btn-primary" data-tour style="margin-bottom:4px">🎬 Comprendre le graphique en 1 minute</button>` + [
         ['Les axes', 'en bas la <b>pression absolue</b> (1 bar en surface, +1 bar tous les 10 m) ; à gauche la <b>tension d’azote</b> dans le tissu.'],
         ['Ligne grise', '<b>pression absolue</b> : tension = pression ambiante. En dessous, le tissu se charge (saturation) ; au-dessus, il se vide (désaturation).'],
         ['Ligne rouge', `<b>M-value</b> du compartiment C${i + 1} (période ${fmt(c[0], 1)} min) : la tension maximale tolérée. Au-dessus : bulles.`],
@@ -306,9 +325,83 @@
       el.qTbl.innerHTML = '<thead><tr><th>Q</th><th>Risque</th></tr></thead><tbody>' + QRISK.map((r, k) => `<tr class="${k === idx ? 'cur' : ''}"><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('') + '</tbody>';
     }
 
+    /* ---------- Visite guidée : lire le graphique en 1 minute ---------- */
+    function tourSteps() {
+      const pts = R.plan.pts, tBot = R.time, first = R.plan.first;
+      const iF = first ? pts.findIndex(q => q[0] > tBot && q[1] === first) : -1;
+      const tFirst = iF > 0 ? pts[iF][0] : R.plan.total;
+      const total = R.plan.total, i = R.comp;
+      const sBot = at(R.tr, tBot);
+      return [
+        { hl: ['axes'], t: [0, 0], txt: `📊 Ce graphique raconte la vie de l’<b>azote</b> dans un de tes tissus (le n° ${i + 1}).<br>➡️ En bas : la <b>pression autour de toi</b>. 1 bar en surface, +1 bar tous les 10 m.<br>⬆️ À gauche : l’<b>azote dissous dans le tissu</b>, sa « tension ».` },
+        { hl: ['amb', 'zsat'], t: [0, 0], txt: `⚖️ La <b>ligne grise</b>, c’est l’équilibre : autant d’azote dans le tissu que de pression autour.<br>🧽 <b>Sous</b> la ligne grise, le tissu est une éponge sèche : il <b>absorbe</b> l’azote.` },
+        { hl: ['path', 'zsat', 'amb'], t: [0, tBot], txt: `⬇️ <b>Tu descends</b> : la pression grimpe d’un coup, le point file vers la droite.<br>🧽 L’éponge se remplit : la courbe monte doucement pendant tout le fond.<br>① Fin du fond : ${fmt(sBot.T[i], 2)} bar d’azote dans le tissu.` },
+        { hl: ['path', 'zdes', 'amb'], t: [tBot, tFirst], txt: `⬆️ <b>Tu remontes</b> : la pression baisse vite, mais l’azote sort lentement.<br>Le tissu passe <b>au-dessus</b> de la ligne grise : il se <b>vide</b>. C’est normal, c’est comme ça qu’on élimine l’azote.` },
+        { hl: ['mv', 'zbul'], t: [tFirst, tFirst], txt: `🍾 La <b>ligne rouge</b> (M-value), c’est la limite.<br>Au-dessus, l’azote sort trop vite et fait des <b>bulles</b> : comme une bouteille de soda qu’on ouvre d’un coup.` },
+        { hl: ['gf', 'mv'], t: [tFirst, tFirst], txt: `🛟 La <b>ligne bleue</b>, c’est ta marge de sécurité, réglée par tes GF ${R.gl}/${R.gh}.<br>Au premier palier, tu t’autorises <b>${R.gl} %</b> du chemin vers le rouge ; en sortant de l’eau, <b>${R.gh} %</b>.<br>GF plus bas = plus loin du rouge = remontée plus longue.` },
+        first
+          ? { hl: ['path', 'gf'], t: [tFirst, total - 3 / 6], txt: `⏸️ <b>Aux paliers</b>, tu attends : la pression ne bouge plus, l’azote sort, la courbe redescend.<br>Dès qu’elle s’est assez éloignée de la ligne bleue, tu montes au palier suivant (② premier palier, ③ dernier palier).` }
+          : { hl: ['path', 'gf'], t: [tFirst, total], txt: `✅ <b>Pas de palier</b> : pendant toute la remontée, la courbe reste sous la ligne bleue. Tu peux sortir directement (à la bonne vitesse !).` },
+        { hl: ['path', 'gf', 'amb'], t: [Math.min(total - 3 / 6, total), total], txt: `🏁 <b>Surface</b> : tu sors en restant sous la ligne bleue, mission réussie !<br>Il reste de l’azote dans le tissu : il partira dans les heures qui suivent. C’est ce que la table MN90 note avec la <b>lettre GPS</b>.` },
+        { hl: [], t: [total, total], bars: true, txt: `🫧 En dessous, <b>chaque barre est un tissu</b>, du plus rapide (1) au plus lent (16).<br>0 % = équilibre, 100 % = ligne rouge, pointillé bleu = ta marge GF.<br>🎮 À toi : baisse les GF, puis relance la visite pour voir la différence.` },
+      ];
+    }
+    function tourAnim(t0, t1) {
+      if (TOUR.anim) cancelAnimationFrame(TOUR.anim);
+      if (RM.matches || t1 - t0 < 0.05) { el.tCur.value = t1; drawAll(); return; }
+      const dur = Math.min(4000, 1200 + (t1 - t0) * 120), start = performance.now();
+      el.tCur.value = t0;
+      const tick = now => {
+        const k = Math.min(1, (now - start) / dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        el.tCur.value = t0 + (t1 - t0) * e; drawAll();
+        TOUR.anim = k < 1 ? requestAnimationFrame(tick) : null;
+      };
+      TOUR.anim = requestAnimationFrame(tick);
+    }
+    function tourShow(n) {
+      const steps = tourSteps();
+      TOUR.step = Math.max(0, Math.min(steps.length - 1, n));
+      const st = steps[TOUR.step];
+      TOUR.hl = st.hl;
+      el.tourTxt.innerHTML = st.txt;
+      el.tourDots.innerHTML = steps.map((_, k) => `<i class="${k === TOUR.step ? 'on' : k < TOUR.step ? 'done' : ''}"></i>`).join('');
+      el.tourPrev.disabled = TOUR.step === 0;
+      el.tourNext.textContent = TOUR.step === steps.length - 1 ? 'Terminer ✓' : 'Suivant ▶';
+      el.bPlot.classList.toggle('tour-hl', !!st.bars);
+      document.body.classList.toggle('tour-bars', !!st.bars);
+      if (st.bars) el.bPlot.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'nearest' });
+      tourAnim(st.t[0], st.t[1]);
+    }
+    function tourStart() {
+      if (S.playing) el.play.click();
+      TOUR.on = true;
+      el.tour.hidden = false;
+      document.body.classList.add('touring');
+      el.pPlot.closest('.card').scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'start' });
+      tourShow(0);
+    }
+    function tourStop() {
+      if (TOUR.anim) cancelAnimationFrame(TOUR.anim);
+      TOUR.on = false; TOUR.hl = []; TOUR.anim = null;
+      el.tour.hidden = true;
+      el.bPlot.classList.remove('tour-hl');
+      document.body.classList.remove('touring', 'tour-bars');
+      drawAll();
+    }
+    document.addEventListener('click', e => { if (e.target.closest('[data-tour]')) { e.preventDefault(); tourStart(); } });
+    el.tourPrev.addEventListener('click', () => tourShow(TOUR.step - 1));
+    el.tourNext.addEventListener('click', () => { if (TOUR.step >= tourSteps().length - 1) tourStop(); else tourShow(TOUR.step + 1); });
+    el.tourClose.addEventListener('click', tourStop);
+    document.addEventListener('keydown', e => {
+      if (!TOUR.on) return;
+      if (e.key === 'Escape') tourStop();
+      else if (e.key === 'ArrowRight') el.tourNext.click();
+      else if (e.key === 'ArrowLeft' && TOUR.step > 0) tourShow(TOUR.step - 1);
+    });
+
     /* ---------- Événements ---------- */
-    [el.depth, el.time, el.o2, el.gfLow, el.gfHigh].forEach(i => i.addEventListener('input', () => render(false)));
-    el.tCur.addEventListener('input', drawAll);
+    [el.depth, el.time, el.o2, el.gfLow, el.gfHigh].forEach(i => i.addEventListener('input', () => { render(false); if (TOUR.on) tourShow(TOUR.step); }));
+    el.tCur.addEventListener('input', () => { if (TOUR.anim) { cancelAnimationFrame(TOUR.anim); TOUR.anim = null; } drawAll(); });
     el.presets.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; el.gfLow.value = b.dataset.l; el.gfHigh.value = b.dataset.h; render(true); });
     el.cmpTbl.addEventListener('click', e => { const tr = e.target.closest('tr[data-l]'); if (!tr) return; el.gfLow.value = tr.dataset.l; el.gfHigh.value = tr.dataset.h; render(true); });
     el.cmpNotes.addEventListener('click', e => { if (!e.target.closest('[data-ref]')) return; e.preventDefault(); el.depth.value = 50; el.time.value = 15; el.o2.value = 21; render(false); });
