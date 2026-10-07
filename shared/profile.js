@@ -106,7 +106,9 @@
       } else {
         const max = auto ? r.pa : r.pe;
         if (max >= zone) {
-          items.push({ code, status: 'used', text: `Tu utilises ${auto ? r.paBy : r.peBy} : ${code}, ${word} jusqu’à ${zone} m.` });
+          const by = auto ? r.paBy : r.peBy;
+          const src = QUALS.some(q => q.id === by) ? `ta qualification ${by}` : `ton ${by}`;
+          items.push({ code, status: 'used', text: `Tu utilises ${src} : ${word} jusqu’à ${zone} m.` });
         } else {
           const lvl = levelOf(p);
           const lim = max ? `${max} m max ${word}` : `pas d’autonomie (sauf qualification PA12)`;
