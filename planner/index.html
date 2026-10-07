@@ -136,6 +136,15 @@
   .badge.warnb { background: var(--warn-bg); border-color: var(--warn); }
   .mix-tbl td:first-child, .mix-tbl th:first-child { text-align: left; }
   .mix-tbl tr.cur td { font-weight: 800; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  /* Table complète en superposition */
+  .modal.full-table { max-width: min(1400px, 96vw); width: 96vw; max-height: 90vh; }
+  .ft-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; top: -20px; background: var(--surface); padding: 4px 0 6px; z-index: 2; }
+  .ft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 8px; }
+  .ft-block { border: 1px solid var(--border); border-radius: 10px; padding: 6px; background: var(--bg2); scroll-margin-top: 56px; }
+  .ft-block.cur { border: 2px solid var(--accent); }
+  .ft-block h3 { margin: 0 0 4px !important; color: var(--accent); }
+  .ft-block .tbl { font-size: .78rem; }
+  .ft-block .tbl th, .ft-block .tbl td { padding: 2px 3px; }
   .pane h3 { margin: 12px 0 6px; }
   .pane h3:first-child { margin-top: 0; }
 

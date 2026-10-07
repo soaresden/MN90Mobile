@@ -532,7 +532,43 @@
       E.push(['GPS', r.tab.gps === '*' ? 'pas de lettre (*) : aucune plongée successive possible.' :
         `lettre <b>${r.tab.gps}</b> : elle mesure l’azote qu’il te reste en sortant. Pour une 2e plongée, tu la reportes dans le tableau I avec ton intervalle de surface.`]);
       html += `<div class="steps">${E.map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('')}</div>`;
+      html = `<button type="button" class="btn btn-outline btn-sm" data-fulltable style="margin-bottom:8px">📖 Voir la table MN90 complète</button>` + html;
       el.tableRead.innerHTML = html;
+    }
+
+    /* ---------- Table MN90 complète en superposition ---------- */
+    let fullBack = null;
+    function openFullTable(r) {
+      if (!fullBack) {
+        fullBack = document.createElement('div');
+        fullBack.className = 'modal-back';
+        fullBack.hidden = true;
+        fullBack.innerHTML = `<div class="modal full-table" role="dialog" aria-modal="true" aria-labelledby="ft-title">
+          <div class="ft-head"><h2 id="ft-title">📖 Table MN90 FFESSM</h2><button type="button" class="btn btn-outline btn-sm" data-close>Fermer ✕</button></div>
+          <p class="hint">Profondeur et durée immédiatement supérieures. Paliers en minutes : <b class="pd15">15 m</b> · <b class="pd12">12 m</b> · <b class="pd9">9 m</b> · <b class="pd6">6 m</b> · <b class="pd3">3 m</b>. 62 et 65 m : tables de secours.</p>
+          <div class="ft-grid"></div></div>`;
+        document.body.appendChild(fullBack);
+        fullBack.addEventListener('click', e => { if (e.target === fullBack || e.target.closest('[data-close]')) closeFullTable(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && fullBack && !fullBack.hidden) closeFullTable(); });
+      }
+      const curD = r && r.tab ? r.tab.d : null, curT = r && r.tab ? r.tab.t : null;
+      fullBack.querySelector('.ft-grid').innerHTML = L.DEPTHS.map(d => {
+        const rows = L.MN90[d];
+        const cols = L.STOP_DEPTHS.filter(c => rows.some(x => x[1][c]));
+        return `<section class="ft-block${d === curD ? ' cur' : ''}"${d === curD ? ' id="ft-cur"' : ''}><h3>${d} m${d > 60 ? ' <small>secours</small>' : ''}</h3>
+          <table class="tbl"><thead><tr><th>Durée</th>${cols.map(c => `<th class="pd${c}">${c}</th>`).join('')}<th>DTR</th><th>GPS</th></tr></thead><tbody>` +
+          rows.map(x => `<tr class="${d === curD && x[0] === curT ? 'hit' : ''}"><td>${x[0]}′</td>${cols.map(c => x[1][c] ? `<td class="pd${c}" style="font-weight:800">${x[1][c]}</td>` : '<td class="dim">·</td>').join('')}<td>${x[2]}</td><td>${x[3]}</td></tr>`).join('') +
+          `</tbody></table></section>`;
+      }).join('');
+      fullBack.hidden = false;
+      document.documentElement.classList.add('modal-open');
+      const cur = fullBack.querySelector('#ft-cur');
+      if (cur) setTimeout(() => cur.scrollIntoView({ block: 'start' }), 30);
+      fullBack.querySelector('[data-close]').focus();
+    }
+    function closeFullTable() {
+      fullBack.hidden = true;
+      document.documentElement.classList.remove('modal-open');
     }
 
     /* ---------- DTR et pression de décollage ---------- */
@@ -715,6 +751,7 @@
       render();
     });
     el.reqs.addEventListener('click', e => { if (e.target.closest('[data-open-profile]')) P.open(); });
+    el.tableRead.addEventListener('click', e => { if (e.target.closest('[data-fulltable]')) openFullTable(S.last); });
     el.ptabs.addEventListener('click', e => { const b = e.target.closest('.ptab'); if (b) showPane(b.dataset.pane); });
     el.kpis.addEventListener('click', e => {
       if (e.target.closest('.help-btn')) return;
