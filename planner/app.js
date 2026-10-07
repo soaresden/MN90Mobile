@@ -252,7 +252,7 @@
         S.draw.forEach((p, i) => {
           const last = i === S.draw.length - 1;
           g += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${last ? 9 : 7}" style="fill:var(--surface);stroke:${i === 0 ? 'var(--text2)' : 'var(--c1)'}" stroke-width="3"/>`;
-          if (last && i > 0) g += `<text x="${X(p[0])}" y="${Y(p[1]) - 14}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text)">départ du fond</text>`;
+          if (last && i > 0) { const ly = Y(p[1]) + 26 > H - m.b ? Y(p[1]) - 14 : Y(p[1]) + 26; g += `<text x="${X(p[0])}" y="${ly}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text)">départ du fond</text>`; }
         });
       }
       g += `<line id="cursor" y1="${m.t}" y2="${H - m.b}" style="stroke:var(--text);display:none" stroke-opacity=".4"/>`;
