@@ -15,7 +15,7 @@
     pdeco: {
       title: 'Pression de décollage',
       simple: 'La pression que doit afficher ton manomètre au moment de quitter le fond, pour faire toute la remontée et sortir avec ta réserve.',
-      cours: 'Méthode GP : Pdéco = DTR × β + pression de sécurité. β (bar par minute de DTR) dépend du bloc et de la conso : 3 pour un 15 L et 4 pour un 12 L à 20 L/min. La règle de Tito (profondeur + 2 × DTR) est un moyen mnémotechnique moins prudent : l’appli te montre l’écart.',
+      cours: 'Règle de Tito (retenue par l’appli) : Pdéco = profondeur + 2 × DTR, arrondie à la dizaine supérieure. L’appli vérifie qu’elle couvre bien toute la remontée et ta réserve (calcul exact) ; sinon, elle te donne le minimum à respecter. Méthode GP pour comparer : Pdéco = DTR × β + pression de sécurité (β = 3 pour un 15 L, 4 pour un 12 L à 20 L/min).',
     },
     gps: {
       title: 'GPS : groupe de plongée successive',

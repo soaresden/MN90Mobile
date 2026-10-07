@@ -65,8 +65,9 @@
         const bottomL = L.gasUse(dive.bottom, g.sac);
         res.pBottom = g.press - bottomL / g.tank;     // manomètre au départ du fond
         res.deco = L.decollage(res, g);
-        res.pdecoMin = Math.ceil(res.deco.exact);                                   // strict : remontée + réserve
-        res.pdecoRec = Math.ceil(Math.max(res.deco.gp, res.deco.exact) / 10) * 10;  // repère conseillé (marge GP)
+        res.pdecoMin = Math.ceil(res.deco.exact);                 // strict : toute la remontée + la réserve
+        res.pdecoRec = Math.ceil(res.deco.tito / 10) * 10;        // repère retenu : règle de Tito (club)
+        res.titoShort = res.pdecoRec < res.pdecoMin;              // Tito ne couvre pas la remontée avec ce bloc
       }
       if (S.view === 'draw') res.fast = fastAscents(dive.bottom);
       if (S.view === 'param' && isNx() && el.compare.checked) {
@@ -273,13 +274,28 @@
     }
 
     /* ---------- Indicateurs ---------- */
-    // Barre de valeur : zones [[jusqu'à, 'ok'|'warn'|'danger'], ...] de min à max, repère sur la valeur
-    function rangeBar(v, min, max, zones) {
+    // Barre de valeur façon analyse de sang : zones [[jusqu'à, 'ok'|'warn'|'danger'], ...] de min à max,
+    // repère sur la valeur, et valeurs limites écrites sous la barre.
+    // tick : fonction de formatage des limites, ou liste [[valeur, texte], ...] pour choisir les limites affichées.
+    function rangeBar(v, min, max, zones, tick) {
       const span = max - min || 1;
+      const pct = x => Math.max(0, Math.min(100, (x - min) / span * 100));
       let prev = min;
       const segs = zones.map(([to, c]) => { const w = Math.max(0, (Math.min(to, max) - prev) / span * 100); prev = Math.max(prev, Math.min(to, max)); return `<i class="${c}" style="width:${w.toFixed(1)}%"></i>`; }).join('');
-      const pos = Math.max(0, Math.min(100, (v - min) / span * 100));
-      return `<div class="rbar" aria-hidden="true">${segs}<b style="left:${pos.toFixed(1)}%"></b></div>`;
+      const list = Array.isArray(tick) ? tick
+        : zones.slice(0, -1).map(([to]) => [to, tick ? tick(to) : fmt(to, 1)]);
+      // Deux limites trop proches : la seconde passe sur une deuxième ligne (toutes restent visibles)
+      const lastAt = [-100, -100];
+      let two = false;
+      const ticks = list.filter(([x]) => x > min && x < max).sort((a, b) => a[0] - b[0]).map(([x, label]) => {
+        const at = pct(x);
+        const row = at - lastAt[0] >= 15 ? 0 : at - lastAt[1] >= 15 ? 1 : -1;
+        if (row < 0) return '';
+        lastAt[row] = at;
+        if (row) two = true;
+        return `<span class="rt${row ? ' r2' : ''}" style="left:${Math.max(8, Math.min(92, at)).toFixed(1)}%">${label}</span>`;
+      }).join('');
+      return `<div class="rwrap${two ? ' two' : ''}" aria-hidden="true"><div class="rbar">${segs}<b style="left:${pct(v).toFixed(1)}%"></b></div>${ticks}</div>`;
     }
 
     function renderKpis(r) {
@@ -293,27 +309,29 @@
         ['⏱️ Temps', [
           T('dtr', 'DTR', has ? `${r.tab.dtr}′` : '—', 'remontée (table)', '', 'dtr', has ? `${r.tab.dtr} min pour remonter de ${r.depth} m.` : ''),
           T('total', 'Durée totale', has ? `${Math.round(r.prof.total)}′` : '—', 'immersion → sortie', has && r.prof.total > L.LIMITS.immersion ? 'danger' : '', 'dtr', has ? `sortie de l’eau à ${Math.round(r.prof.total)} min.` : '',
-            has ? rangeBar(r.prof.total, 0, 150, [[100, 'ok'], [120, 'warn'], [150, 'danger']]) : ''),
+            has ? rangeBar(r.prof.total, 0, 150, [[100, 'ok'], [120, 'warn'], [150, 'danger']], x => `${x}′`) : ''),
           T('gps', 'GPS', has ? (r.tab.gps === '*' ? '—' : r.tab.gps) : '—', has && r.tab.gps === '*' ? 'pas de successive' : 'lettre de sortie', '', 'gps', has ? `tu sors avec la lettre ${r.tab.gps}.` : ''),
         ]],
         ['🫧 Air', [
           T('fin', 'Fin de plongée', has ? `${Math.round(r.left)} b` : '—', has ? `conso ${Math.round(r.gasL)} L` : '', has ? (r.left < res ? 'danger' : r.left < res + 20 ? 'warn' : 'ok') : '', 'autonomie', has ? `il te reste ${Math.round(r.left)} b en sortant.` : '',
-            has ? rangeBar(r.left, 0, press, [[res, 'danger'], [res + 20, 'warn'], [press, 'ok']]) : ''),
-          T('deco', 'Décollage', has ? `${r.pdecoRec} b` : '—', 'quitter le fond à', has ? (r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok') : '', 'pdeco', has ? `quitte le fond à ${r.pdecoRec} b au plus tard.` : '',
-            has ? rangeBar(r.pBottom, 0, press, [[r.pdecoMin, 'danger'], [r.pdecoRec, 'warn'], [press, 'ok']]) : ''),
+            has ? rangeBar(r.left, 0, press, [[res, 'danger'], [res + 20, 'warn'], [press, 'ok']], x => `${Math.round(x)} b`) : ''),
+          T('deco', 'Décollage · Tito', has ? `${r.pdecoRec} b` : '—', has ? (r.titoShort ? `⚠ minimum ${r.pdecoMin} b` : `${r.depth} + 2 × DTR ${r.deco.dtr}`) : '',
+            has ? (r.pBottom < r.pdecoMin ? 'danger' : (r.titoShort || r.pBottom < r.pdecoRec) ? 'warn' : 'ok') : '', 'pdeco', has ? `règle de Tito : quitte le fond à ${r.pdecoRec} b.` : '',
+            has ? rangeBar(r.pBottom, 0, press, [[Math.min(r.pdecoMin, r.pdecoRec), 'danger'], [Math.max(r.pdecoMin, r.pdecoRec), 'warn'], [press, 'ok']],
+              [[r.pdecoRec, `Tito ${r.pdecoRec}`], [r.pdecoMin, `min ${r.pdecoMin}`]]) : ''),
         ]],
         ['🧪 Gaz', [
           T('ppo2', 'PpO₂ fond', `${fmt(r.ppo2, 2)} b`, `max ${fmt(r.pmax, 1)} b`, ppCls, 'ppo2', `${fmt(L.pabs(r.depth), 1)} × ${fmt(r.fo2, 2)} = ${fmt(r.ppo2, 2)} b.`,
-            rangeBar(r.ppo2, 0, 1.8, [[Math.min(1.4, pm), 'ok'], [pm, 'warn'], [1.8, 'danger']])),
+            rangeBar(r.ppo2, 0, 1.8, [[Math.min(1.4, pm), 'ok'], [pm, 'warn'], [1.8, 'danger']], x => fmt(x, 1))),
           T('pea', 'PEA', r.nitrox ? `${fmt(r.pea, 1)} m` : `${r.depth} m`, r.nitrox ? `table ${r.tab.d ?? '—'} m` : 'à l’air = réelle', '', 'pea', r.nitrox ? `compte comme ${fmt(r.pea, 1)} m à l’air.` : ''),
           T('mod', 'MOD', `${fmt(r.mod, 1)} m`, r.nitrox ? `Nx${Math.round(r.fo2 * 100)} à ${fmt(r.pmax, 1)} b` : 'air à 1,6 b', r.depth > r.mod ? 'danger' : 'ok', 'mod', `ne dépasse jamais ${fmt(r.mod, 1)} m.`,
-            rangeBar(r.depth, 0, Math.max(r.mod + 10, r.depth + 5), [[Math.max(0, r.mod - 3), 'ok'], [r.mod, 'warn'], [Math.max(r.mod + 10, r.depth + 5), 'danger']])),
+            rangeBar(r.depth, 0, Math.max(r.mod + 10, r.depth + 5), [[Math.max(0, r.mod - 3), 'ok'], [r.mod, 'warn'], [Math.max(r.mod + 10, r.depth + 5), 'danger']], [[r.mod, `MOD ${fmt(r.mod, 1)}`]])),
         ]],
         ['🧠 Corps', [
           T('snc', '%SNC', has ? `${fmt(snc, 0)} %` : '—', 'jauge cerveau', snc > L.LIMITS.sncMax ? 'danger' : snc > L.LIMITS.sncWarn ? 'warn' : 'ok', 'snc', has ? `${fmt(snc, 0)} % de la dose max du jour.` : '',
-            rangeBar(snc, 0, 100, [[L.LIMITS.sncWarn, 'ok'], [L.LIMITS.sncMax, 'warn'], [100, 'danger']])),
+            rangeBar(snc, 0, 100, [[L.LIMITS.sncWarn, 'ok'], [L.LIMITS.sncMax, 'warn'], [100, 'danger']], x => `${x} %`)),
           T('narc', 'Narcose 🥴', `${fmt(r.ppn2, 1)} b`, 'PpN₂ au fond', r.ppn2 > 5.6 ? 'danger' : r.ppn2 > 3.2 ? 'warn' : 'ok', 'narcose', `PpN₂ ${fmt(r.ppn2, 1)} b.`,
-            rangeBar(r.ppn2, 0, 6.5, [[3.2, 'ok'], [5.6, 'warn'], [6.5, 'danger']])),
+            rangeBar(r.ppn2, 0, 6.5, [[3.2, 'ok'], [5.6, 'warn'], [6.5, 'danger']], x => fmt(x, 1))),
         ]],
       ];
       el.kpis.innerHTML = groups.map(([title, tiles]) => `<div class="kgroup"><div class="gt">${title}</div><div class="row" style="--n:${tiles.length}">` +
@@ -369,7 +387,7 @@
       item('deco', 'Pression de décollage', `<div class="f">GP : DTR × β + sécurité = ${D.dtr} × ${fmt(D.beta.value, 1)} + ${g.reserve} = ${fmt(D.gp, 0)} b<br>
         Exact : remontée ${fmt(D.ascentL, 0)} L ÷ ${g.tank} L + ${g.reserve} = ${fmt(D.exact, 0)} b<br>
         Tito : ${r.depth} + 2 × ${D.dtr} = ${D.tito} b<br>
-        Repère = max(GP, exact) arrondi à la dizaine supérieure = <b>${r.pdecoRec} b</b></div>
+        Repère retenu = règle de Tito arrondie à la dizaine supérieure = <b>${r.pdecoRec} b</b>${r.titoShort ? ` · <b style="color:var(--warn)">sous le minimum exact de ${r.pdecoMin} b</b>` : ` (≥ minimum exact ${r.pdecoMin} b)`}</div>
         <p class="small muted">Au départ du fond, ton manomètre affichera environ ${Math.round(r.pBottom)} b.</p>`);
       item('ppo2', 'PpO₂ au fond', `<div class="f">Pabs = ${r.depth} / 10 + 1 = ${fmt(L.pabs(r.depth), 1)} b<br>PpO₂ = Pabs × %O₂ = ${fmt(L.pabs(r.depth), 1)} × ${fmt(r.fo2, 2)} = <b>${fmt(r.ppo2, 2)} b</b> (max ${fmt(r.pmax, 1)} b)</div>`);
       item('pea', 'PEA : profondeur équivalente air', r.nitrox
@@ -430,13 +448,13 @@
       const zoneTxt = snc > L.LIMITS.sncMax ? 'au-delà de la limite' : snc > L.LIMITS.sncWarn ? 'zone d’alerte' : 'zone normale';
       el.gauges.innerHTML = `<div class="body-wrap">${svg}<div class="body-legend">
         <div class="bl"><div class="bh">🧠 Cerveau · %SNC ${H.btn('snc', `${fmt(snc, 0)} % de la dose max de la journée.`)}</div>
-          <div class="bv" style="color:${brain}">${fmt(snc, 0)} %</div>${rangeBar(snc, 0, 100, [[L.LIMITS.sncWarn, 'ok'], [L.LIMITS.sncMax, 'warn'], [100, 'danger']])}
+          <div class="bv" style="color:${brain}">${fmt(snc, 0)} %</div>${rangeBar(snc, 0, 100, [[L.LIMITS.sncWarn, 'ok'], [L.LIMITS.sncMax, 'warn'], [100, 'danger']], x => `${x} %`)}
           <div class="bt">Dose d’oxygène reçue par le cerveau : ${zoneTxt} (alerte ${L.LIMITS.sncWarn} %, limite ${L.LIMITS.sncMax} %).</div></div>
         <div class="bl"><div class="bh">🫁 Poumons · OTU ${H.btn('otu', `${fmt(otu, 0)} OTU sur ${L.LIMITS.otuDay} possibles aujourd’hui.`)}</div>
-          <div class="bv" style="color:${lungs}">${fmt(otu, 0)} <small style="font-size:.6em;color:var(--text2)">/ ${L.LIMITS.otuDay}</small></div>${rangeBar(otu, 0, L.LIMITS.otuDay, [[500, 'ok'], [700, 'warn'], [L.LIMITS.otuDay, 'danger']])}
+          <div class="bv" style="color:${lungs}">${fmt(otu, 0)} <small style="font-size:.6em;color:var(--text2)">/ ${L.LIMITS.otuDay}</small></div>${rangeBar(otu, 0, L.LIMITS.otuDay, [[500, 'ok'], [700, 'warn'], [L.LIMITS.otuDay, 'danger']], x => String(x))}
           <div class="bt">Irritation des poumons par l’oxygène sur la journée.</div></div>
         <div class="bl"><div class="bh">🥴 Narcose · PpN₂ ${H.btn('narcose', `PpN₂ ${fmt(r.ppn2, 1)} b au fond.`)}</div>
-          <div class="bv" style="color:${r.ppn2 > 5.6 ? 'var(--danger)' : narc ? 'var(--warn)' : 'var(--ok)'}">${fmt(r.ppn2, 1)} b</div>${rangeBar(r.ppn2, 0, 6.5, [[3.2, 'ok'], [5.6, 'warn'], [6.5, 'danger']])}
+          <div class="bv" style="color:${r.ppn2 > 5.6 ? 'var(--danger)' : narc ? 'var(--warn)' : 'var(--ok)'}">${fmt(r.ppn2, 1)} b</div>${rangeBar(r.ppn2, 0, 6.5, [[3.2, 'ok'], [5.6, 'warn'], [6.5, 'danger']], x => fmt(x, 1))}
           <div class="bt">${narc ? 'Narcose probable : l’azote agit comme l’alcool, reste vigilant.' : 'Pas de narcose attendue à cette profondeur.'}</div></div>
       </div></div>`;
     }
@@ -467,7 +485,8 @@
       if (r.prof) {
         if (r.left < r.gear.reserve) A.push(['danger', `Gaz insuffisant : tu sors avec ${Math.round(r.left)} b (réserve ${r.gear.reserve} b).`]);
         if (r.pBottom < r.pdecoMin) A.push(['danger', `Au départ du fond tu n’auras que ${Math.round(r.pBottom)} b : il en faut ${r.pdecoMin} pour remonter avec ta réserve.`]);
-        else if (r.pBottom < r.pdecoRec) A.push(['warn', `Au départ du fond tu auras ${Math.round(r.pBottom)} b : c’est suffisant (${r.pdecoMin} b), mais sous le repère GP de ${r.pdecoRec} b. Peu de marge en cas d’imprévu.`]);
+        else if (r.pBottom < r.pdecoRec) A.push(['warn', `Au départ du fond tu auras ${Math.round(r.pBottom)} b : c’est suffisant (${r.pdecoMin} b), mais sous le repère de Tito de ${r.pdecoRec} b. Peu de marge en cas d’imprévu.`]);
+        if (r.titoShort) A.push(['warn', `Règle de Tito : ${r.pdecoRec} b, mais avec ton bloc de ${r.gear.tank} L il faut au moins ${r.pdecoMin} b pour remonter avec ta réserve. Décolle à ${r.pdecoMin} b.`]);
         if (r.prof.total > L.LIMITS.immersion) A.push(['danger', `Immersion de ${Math.round(r.prof.total)} min : au-delà de 2 h.`]);
         if (r.tox.snc > L.LIMITS.sncMax) A.push(['danger', `%SNC ${fmt(r.tox.snc, 0)} % : au-delà de ${L.LIMITS.sncMax} %, risque de crise hyperoxique.`]);
         else if (r.tox.snc > L.LIMITS.sncWarn) A.push(['warn', `%SNC ${fmt(r.tox.snc, 0)} % : pense à un intervalle de surface d’au moins 45 min avant de replonger.`]);
@@ -522,15 +541,15 @@
       const D = r.deco, g = r.gear, st = L.stopList(r.tab.stops);
       const tStops = st.reduce((a, s) => a + r.tab.stops[s], 0);
       const gpAsc = Math.round(L.pabs(r.depth));
-      const titoRound = Math.ceil(D.tito / 10) * 10;
-      const titoLow = titoRound < D.exact;
+      const titoRound = r.pdecoRec;
+      const titoLow = r.titoShort;
       const rows = [
-        { k: 'gp', name: 'Méthode GP', v: D.gp, best: D.gp >= D.exact,
+        { k: 'tito', name: 'Règle de Tito', v: D.tito, best: true,
+          d: `Profondeur + 2 × DTR = ${r.depth} + 2 × ${D.dtr} = ${D.tito} b, arrondi à la dizaine supérieure : <b>${titoRound} b</b>.` + (titoLow ? ` <b style="color:var(--warn)">Avec ce bloc, il faut au moins ${r.pdecoMin} b (calcul exact) : décolle à ${r.pdecoMin} b.</b>` : ' Elle couvre la remontée et la réserve pour ce bloc (calcul exact).') },
+        { k: 'gp', name: 'Méthode GP', v: D.gp, best: false,
           d: `DTR × β + sécurité = ${D.dtr} × ${fmt(D.beta.value, 1)} + ${g.reserve} = ${fmt(D.gp, 0)} b. β = ${fmt(D.beta.value, 1)} b/min pour un ${g.tank} L à ${g.sac} L/min${D.beta.fromTable ? ' (table Bardassier)' : ' (estimé)'}.` },
-        { k: 'exact', name: 'Calcul exact', v: D.exact, best: D.exact > D.gp,
+        { k: 'exact', name: 'Calcul exact (minimum)', v: D.exact, best: false,
           d: `Gaz de toute la remontée : ${Math.round(D.ascentL)} L ÷ ${g.tank} L = ${fmt(D.ascentL / g.tank, 0)} b, + réserve ${g.reserve} b.` },
-        { k: 'tito', name: 'Règle de Tito', v: D.tito, best: false,
-          d: `Profondeur + 2 × DTR = ${r.depth} + 2 × ${D.dtr} = ${D.tito} b, arrondi à la dizaine supérieure : ${titoRound} b.` + (titoLow ? ` <b style="color:var(--danger)">Moins prudente que le calcul exact : ne l’utilise pas seule.</b>` : ' Cohérente avec le calcul exact pour ce bloc.') },
       ];
       // DTR max convenue : durée max au fond qui la respecte (lecture de la table à la PEA)
       const dtrMax = +el.dtrMax.value;
@@ -551,16 +570,16 @@
       el.deco.innerHTML = `
         <div class="answer" style="margin-bottom:12px">
           <div class="ans"><span class="l">⏱ Déclencheur temps</span><span class="v">${timeTxt}</span><span class="why">Au bout de ce temps au fond, on s’en va.</span><span class="det">DTR prévue : ${D.dtr}′ (table ${r.tab.d} m / ${r.tab.t}′)</span></div>
-          <div class="ans"><span class="l">🔽 Déclencheur pression</span><span class="v">${r.pdecoRec} b</span><span class="why">Dès que le manomètre l’affiche, on s’en va.</span><span class="det">Le premier des deux qui arrive fait décoller.</span></div>
+          <div class="ans"><span class="l">🔽 Déclencheur pression · Tito</span><span class="v">${Math.max(r.pdecoRec, r.titoShort ? r.pdecoMin : 0)} b</span><span class="why">Dès que le manomètre l’affiche, on s’en va.</span><span class="det">Le premier des deux qui arrive fait décoller.</span></div>
         </div>
         <div class="steps" style="margin:0 0 12px">
           <div><em>DTR</em>table MN90 : <b>${D.dtr} min</b>. Méthode GP rapide : pression absolue au fond ${fmt(L.pabs(r.depth), 1)} b → environ ${gpAsc} min de remontée${tStops ? ` + ${tStops} min de paliers = ${gpAsc + tStops} min` : ''}. Attention : la DTR n’est pas le temps au fond.</div>
           ${dtrLine}
           <div><em>Mi-pression</em><b>${half} b</b> (moitié de ${g.press} b). Si la plongée est un aller-retour, le demi-tour logique se fait à (${g.press} + ${r.pdecoRec}) / 2 = <b>${halfTrip} b</b> pour garder de quoi revenir ET remonter.</div>
-          <div><em>Sécu paliers</em>${secuOk ? `<b style="color:var(--ok)">OK</b> : au départ du fond tu auras environ ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin} (calcul exact)${secuMarge ? ` et ${r.pdecoRec} avec la marge GP.` : `. <b style="color:var(--warn)">Sous le repère GP de ${r.pdecoRec} b : peu de marge.</b>`}` : `<b style="color:var(--danger)">NON</b> : au départ du fond tu n’auras que ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin}. Raccourcis la plongée.`}</div>
+          <div><em>Sécu paliers</em>${secuOk ? `<b style="color:var(--ok)">OK</b> : au départ du fond tu auras environ ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin} (calcul exact)${secuMarge ? ` et ${r.pdecoRec} avec la règle de Tito.` : `. <b style="color:var(--warn)">Sous le repère de Tito de ${r.pdecoRec} b : peu de marge.</b>`}` : `<b style="color:var(--danger)">NON</b> : au départ du fond tu n’auras que ${Math.round(r.pBottom)} b, il en faut ${r.pdecoMin}. Raccourcis la plongée.`}</div>
         </div>
-        <div class="deco-rows">${rows.map(x => `<div class="deco-row ${x.best ? 'best' : ''}"><span><b>${x.name}</b>${x.best ? '<span class="badge">la plus prudente</span>' : ''}${x.k === 'tito' && titoLow ? '<span class="badge warnb">insuffisante ici</span>' : ''}</span><span class="dv">${fmt(x.v, 0)} b${x.k === 'tito' && titoRound !== x.v ? ` <small style="font-size:.6em;color:var(--text2)">→ ${titoRound}</small>` : ''}</span><span class="dd">${x.d}</span></div>`).join('')}</div>
-        <div class="alert ${r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok'}" style="margin-top:12px">🔑 Contrat : <b>${timeTxt} au fond OU ${r.pdecoRec} b au manomètre</b>, le premier des deux fait décoller.${r.pBottom < r.pdecoRec ? ` Avec environ ${Math.round(r.pBottom)} b au départ du fond, c’est la pression qui décidera avant le temps${r.pBottom < r.pdecoMin ? ' : raccourcis la plongée' : ''}.` : ''}</div>` + phasesTable(r);
+        <div class="deco-rows">${rows.map(x => `<div class="deco-row ${x.best ? 'best' : ''}"><span><b>${x.name}</b>${x.best ? '<span class="badge">retenue</span>' : ''}${x.k === 'tito' && titoLow ? '<span class="badge warnb">sous le minimum</span>' : ''}</span><span class="dv">${fmt(x.v, 0)} b${x.k === 'tito' && titoRound !== x.v ? ` <small style="font-size:.6em;color:var(--text2)">→ ${titoRound}</small>` : ''}</span><span class="dd">${x.d}</span></div>`).join('')}</div>
+        <div class="alert ${r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok'}" style="margin-top:12px">🔑 Contrat : <b>${timeTxt} au fond OU ${Math.max(r.pdecoRec, r.titoShort ? r.pdecoMin : 0)} b au manomètre</b> (règle de Tito${r.titoShort ? ', relevée au minimum exact' : ''}), le premier des deux fait décoller.${r.pBottom < r.pdecoRec ? ` Avec environ ${Math.round(r.pBottom)} b au départ du fond, c’est la pression qui décidera avant le temps${r.pBottom < r.pdecoMin ? ' : raccourcis la plongée' : ''}.` : ''}</div>` + phasesTable(r);
     }
 
     // Consommation phase par phase (repris de l'ancien outil DTR)

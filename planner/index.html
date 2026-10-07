@@ -59,7 +59,13 @@
   .kpi .s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .kpi .help-btn { top: 5px; right: 5px; width: 19px; height: 19px; font-size: .7rem; }
   /* Barre de valeur façon analyse de sang : zones vert / orange / rouge + repère */
-  .rbar { position: relative; display: flex; height: 6px; border-radius: 3px; margin: 6px 0 3px; }
+  .rwrap { position: relative; padding-bottom: 12px; margin: 6px 0 1px; }
+  .rbar { position: relative; display: flex; height: 6px; border-radius: 3px; }
+  .rt { position: absolute; top: 8px; transform: translateX(-50%); font-size: .62rem; line-height: 1; color: var(--text2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .rwrap.two { padding-bottom: 22px; }
+  .rt.r2 { top: 18px; }
+  .rt.r2::before { top: -14px; height: 13px; }
+  .rt::before { content: ""; position: absolute; left: 50%; top: -4px; width: 1px; height: 3px; background: var(--text2); }
   .rbar i { display: block; height: 100%; opacity: .55; }
   .rbar i:first-child { border-radius: 3px 0 0 3px; } .rbar i:last-child { border-radius: 0 3px 3px 0; }
   .rbar i.ok { background: var(--ok); } .rbar i.warn { background: var(--warn); } .rbar i.danger { background: var(--danger); }
@@ -80,6 +86,7 @@
   .calc-item.flash { outline: 3px solid var(--accent); }
   .calc-item .tbl { font-size: .8rem; }
   @media (max-width: 700px) { .kgroups { grid-template-columns: minmax(0, 1fr); } }
+  @media (min-width: 1000px) and (max-height: 960px) { .kpi .s { display: none; } }
   @container (min-width: 1250px) { .kgroups { grid-template-columns: 3fr 2fr 3fr 2fr; } }
   .kpi .v { font-size: 1.3rem; }
   .kpi .s { font-size: .72rem; }
