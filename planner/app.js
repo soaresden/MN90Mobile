@@ -83,7 +83,8 @@
       const out = [];
       for (let i = 1; i < pts.length; i++) {
         const dz = pts[i - 1][1] - pts[i][1], dt = pts[i][0] - pts[i - 1][0];
-        if (dz > 0 && dt > 0 && dz / dt > L.SPEED.asc + 1e-9) out.push({ i, rate: dz / dt, from: pts[i - 1], to: pts[i] });
+        if (dz > 0 && dt > 0 && dz / dt > L.SPEED.asc + 1e-9)
+          out.push({ i, rate: dz / dt, from: pts[i - 1], to: pts[i], rapid: L.isRapidAscent(pts[i - 1][1], pts[i][1], dt) });
       }
       return out;
     }
@@ -169,7 +170,7 @@
       el.answer.className = 'answer' + (block ? ' blocked' : '');
       el.answer.innerHTML = (block ? `<div class="alert danger" style="grid-column:1/-1">⛔ Plongée non permise : ${block}</div>` : '')
         + card('Sans palier', lim.maxNoStop)
-        + card('Maximum, paliers compris', lim.max)
+        + card('Avec paliers', lim.max)
         + `<button type="button" class="btn btn-outline btn-sm" data-calcopen style="grid-column:1/-1;justify-self:start">🧮 Voir le calcul</button>`;
 
       // Comparatif des mélanges
@@ -255,7 +256,15 @@
           g += `<text x="${(X(s.from) + X(s.to)) / 2}" y="${Y(s.depth) + 19}" text-anchor="middle" font-size="11.5" font-weight="800" style="fill:var(--p${s.depth})">${s.depth} m · ${s.dur}′</text>`;
         });
         g += `<circle cx="${X(r.prof.bottomEnd)}" cy="${Y(bottom().at(-1)[1])}" r="4" style="fill:var(--c1)"/>`;
-        g += `<text x="${Math.min(X(r.prof.total), W - m.r - 4)}" y="${Y(0) - 6}" text-anchor="end" font-size="11" font-weight="700" style="fill:var(--text)">sortie ${Math.round(r.prof.total)}′</text>`;
+        // DTR : trait violet du départ du fond à la sortie de l'eau, avec son étiquette
+        {
+          const x0 = X(r.prof.bottomEnd), x1 = X(r.prof.total), yb = 12, DTRC = '#7C3AED';
+          g += `<line x1="${x0}" x2="${x0}" y1="${yb}" y2="${Y(bottom().at(-1)[1])}" stroke="${DTRC}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>`;
+          g += `<line x1="${x1}" x2="${x1}" y1="${yb}" y2="${Y(0)}" stroke="${DTRC}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>`;
+          g += `<line x1="${x0}" x2="${x1}" y1="${yb}" y2="${yb}" stroke="${DTRC}" stroke-width="5" stroke-linecap="round"/>`;
+          const lx = Math.max(m.l + 60, Math.min((x0 + x1) / 2, W - m.r - 62));
+          g += `<text x="${lx}" y="${yb + 15}" text-anchor="middle" font-size="12" font-weight="800" fill="${DTRC}" style="paint-order:stroke;stroke:var(--water1);stroke-width:3px">DTR ${r.tab.dtr}′ · sortie ${Math.round(r.prof.total)}′</text>`;
+        }
       } else {
         g += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--danger)">${r.tab.err}</text>`;
       }
@@ -481,7 +490,9 @@
       if (r.depth > 60) A.push(['danger', 'Au-delà de 60 m : interdit (tables de secours uniquement).']);
       if (r.ppn2 > 5.6) A.push(['danger', `PpN₂ ${fmt(r.ppn2, 1)} b : au-delà de 5,6 b, narcose dangereuse.`]);
       else if (r.ppn2 > 3.2) A.push(['warn', `PpN₂ ${fmt(r.ppn2, 1)} b : narcose probable, palanquée expérimentée et vigilance.`]);
-      (r.fast || []).forEach(f => A.push(['danger', `Remontée trop rapide entre ${fmt(f.from[0], 1)}′ et ${fmt(f.to[0], 1)}′ : ${fmt(f.rate, 0)} m/min (max ${L.SPEED.asc} m/min).`]));
+      (r.fast || []).forEach(f => A.push(f.rapid
+        ? ['danger', `Remontée rapide entre ${fmt(f.from[0], 1)}′ et ${fmt(f.to[0], 1)}′ : ${fmt(f.rate, 0)} m/min de ${fmt(f.from[1], 0)} à ${fmt(f.to[1], 0)} m (plus de 15 m/min entre 30 m et la surface sur 10 m ou plus). Procédure dans l’onglet 🚨 Urgence.`]
+        : ['warn', `Remontée trop rapide entre ${fmt(f.from[0], 1)}′ et ${fmt(f.to[0], 1)}′ : ${fmt(f.rate, 0)} m/min (max ${L.SPEED.asc} m/min).`]));
       if (r.prof) {
         if (r.left < r.gear.reserve) A.push(['danger', `Gaz insuffisant : tu sors avec ${Math.round(r.left)} b (réserve ${r.gear.reserve} b).`]);
         if (r.pBottom < r.pdecoMin) A.push(['danger', `Au départ du fond tu n’auras que ${Math.round(r.pBottom)} b : il en faut ${r.pdecoMin} pour remonter avec ta réserve.`]);

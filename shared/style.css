@@ -402,6 +402,13 @@ legend { font-weight: 700; font-size: .9rem; margin-bottom: 8px; color: var(--te
 
 /* ── Dessin du matériel (plongeur et bouteille) ── */
 .gear-art svg { display: block; width: 100%; max-width: 320px; height: auto; margin: 0 auto 8px; }
+/* Fiche profil : deux colonnes sur grand écran (pas de défilement) */
+@media (min-width: 860px) {
+  .modal.pf-modal { max-width: 940px; }
+  .pf-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .pf-modal .gear-art svg { max-width: 290px; }
+  .pf-modal fieldset { margin-bottom: 10px; }
+}
 
 /* ── Fenêtres (profil, aide) ── */
 .modal-back {

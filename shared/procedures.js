@@ -32,25 +32,26 @@
     const ra = L.rapidAscent(r);
     const sl = L.slowAscent(r, 10);
     const st = L.stopList(r.tab.stops);
-    let out = `<h3 style="margin-bottom:6px">⬆️ Remontée rapide (plus de 15 à 17 m/min)</h3>`;
-    if (!ra || ra.err) {
-      out += `<div class="alert danger">Procédure hors table${ra ? ` (${ra.err})` : ''} : oxygène pur, alerte des secours, évacuation.</div>`;
+    const dTxt = Number.isInteger(r.depth) ? r.depth : fmt(r.depth, 1);
+    let out = `<h3 style="margin-bottom:6px">⬆️ Remontée rapide</h3>
+      <p class="small muted" style="margin-bottom:6px"><b>Définition</b> : remontée à plus de <b>15 m/min</b> entre <b>30 m et la surface</b>, sur une distance de <b>10 m minimum</b>.</p>`;
+    if (!ra) {
+      out += `<div class="alert danger">Oxygène pur, alerte des secours, évacuation vers un centre hyperbare.</div>`;
     } else {
+      const base = L.stopList(ra.base);
       const pst = L.stopList(ra.stops);
-      const midTxt = fmt(ra.mid, Number.isInteger(ra.mid) ? 0 : 1);
       out += `<div class="steps" style="margin:0 0 10px">
-        <div><em>1.</em>Seulement si le plongeur va bien et que la réimmersion est possible <b>en moins de 3 min</b>.</div>
-        <div><em>2.</em>Redescendre à la <b>demi-profondeur : ${midTxt} m</b> (moitié de ${ra.ref} m${r.nitrox ? ', profondeur réelle au Nitrox' : ', profondeur de la table'}).</div>
-        <div><em>3.</em><b>Palier de 5 min</b> à ${midTxt} m, puis remontée à 15–17 m/min.</div>
-        <div><em>4.</em>Nouvelle durée de plongée : du début de la plongée à la fin du palier de ${midTxt} m ≈ <b>${ra.duration} min</b> → table ${ra.tab.d} m / ${ra.tab.t}′.</div>
-        <div><em>5.</em>Paliers : ${pst.map(s => `<span class="pd${s}" style="font-weight:800">${s} m ${ra.stops[s]}′</span>`).join(' + ')}${(r.tab.stops[3] || 0) < 2 || !ra.tab.stops[3] || ra.tab.stops[3] < 2 ? ' (3 m porté au minimum de 2 min)' : ''}. Beaucoup de clubs ajoutent aussi 3 min de palier de sécurité.</div>
+        <div><em>1.</em>Dans les <b>3 minutes</b> au maximum, rejoindre un palier à <b>mi-profondeur minimum : ${ra.mid} m</b> (moitié de ${dTxt} m).</div>
+        <div><em>2.</em>Y rester <b>5 minutes</b>.</div>
+        <div><em>3.</em>Remonter en faisant les paliers prévus ${base.length ? `(${base.map(s => `<span class="pd${s}" style="font-weight:800">${s} m ${ra.base[s]}′</span>`).join(' + ')})` : '(aucun ici)'} <b>+ 1 min à 6 m + 5 min à 3 m</b>.</div>
+        <div><em>→</em>Pour cette plongée : ${pst.map(s => `<span class="pd${s}" style="font-weight:800">${s} m ${ra.stops[s]}′</span>`).join(' + ')}.</div>
       </div>`;
       const bi = ra.prof.pts.findIndex(p => p[0] >= r.prof.bottomEnd - 1e-9);
       const t1 = ra.prof.pts.find(p => p[0] > ra.tSurface + 3 - 1e-9 && Math.abs(p[1] - ra.mid) < 1e-9);
       out += miniChart(ra.prof.pts, ra.prof.segs, t1 ? { t0: ra.prof.pts[bi][0], t1: t1[0], t2: t1[0] + 5, mid: ra.mid } : null);
-      out += `<p class="small muted" style="margin-top:6px">Hypothèses : remontée rapide au départ du fond, 3 min en surface. Sortie de l’eau vers ${Math.round(ra.prof.total)}′.</p>`;
+      out += `<p class="small muted" style="margin-top:6px">Exemples du cours à 30 m : sans palier → 15 m 5 min, puis 1 min à 6 m et 5 min à 3 m ; avec 3 min à 3 m prévues → 15 m 5 min, puis 1 min à 6 m et 8 min à 3 m. Dessin : remontée rapide au départ du fond, 3 min en surface, sortie vers ${Math.round(ra.prof.total)}′.</p>`;
     }
-    out += `<div class="alert danger" style="margin-top:10px">Réimmersion impossible en moins de 3 min, ou le moindre symptôme : <b>oxygène pur</b>, alerte (<b>196</b> CROSS en mer, <b>112</b> à terre), évacuation. Pas de réimmersion.</div>`;
+    out += `<div class="alert danger" style="margin-top:10px">Impossible de se réimmerger : <b>oxygène</b> et <b>évacuation vers un centre hyperbare</b> (alerte <b>196</b> en mer, <b>112</b> ou <b>15</b> à terre).</div>`;
 
     // Panne d'ordinateur : on reste entre 3 et 6 m jusqu'à la pression de réserve
     {
@@ -68,17 +69,21 @@
         </div>`;
     }
 
-    out += `<h3 style="margin:16px 0 6px">⏸️ Palier interrompu</h3>`;
-    out += st.length
-      ? `<div class="steps" style="margin:0">${st.map(s => `<div><em>${s} m</em>si tu quittes le palier de <span class="pd${s}" style="font-weight:800">${s} m</span> avant la fin : dans les 3 min, redescends à ${s} m et <b>refais les ${r.tab.stops[s]} min en entier</b>, puis continue normalement.</div>`).join('')}</div>`
-      : `<p class="muted">Pas de palier obligatoire sur cette plongée. Si le palier de sécurité est interrompu, il n’y a pas de procédure, mais reste prudent.</p>`;
+    out += `<h3 style="margin:16px 0 6px">⏸️ Interruption des paliers obligatoires</h3>`;
+    out += `<div class="steps" style="margin:0">
+        <div><em>1.</em>Se <b>réimmerger dans les 3 min</b> et suivre les indications du moyen de décompression${st.length ? ` (ici : ${st.map(s => `<span class="pd${s}" style="font-weight:800">${s} m ${r.tab.stops[s]}′</span>`).join(' + ')})` : ''}, <b>en ajoutant 3 min au palier de 3 m</b>${st.length ? ` → <span class="pd3" style="font-weight:800">3 m ${(r.tab.stops[3] || 0) + 3}′</span>` : ''}.</div>
+        <div><em>Impossible de se réimmerger</em></div>
+        <div><em>⛔</em>Signe d’un possible accident <b>OU</b> plus de 3 min de paliers non réalisés : <b>oxygène</b> et <b>déclenchement des secours</b>.</div>
+        <div><em>👀</em>Aucun signe <b>ET</b> moins de 3 min de paliers non réalisés : <b>observation pendant 3 heures</b> et <b>pas de nouvelle plongée pendant 24 heures</b>. Au moindre signe pouvant évoquer un accident : secours.</div>
+      </div>`;
+    if (!st.length) out += `<p class="small muted" style="margin-top:6px">Pas de palier obligatoire sur cette plongée : la procédure concerne les paliers imposés par la table ou l’ordinateur.</p>`;
 
     out += `<h3 style="margin:16px 0 6px">🐢 Remontée lente jusqu’au 1er palier</h3>`;
     if (sl && !sl.tab.err) {
       const ns = L.stopList(sl.tab.stops);
       out += `<p>Exemple à 10 m/min au lieu de 15 : la remontée prend ${mmss(sl.tAsc)}. On l’ajoute à la durée : ${Number.isInteger(r.time) ? r.time : fmt(r.time, 1)} + ${fmt(sl.tAsc, 1)} → <b>${sl.duration} min</b>, table ${sl.tab.d} m / ${sl.tab.t}′ : ${ns.length ? ns.map(s => `<span class="pd${s}" style="font-weight:800">${s} m ${sl.tab.stops[s]}′</span>`).join(' + ') : 'toujours sans palier'}.</p>`;
     }
-    out += `<p class="small muted" style="margin-top:8px">Remontée trop rapide <i>entre</i> deux paliers (plus de 6 m/min) : aucun protocole MN90. Source : mode d’emploi des tables fédérales FFESSM (Blanchard &amp; Imbert).</p>`;
+    out += `<p class="small muted" style="margin-top:8px">Remontée trop rapide <i>entre</i> deux paliers (plus de 6 m/min) : aucun protocole. Remontée rapide et interruption des paliers : définitions du cours ; remontée lente : mode d’emploi des tables fédérales (Blanchard &amp; Imbert).</p>`;
     return out;
   }
 
