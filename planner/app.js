@@ -9,7 +9,7 @@
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
     'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'gearArt', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
-    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc', 'layerBar', 'layerSum'];
+    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc', 'layerBar', 'layerSum', 'succ', 'sInt', 'sD2', 'sT2', 'sO2', 'vInt', 'vD2', 'vT2', 'vO22'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile, H = window.MN90Help;
@@ -129,6 +129,7 @@
       renderDeco(r);
       renderEmerg(r);
       renderCalc(r);
+      renderSucc(r);
     }
 
     function setSeg(seg, v) {
@@ -618,6 +619,96 @@
       el.tableRead.innerHTML = html;
     }
 
+    /* ---------- 2e plongée : consécutive, successive (tableaux I et II) ou isolée ---------- */
+    const hm = m => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') : ''}`);
+    let lastSucc = null;
+    function renderSucc(r) {
+      const iv = +el.sInt.value, d2 = +el.sD2.value, t2 = +el.sT2.value, o2 = +el.sO2.value;
+      el.vInt.textContent = hm(iv); el.vD2.textContent = d2; el.vT2.textContent = t2;
+      el.vO22.textContent = o2 <= 21 ? 'Air' : 'Nx' + o2;
+      if (!r || !r.prof) { el.succ.innerHTML = '<p class="muted">Règle d’abord une 1re plongée dans la table.</p>'; return; }
+      const fo2 = o2 / 100, nx = o2 > 21;
+      const n = L.nextDive(r, iv, d2, t2, fo2, nx, r.gear);
+      lastSucc = { n, r, d2, t2, o2, iv };
+      const KIND = { consecutive: 'Plongée consécutive (intervalle < 15 min)', successive: 'Plongée successive', isolee: 'Plongée isolée (intervalle ≥ 12 h)' };
+      let html = `<span class="kind ${n.kind}">${KIND[n.kind]}</span>`;
+      if (n.err) { el.succ.innerHTML = html + `<div class="alert danger">${n.err}</div>`; return; }
+      const E = [];
+      const p2 = nx ? `${fmt(L.pea(d2, fo2), 1)} m (PEA du Nx${o2})` : `${d2} m`;
+      if (n.kind === 'successive') {
+        E.push(['1re plongée', `ligne ${r.tab.d} m / ${r.tab.t}′ → lettre <b>${n.gps}</b>.`]);
+        E.push(['Tableau I', `ligne <b>${n.gps}</b>, intervalle ${hm(iv)} → colonne <b>${hm(n.col)}</b> (valeur immédiatement inférieure) → azote résiduel <b>${n.n2 === null ? 'revenu à la normale' : fmt(n.n2, 2)}</b>.`]);
+        E.push(['Tableau II', n.maj ? `azote ${fmt(n.n2, 2)} → ligne <b>${fmt(n.n2row, 2)}</b> (immédiatement supérieure), profondeur ${p2} → colonne <b>${n.depthCol} m</b> → majoration <b>${n.maj} min</b>.` : 'azote résiduel ≤ 0,81 : <b>pas de majoration</b>.']);
+        E.push(['Durée fictive', `${n.maj} + ${t2} = <b>${n.duration} min</b> → table ${n.tab.d} m / ${n.tab.t}′.`]);
+      } else if (n.kind === 'consecutive') {
+        E.push(['Règle', 'intervalle strictement inférieur à 15 min : on considère une seule et même plongée.']);
+        E.push(['Calcul', `durée = ${fmt(r.time, 0)} + ${t2} = <b>${n.duration} min</b>, profondeur max = <b>${fmt(n.tabDepth, 1)} m</b> → table ${n.tab.d} m / ${n.tab.t}′.`]);
+      } else {
+        E.push(['Règle', 'au moins 12 h après la précédente : la 2e plongée se calcule comme une plongée isolée.']);
+        E.push(['Table', `${p2} / ${t2}′ → ligne ${n.tab.d} m / ${n.tab.t}′.`]);
+      }
+      const st = L.stopList(n.tab.stops);
+      const g = r.gear, res = g.reserve;
+      E.push(['Résultat', `${st.length ? st.map(k => `<span class="pd${k}" style="font-weight:800">${k} m ${n.tab.stops[k]}′</span>`).join(' + ') : 'aucun palier'} · DTR <b>${n.tab.dtr}′</b> · lettre <b>${n.tab.gps}</b>.`]);
+      html += `<div class="steps" style="margin-top:4px">${E.map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('')}</div>`;
+      if (n.kind === 'successive') html += `<button type="button" class="btn btn-outline btn-sm" data-succtables style="margin-top:8px">📋 Voir les tableaux I et II</button>`;
+      const A = [];
+      A.push(n.left < res ? ['danger', `Bloc (même matériel, regonflé) : tu sortirais avec ${Math.round(n.left)} b, sous ta réserve de ${res} b.`] : ['ok', `Bloc (même matériel, regonflé) : sortie avec ${Math.round(n.left)} b.`]);
+      const snc = n.sncTotal;
+      A.push([snc > L.LIMITS.sncMax ? 'danger' : snc > L.LIMITS.sncWarn ? 'warn' : 'ok', `%SNC cumulé : ${fmt(n.sncCarry, 0)} % restant de la 1re (divisé par 2 toutes les 90 min) + ${fmt(n.tox.snc, 0)} % = <b>${fmt(snc, 0)} %</b>.`]);
+      A.push([n.otuTotal > L.LIMITS.otuDay ? 'danger' : 'ok', `OTU de la journée : ${fmt(n.otuTotal, 0)} / ${L.LIMITS.otuDay}.`]);
+      if (n.tab.gps === '*') A.push(['warn', 'Pas de lettre GPS après la 2e plongée : pas de 3e plongée.']);
+      A.push(['info', 'Deux plongées au maximum par 24 heures.']);
+      if (nx) { const mod = L.mod(fo2, 1.6); if (d2 > mod) A.push(['danger', `Nx${o2} interdit à ${d2} m (MOD ${fmt(mod, 1)} m à 1,6 b).`]); }
+      html += `<div class="alerts" style="margin-top:8px">${A.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('')}</div>`;
+      html += succChart(r, n, iv);
+      el.succ.innerHTML = html;
+    }
+
+    // Les deux plongées sur une même frise (intervalle de surface raccourci)
+    function succChart(r, n, iv) {
+      const W = 460, H = 160, m = { l: 28, r: 8, t: 12, b: 20 };
+      const t1 = r.prof.total, t2 = n.prof.total, gap = Math.max(t1, t2) * 0.35;
+      const tot = t1 + gap + t2, maxZ = Math.max(10, Math.ceil(Math.max(r.depth, ...n.prof.pts.map(p => p[1])) / 5) * 5);
+      const X = t => m.l + t / tot * (W - m.l - m.r), Y = z => m.t + z / maxZ * (H - m.t - m.b);
+      const line = (pts, off) => pts.map(([t, z]) => `${X(t + off).toFixed(1)},${Y(z).toFixed(1)}`).join(' ');
+      let g = `<rect width="${W}" height="${H}" style="fill:var(--water1)"/>`;
+      for (let z = 0; z <= maxZ; z += maxZ > 30 ? 10 : 5) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(z)}" y2="${Y(z)}" style="stroke:var(--grid)"/><text x="${m.l - 4}" y="${Y(z) + 4}" font-size="10" text-anchor="end" style="fill:var(--text2)">${z}</text>`;
+      g += `<polyline points="${line(r.prof.pts, 0)}" fill="none" style="stroke:var(--c1)" stroke-width="2.5"/>`;
+      g += `<polyline points="${line(n.prof.pts, t1 + gap)}" fill="none" style="stroke:var(--c3)" stroke-width="2.5"/>`;
+      [[r.prof.segs, 0], [n.prof.segs, t1 + gap]].forEach(([segs, off]) => segs.forEach(sg => { g += `<line x1="${X(sg.from + off)}" x2="${X(sg.to + off)}" y1="${Y(sg.depth)}" y2="${Y(sg.depth)}" style="stroke:var(--p${sg.depth})" stroke-width="6" stroke-linecap="round"/>`; }));
+      g += `<line x1="${X(t1)}" x2="${X(t1 + gap)}" y1="${Y(0)}" y2="${Y(0)}" style="stroke:var(--text2)" stroke-width="2" stroke-dasharray="4 3"/>`;
+      g += `<text x="${X(t1 + gap / 2)}" y="${Y(0) + 16}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text2)">surface ${hm(iv)}</text>`;
+      g += `<text x="${X(t1 / 2)}" y="${H - 5}" text-anchor="middle" font-size="10.5" font-weight="700" style="fill:var(--c1)">1re · ${r.tab.gps}</text>`;
+      g += `<text x="${X(t1 + gap + t2 / 2)}" y="${H - 5}" text-anchor="middle" font-size="10.5" font-weight="700" style="fill:var(--c3)">2e${n.maj ? ` · +${n.maj}′` : ''} · ${n.tab.gps}</text>`;
+      return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:8px;border-radius:10px;border:1px solid var(--border)" role="img" aria-label="Les deux plongées">${g}</svg>`;
+    }
+
+    // Tableaux I et II en superposition, cases utilisées surlignées
+    let succBack = null;
+    function openSuccTables() {
+      if (!lastSucc || lastSucc.n.kind !== 'successive') return;
+      const { n } = lastSucc;
+      if (!succBack) {
+        succBack = document.createElement('div');
+        succBack.className = 'modal-back';
+        succBack.hidden = true;
+        succBack.innerHTML = `<div class="modal full-table" role="dialog" aria-modal="true" aria-labelledby="st-title"><div class="ft-head"><h2 id="st-title">📋 Tableaux I et II MN90</h2><button type="button" class="btn btn-outline btn-sm" data-close>Fermer ✕</button></div><div class="st-body"></div></div>`;
+        document.body.appendChild(succBack);
+        succBack.addEventListener('click', e => { if (e.target === succBack || e.target.closest('[data-close]')) { succBack.hidden = true; document.documentElement.classList.remove('modal-open'); } });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && succBack && !succBack.hidden) { succBack.hidden = true; document.documentElement.classList.remove('modal-open'); } });
+      }
+      const ci = L.T1_COLS.indexOf(n.col);
+      const t1 = `<h3>Tableau I : azote résiduel</h3><p class="hint">Ligne = lettre GPS · colonne = intervalle de surface (valeur immédiatement inférieure).</p><div class="tbl-wrap tI"><table class="tbl"><thead><tr><th>GPS</th>${L.T1_COLS.map(c => `<th>${hm(c)}</th>`).join('')}</tr></thead><tbody>` +
+        Object.keys(L.TABLE_I).map(k => `<tr class="${k === n.gps ? 'row' : ''}"><td>${k}</td>${L.T1_COLS.map((c, j) => { const v = L.TABLE_I[k][j]; return `<td class="${k === n.gps && j === ci ? 'hit' : ''}">${v === undefined ? '' : fmt(v, 2)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>';
+      const t2 = `<h3 style="margin-top:12px">Tableau II : majoration (min)</h3><p class="hint">Ligne = azote résiduel (immédiatement supérieur) · colonne = profondeur de la 2e plongée (immédiatement supérieure).</p><div class="tbl-wrap tII"><table class="tbl"><thead><tr><th>Azote</th>${L.T2_DEPTHS.map(d => `<th>${d} m</th>`).join('')}</tr></thead><tbody>` +
+        L.TABLE_II.map(row => `<tr class="${Math.abs(row[0] - (n.n2row || -1)) < 1e-9 ? 'row' : ''}"><td>${fmt(row[0], 2)}</td>${L.T2_DEPTHS.map((d, j) => `<td class="${Math.abs(row[0] - (n.n2row || -1)) < 1e-9 && d === n.depthCol ? 'hit' : ''}">${row[1 + j]}</td>`).join('')}</tr>`).join('') + '</tbody></table></div>';
+      succBack.querySelector('.st-body').innerHTML = t1 + t2;
+      succBack.hidden = false;
+      document.documentElement.classList.add('modal-open');
+      succBack.querySelector('[data-close]').focus();
+    }
+
     /* ---------- Table MN90 complète en superposition ---------- */
     let fullBack = null;
     function openFullTable(r) {
@@ -824,6 +915,8 @@
     }
 
     /* ---------- Événements ---------- */
+    [el.sInt, el.sD2, el.sT2, el.sO2].forEach(i => i.addEventListener('input', () => renderSucc(S.last)));
+    el.succ.addEventListener('click', e => { if (e.target.closest('[data-succtables]')) openSuccTables(); });
     [el.depth, el.time, el.o2, el.compare, el.scaleZ, el.scaleT, el.dtrMax].forEach(i => i.addEventListener('input', render));
     el.gasSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.gas = b.dataset.v; render(); } });
     el.ppSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.pmax = +b.dataset.v; render(); } });
