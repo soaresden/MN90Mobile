@@ -44,6 +44,8 @@
   .ptab.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .pane[hidden] { display: none !important; }
   .side-field .field { margin-bottom: 8px; }
+  #lvlSeg button { font-size: .86rem; }
+  .ptab[hidden] { display: none !important; }
 
   @media (min-width: 1000px) and (min-height: 600px) {
     html, body { height: 100%; overflow: hidden; }
@@ -85,6 +87,10 @@
 <main class="nx-app">
   <!-- ===== Réglages et réponses ===== -->
   <aside class="nx-side">
+    <div class="seg" id="lvlSeg" role="group" aria-label="Niveau Nitrox">
+      <button type="button" data-v="simple" class="on">⚗️ Nitrox</button>
+      <button type="button" data-v="conf">🎓 Nitrox Confirmé</button>
+    </div>
     <section class="card side-field">
       <h2>🧪 Mon mélange <button type="button" class="help-btn" data-help="mod" aria-label="C’est quoi ?">?</button></h2>
       <label class="field"><span class="field-row">Mélange <b>Nx<span id="vO2"></span></b></span>
@@ -138,6 +144,9 @@
       <button type="button" class="ptab" data-pane="calc">🧮 Calculs</button>
       <button type="button" class="ptab" data-pane="tox">🧠 Toxicité</button>
       <button type="button" class="ptab" data-pane="gen">📋 Table Nitrox</button>
+      <button type="button" class="ptab conf-only" data-pane="decogas" hidden>🟢 Gaz de déco</button>
+      <button type="button" class="ptab conf-only" data-pane="o2stops" hidden>⏱️ Paliers O₂</button>
+      <button type="button" class="ptab conf-only" data-pane="gonf" hidden>⛽ Gonflage</button>
     </div>
     <div class="pbody">
       <div class="pane" data-pane="mix">
@@ -152,6 +161,31 @@
       <div class="pane" data-pane="tox" hidden>
         <h3>Ma dose d’oxygène</h3>
         <div class="steps" id="sncSteps"></div>
+      </div>
+      <div class="pane" data-pane="decogas" hidden>
+        <h3>🟢 Mon gaz de déco</h3>
+        <label class="field"><span class="field-row">Mélange de déco <b id="vDeco"></b></span>
+          <input type="range" id="decoO2" min="40" max="100" step="1" value="80"></label>
+        <div id="decoOut"></div>
+      </div>
+      <div class="pane" data-pane="o2stops" hidden>
+        <h3>⏱️ Paliers à l’O₂ pur</h3>
+        <p class="small muted" style="margin-bottom:6px">Cours Nitrox Confirmé : on conserve les <b>2/3 des paliers air</b> de la table MN90, avec un <b>minimum de 5 min</b>. Stabilité impérative au palier de 6 m à l’O₂ (point d’appui).</p>
+        <label class="field"><span class="field-row">Profondeur de la plongée <b><span id="vOd"></span> m</b></span>
+          <input type="range" id="o2Depth" min="12" max="60" step="1" value="40"></label>
+        <label class="field"><span class="field-row">Durée de plongée <b><span id="vOt"></span> min</b></span>
+          <input type="range" id="o2Time" min="5" max="90" step="1" value="25"></label>
+        <div id="o2Out"></div>
+      </div>
+      <div class="pane" data-pane="gonf" hidden>
+        <h3>⛽ Gonflage par pression partielle</h3>
+        <div class="grid2">
+          <label class="field">Pression finale (bar)<input class="input" type="number" id="gPf" value="200" min="50" max="300" step="10"></label>
+          <label class="field">% O₂ visé<input class="input" type="number" id="gFo2" value="32" min="22" max="99" step="1"></label>
+          <label class="field">Reste dans le bloc (bar)<input class="input" type="number" id="gPi" value="0" min="0" max="250" step="10"></label>
+          <label class="field">% O₂ du reste<input class="input" type="number" id="gFi" value="21" min="21" max="100" step="1"></label>
+        </div>
+        <div id="gonfOut"></div>
       </div>
       <div class="pane" data-pane="gen" hidden id="genCard">
         <h3>📋 Ma table de plongée pour ce Nitrox</h3>
