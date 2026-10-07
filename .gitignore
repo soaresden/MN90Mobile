@@ -1,0 +1,10 @@
+# Documents de référence privés (cours FFESSM, PDFs)
+references/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+*.swp
