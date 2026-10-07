@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const NEEDED = ['o2', 'vO2', 'ppSeg', 'modBig', 'modTrio', 'reqMix', 'modSteps', 'modPlot',
+  const NEEDED = ['ntabs', 'vDepth2', 'o2', 'vO2', 'ppSeg', 'modBig', 'modTrio', 'reqMix', 'modSteps', 'modPlot',
     'depth', 'vDepth', 'bestTrio', 'mixTbl', 'sncPlot', 'minutes', 'vMin', 'sncSteps', 'genBtn', 'printBtn', 'genOut'];
   const PPS = [1.4, 1.5, 1.6];
 
@@ -24,6 +24,7 @@
       el.vO2.textContent = pct;
       el.genBtn.textContent = `Générer la table de plongée pour ${pct >= 100 ? 'l’O₂ pur' : pct === 21 ? 'l’air' : 'ce Nx' + pct}`;
       el.vDepth.textContent = depth;
+      el.vDepth2.textContent = depth;
       el.vMin.textContent = el.minutes.value;
       el.ppSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.pmax));
 
@@ -115,8 +116,15 @@
       el.printBtn.hidden = false;
     }
 
+    // Grand écran : le graphique prend la taille de sa zone ; sinon taille fixe (mise à l'échelle)
+    const DASH = window.matchMedia('(min-width: 1000px) and (min-height: 600px)');
+    function plotSize(box, w, h) {
+      if (DASH.matches && box.clientWidth > 200 && box.clientHeight > 100) return [box.clientWidth, box.clientHeight];
+      return [w, h];
+    }
+
     function modChart(fo2, conf) {
-      const W = 420, H = 250, m = { l: 40, r: 10, t: 12, b: 26 };
+      const [W, H] = plotSize(el.modPlot, 420, 250); const m = { l: 40, r: 10, t: 12, b: 26 };
       const xMax = conf ? 100 : 40, xMin = 21, zMax = 70;
       const X = p => m.l + (p - xMin) / (xMax - xMin) * (W - m.l - m.r);
       const Y = z => m.t + Math.min(z, zMax) / zMax * (H - m.t - m.b);
@@ -137,7 +145,7 @@
     }
 
     function sncChart(pp) {
-      const W = 420, H = 230, m = { l: 30, r: 6, t: 16, b: 30 };
+      const [W, H] = plotSize(el.sncPlot, 420, 230); const m = { l: 30, r: 6, t: 16, b: 30 };
       const rows = L.NOAA, yMax = 2.5;
       const bw = (W - m.l - m.r) / rows.length;
       const cur = rows.findIndex(x => x[0] >= pp - 1e-9);
@@ -165,6 +173,26 @@
     });
     el.ppSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.pmax = +b.dataset.v; render(); if (generated) generate(); } });
     P.onChange(render);
+    // Onglets du panneau
+    el.ntabs.addEventListener('click', e => {
+      const b = e.target.closest('.ptab');
+      if (!b) return;
+      el.ntabs.querySelectorAll('.ptab').forEach(x => x.classList.toggle('on', x === b));
+      document.querySelectorAll('.pane[data-pane]').forEach(pn => { pn.hidden = pn.dataset.pane !== b.dataset.pane; });
+    });
+    // Hauteur de la barre du haut, et graphiques redessinés quand leur zone change de taille
+    const nav = document.querySelector('.navbar');
+    const setNavH = () => { if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px'); };
+    setNavH();
+    window.addEventListener('resize', setNavH);
+    if (window.ResizeObserver) {
+      let last = '';
+      const ro = new ResizeObserver(() => {
+        const k = [el.modPlot, el.sncPlot].map(x => x.clientWidth + 'x' + x.clientHeight).join('|');
+        if (k !== last) { last = k; render(); }
+      });
+      ro.observe(el.modPlot); ro.observe(el.sncPlot);
+    }
     render();
   }
 
