@@ -40,12 +40,12 @@
 
   // MOD : profondeur max pour une PpO2 donnée (arrondie vers le bas au dixième)
   function mod(fo2, ppo2max) {
-    return Math.floor((ppo2max / fo2 - 1) * 100) / 10;
+    return Math.floor((ppo2max / fo2 - 1) * 100 + 1e-6) / 10;   // tolérance : erreurs d'arrondi machine
   }
 
   // Best mix : % O2 le plus riche utilisable à cette profondeur (arrondi vers le bas)
   function bestMix(depth, ppo2max) {
-    return Math.floor(ppo2max / pabs(depth) * 100);
+    return Math.floor(ppo2max / pabs(depth) * 100 + 1e-6);
   }
 
   // Lecture de table : profondeur et durée immédiatement supérieures, pas d'interpolation

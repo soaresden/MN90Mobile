@@ -94,40 +94,36 @@
     p = p || get();
     const r = rights(p);
     const items = [];
-    const auto = dive.mode === 'auto';
+    // Sans mode imposé : autonomie si le niveau le permet, sinon encadré
+    const forced = dive.mode === 'auto' || dive.mode === 'enc' ? dive.mode : null;
+    const srcOf = by => (QUALS.some(q => q.id === by) ? `ta qualification ${by}` : `ton ${by}`);
     if (dive.depth > 60) {
       items.push({ code: '> 60 m', status: 'forbidden', text: 'Au-delà de 60 m : interdit à l’air comme au Nitrox (Code du sport).' });
     } else {
       const zone = dive.depth <= 12 ? 12 : dive.depth <= 20 ? 20 : dive.depth <= 40 ? 40 : 60;
-      const code = (auto ? 'PA' : 'PE') + zone;
-      const word = auto ? 'en autonomie' : 'encadré';
       if (!r) {
-        items.push({ code, status: 'unknown', text: `${code} : ${dive.depth} m ${word}. Renseigne ton profil pour vérifier.` });
+        items.push({ code: 'PA' + zone, status: 'unknown', text: `${dive.depth} m demande PA${zone} en autonomie ou PE${zone} encadré. Renseigne ton profil pour vérifier.` });
+      } else if (forced !== 'enc' && r.pa >= zone) {
+        items.push({ code: 'PA' + zone, status: 'used', text: `Tu utilises ${srcOf(r.paBy)} : en autonomie jusqu’à ${zone} m.` });
+        if (zone === 60) items.push({ code: 'PA60', status: 'info', text: 'Autonomie entre 40 et 60 m : réservée aux plongeurs majeurs, sur accord du directeur de plongée.' });
+      } else if (forced !== 'auto' && r.pe >= zone) {
+        const auto = r.pa ? `au-delà de ton autonomie (PA${r.pa})` : 'tu n’as pas d’autonomie';
+        items.push({ code: 'PE' + zone, status: 'used', text: `Possible uniquement encadré : tu utilises ${srcOf(r.peBy)} (PE${zone}), ${auto}.` });
       } else {
-        const max = auto ? r.pa : r.pe;
-        if (max >= zone) {
-          const by = auto ? r.paBy : r.peBy;
-          const src = QUALS.some(q => q.id === by) ? `ta qualification ${by}` : `ton ${by}`;
-          items.push({ code, status: 'used', text: `Tu utilises ${src} : ${word} jusqu’à ${zone} m.` });
-        } else {
-          const lvl = levelOf(p);
-          const lim = max ? `${max} m max ${word}` : `pas d’autonomie (sauf qualification PA12)`;
-          items.push({ code, status: 'missing', text: `Hors de tes prérogatives : ${dive.depth} m ${word} demande ${code}. ${lvl.label} : ${lim}.` });
-        }
-        if (auto && zone === 60 && max >= 60) {
-          items.push({ code: 'PA60', status: 'info', text: 'Autonomie entre 40 et 60 m : réservée aux plongeurs majeurs, sur accord du directeur de plongée.' });
-        }
+        const lvl = levelOf(p);
+        items.push({ code: 'PE' + zone, status: 'missing', text: `Hors de tes prérogatives : ${dive.depth} m demande PE${zone} (encadré) ou PA${zone} (autonome). ${lvl.label} : ${r.pe} m encadré${r.pa ? `, ${r.pa} m en autonomie` : ''}.` });
       }
     }
     if (dive.nitrox) {
       const needConf = dive.fo2 > 0.40 + 1e-9;
       const code = needConf ? 'Nitrox Confirmé' : 'Nitrox';
       const pct = Math.round(dive.fo2 * 100);
-      if (!r) items.push({ code, status: 'unknown', text: `Nx${pct} : qualification ${code} requise.` });
-      else if (needConf ? r.pnc : r.pn) items.push({ code, status: 'used', text: `Tu utilises ta qualification ${p.nitrox === 'PNC' ? 'Nitrox Confirmé' : 'Nitrox'} (Nx${pct}).` });
+      const mix = pct >= 100 ? 'O₂ pur' : `Nx${pct}`;
+      if (!r) items.push({ code, status: 'unknown', text: `${mix} : qualification ${code} requise.` });
+      else if (needConf ? r.pnc : r.pn) items.push({ code, status: 'used', text: `Tu utilises ta qualification ${p.nitrox === 'PNC' ? 'Nitrox Confirmé' : 'Nitrox'} (${mix}).` });
       else items.push({ code, status: 'missing', text: needConf
-        ? `Nx${pct} : au-delà de 40 % d’O₂, réservé au Nitrox Confirmé.`
-        : `Nx${pct} : il te faut la qualification Nitrox.` });
+        ? `${mix} : au-delà de 40 % d’O₂, réservé au Nitrox Confirmé.`
+        : `${mix} : il te faut la qualification Nitrox.` });
     }
     return items;
   }

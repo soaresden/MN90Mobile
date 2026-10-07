@@ -7,9 +7,9 @@
   'use strict';
 
   const NEEDED = ['depth', 'time', 'vDepth', 'vTime', 'o2', 'vO2', 'o2Field', 'compare', 'cmpField',
-    'modeSeg', 'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
+    'gasSeg', 'ppSeg', 'gearTxt', 'gearEdit', 'paramInputs', 'drawInputs', 'scaleZ', 'scaleT',
     'vScaleZ', 'vScaleT', 'answer', 'answerCard', 'mixTbl', 'reqs', 'chart', 'svg', 'tip', 'lgGhost',
-    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab'];
+    'drawTools', 'undoPt', 'clearPts', 'examplePts', 'kpis', 'gauges', 'stops', 'alerts', 'tableRead', 'deco', 'dtrMax', 'emerg', 'ptabs', 'alertCount', 'mixTab', 'calc'];
 
   function init() {
     const L = window.MN90Lib, P = window.MN90Profile, H = window.MN90Help;
@@ -24,7 +24,6 @@
       view: 'param',
       gas: 'air',
       pmax: 1.4,
-      diveMode: null,           // 'enc' | 'auto' (choisi selon le profil au 1er rendu)
       draw: DEFAULT_DRAW.map(p => p.slice()),
       last: null,
       map: null,
@@ -47,11 +46,6 @@
     const fo2 = () => (S.gas === 'air' ? 0.21 : +el.o2.value / 100);
     const isNx = () => S.gas === 'nx';
 
-    function defaultDiveMode() {
-      const r = P.rights(P.get());
-      return r && r.pa > 0 ? 'auto' : 'enc';
-    }
-
     function bottom() {
       if (S.view === 'draw') return S.draw;
       return L.squareBottom(+el.depth.value, +el.time.value);
@@ -66,7 +60,7 @@
       res.pmax = isNx() ? S.pmax : 1.6;   // à l'air, seule la limite absolue 1,6 b s'applique
       res.mod = L.mod(res.fo2, S.pmax);
       res.ppn2 = L.pabs(res.depth) * (1 - res.fo2);
-      res.reqs = P.requirements({ depth: res.depth, mode: S.diveMode, nitrox: res.nitrox, fo2: res.fo2 });
+      res.reqs = P.requirements({ depth: res.depth, nitrox: res.nitrox, fo2: res.fo2 });
       if (res.prof) {
         const bottomL = L.gasUse(dive.bottom, g.sac);
         res.pBottom = g.press - bottomL / g.tank;     // manomètre au départ du fond
@@ -100,7 +94,6 @@
       el.vScaleZ.textContent = el.scaleZ.value;
       el.vScaleT.textContent = el.scaleT.value;
       const p = P.get();
-      el.o2.max = p.nitrox === 'PNC' ? 100 : 40;
       el.vO2.textContent = el.o2.value;
       el.o2Field.hidden = !isNx();
       el.ppSeg.parentElement.hidden = !isNx();
@@ -112,8 +105,6 @@
       el.chart.classList.toggle('drawing', S.view === 'draw');
       el.mixTab.hidden = S.view !== 'param';
       if (S.view !== 'param' && el.mixTab.classList.contains('on')) showPane('alerts');
-      if (!S.diveMode) S.diveMode = defaultDiveMode();
-      setSeg(el.modeSeg, S.diveMode);
       setSeg(el.gasSeg, S.gas);
       setSeg(el.ppSeg, String(S.pmax));
       const g = p.gear;
@@ -132,6 +123,7 @@
       renderTableRead(r);
       renderDeco(r);
       renderEmerg(r);
+      renderCalc(r);
     }
 
     function setSeg(seg, v) {
@@ -175,7 +167,8 @@
       el.answer.className = 'answer' + (block ? ' blocked' : '');
       el.answer.innerHTML = (block ? `<div class="alert danger" style="grid-column:1/-1">⛔ Plongée non permise : ${block}</div>` : '')
         + card('Sans palier', lim.maxNoStop)
-        + card('Maximum, paliers compris', lim.max);
+        + card('Maximum, paliers compris', lim.max)
+        + `<button type="button" class="btn btn-outline btn-sm" data-calcopen style="grid-column:1/-1;justify-self:start">🧮 Voir le calcul</button>`;
 
       // Comparatif des mélanges
       const mixes = [['Air', 0.21, false], ['Nx32', 0.32, true], ['Nx36', 0.36, true], ['Nx40', 0.40, true]];
@@ -280,34 +273,114 @@
 
     /* ---------- Indicateurs ---------- */
     function renderKpis(r) {
-      const k = [];
-      const ppCls = r.ppo2 > r.pmax + 1e-9 ? 'danger' : r.ppo2 > 1.4 ? 'warn' : 'ok';
-      if (r.prof) {
-        const st = L.stopList(r.tab.stops);
-        k.push(['DTR', `${r.tab.dtr}′`, 'durée de remontée (table)', '', 'dtr',
-          `${r.tab.dtr} min pour remonter de ${r.depth} m${st.length ? ', paliers compris' : ''}.`]);
-        k.push(['Durée totale', `${Math.round(r.prof.total)}′`, 'de l’immersion à la sortie', r.prof.total > L.LIMITS.immersion ? 'danger' : '', 'dtr',
-          `${r.time} min de plongée + la remontée = sortie à ${Math.round(r.prof.total)} min.`]);
-        k.push(['GPS', r.tab.gps === '*' ? '—' : r.tab.gps, r.tab.gps === '*' ? 'pas de successive' : 'lettre de sortie', '', 'gps',
-          r.tab.gps === '*' ? 'pas de lettre : aucune plongée successive possible.' : `tu sors avec la lettre ${r.tab.gps}.`]);
-        const left = r.left, res = r.gear.reserve;
-        k.push(['Fin de plongée', `${Math.round(left)} b`, `conso ${Math.round(r.gasL)} L`, left < res ? 'danger' : left < res + 20 ? 'warn' : 'ok', 'autonomie',
-          `tu consommes ${Math.round(r.gasL)} L, soit ${Math.round(r.gasBar)} b sur ton ${r.gear.tank} L : il te reste ${Math.round(left)} b.`]);
-        k.push(['Décollage', `${r.pdecoRec} b`, 'manomètre pour quitter le fond', r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok', 'pdeco',
-          `quitte le fond au plus tard quand ton manomètre affiche ${r.pdecoRec} b.`]);
+      const T = (key, l, v, sub, cls, help, ex) => ({ key, l, v, sub, cls, help, ex });
+      const has = !!r.prof;
+      const ppCls = r.ppo2 > r.pmax + 1e-9 ? 'danger' : r.nitrox && r.ppo2 > 1.4 ? 'warn' : 'ok';
+      const res = r.gear.reserve;
+      const snc = has ? r.tox.snc : 0;
+      const groups = [
+        ['⏱️ Temps', [
+          T('dtr', 'DTR', has ? `${r.tab.dtr}′` : '—', 'remontée (table)', '', 'dtr', has ? `${r.tab.dtr} min pour remonter de ${r.depth} m.` : ''),
+          T('total', 'Durée totale', has ? `${Math.round(r.prof.total)}′` : '—', 'immersion → sortie', has && r.prof.total > L.LIMITS.immersion ? 'danger' : '', 'dtr', has ? `sortie de l’eau à ${Math.round(r.prof.total)} min.` : ''),
+          T('gps', 'GPS', has ? (r.tab.gps === '*' ? '—' : r.tab.gps) : '—', has && r.tab.gps === '*' ? 'pas de successive' : 'lettre de sortie', '', 'gps', has ? `tu sors avec la lettre ${r.tab.gps}.` : ''),
+        ]],
+        ['🫧 Air', [
+          T('fin', 'Fin de plongée', has ? `${Math.round(r.left)} b` : '—', has ? `conso ${Math.round(r.gasL)} L` : '', has ? (r.left < res ? 'danger' : r.left < res + 20 ? 'warn' : 'ok') : '', 'autonomie', has ? `il te reste ${Math.round(r.left)} b en sortant.` : ''),
+          T('deco', 'Décollage', has ? `${r.pdecoRec} b` : '—', 'quitter le fond à', has ? (r.pBottom < r.pdecoMin ? 'danger' : r.pBottom < r.pdecoRec ? 'warn' : 'ok') : '', 'pdeco', has ? `quitte le fond à ${r.pdecoRec} b au plus tard.` : ''),
+        ]],
+        ['🧪 Gaz', [
+          T('ppo2', 'PpO₂ fond', `${fmt(r.ppo2, 2)} b`, `max ${fmt(r.pmax, 1)} b`, ppCls, 'ppo2', `${fmt(L.pabs(r.depth), 1)} × ${fmt(r.fo2, 2)} = ${fmt(r.ppo2, 2)} b.`),
+          T('pea', 'PEA', r.nitrox ? `${fmt(r.pea, 1)} m` : `${r.depth} m`, r.nitrox ? `table ${r.tab.d ?? '—'} m` : 'à l’air = réelle', '', 'pea', r.nitrox ? `compte comme ${fmt(r.pea, 1)} m à l’air.` : ''),
+          T('mod', 'MOD', `${fmt(r.mod, 1)} m`, r.nitrox ? `Nx${Math.round(r.fo2 * 100)} à ${fmt(r.pmax, 1)} b` : 'air à 1,6 b', r.depth > r.mod ? 'danger' : 'ok', 'mod', `ne dépasse jamais ${fmt(r.mod, 1)} m.`),
+        ]],
+        ['🧠 Corps', [
+          T('snc', '%SNC', has ? `${fmt(snc, 0)} %` : '—', 'jauge cerveau', snc > L.LIMITS.sncMax ? 'danger' : snc > L.LIMITS.sncWarn ? 'warn' : 'ok', 'snc', has ? `${fmt(snc, 0)} % de la dose max du jour.` : ''),
+          T('narc', 'Narcose', `${fmt(r.ppn2, 1)} b`, 'PpN₂ au fond', r.ppn2 > 5.6 ? 'danger' : r.ppn2 > 3.2 ? 'warn' : 'ok', 'narcose', `PpN₂ ${fmt(r.ppn2, 1)} b.`),
+        ]],
+      ];
+      el.kpis.innerHTML = groups.map(([title, tiles]) => `<div class="kgroup"><div class="gt">${title}</div><div class="row" style="--n:${tiles.length}">` +
+        tiles.map(t => `<div class="kpi ${t.cls}" data-calc="${t.key}" title="Voir le calcul">${H.btn(t.help, t.ex)}<div class="l">${t.l}</div><div class="v">${t.v}</div><div class="s">${t.sub}</div></div>`).join('') +
+        '</div></div>').join('');
+    }
+
+    /* ---------- Détail de tous les calculs ---------- */
+    function phasesList(r) {
+      const pts = r.prof.pts, g = r.gear, out = [];
+      const isStop = (t0, z) => r.prof.segs.some(s => s.depth === z && Math.abs(s.from - t0) < 1e-6);
+      let p = g.press;
+      for (let i = 1; i < pts.length; i++) {
+        const [t0, z0] = pts[i - 1], [t1, z1] = pts[i], dt = t1 - t0;
+        if (dt <= 1e-9) continue;
+        const pm = (z0 + z1) / 20 + 1, Lc = dt * g.sac * pm;
+        p -= Lc / g.tank;
+        const name = z1 > z0 ? `Descente → ${fmt(z1, 0)} m` : z1 < z0 ? `Remontée → ${fmt(z1, 0)} m` : isStop(t0, z0) ? `Palier ${z0} m` : `Fond ${fmt(z0, 0)} m`;
+        out.push({ name, dt, pm, L: Lc, p });
       }
-      k.push(['PpO₂ fond', `${fmt(r.ppo2, 2)} b`, `max ${fmt(r.pmax, 1)} b`, ppCls, 'ppo2',
-        `à ${r.depth} m : ${fmt(L.pabs(r.depth), 1)} b × ${fmt(r.fo2, 2)} = ${fmt(r.ppo2, 2)} b.`]);
-      if (r.nitrox) {
-        k.push(['PEA', `${fmt(r.pea, 1)} m`, `table lue à ${r.tab.d ?? '—'} m`, '', 'pea',
-          `ta plongée à ${r.depth} m compte comme une plongée à ${fmt(r.pea, 1)} m à l’air.`]);
-        k.push(['MOD', `${fmt(r.mod, 1)} m`, `Nx${Math.round(r.fo2 * 100)} à ${fmt(r.pmax, 1)} b`, r.depth > r.mod ? 'danger' : 'ok', 'mod',
-          `avec ton Nx${Math.round(r.fo2 * 100)}, ne dépasse jamais ${fmt(r.mod, 1)} m.`]);
+      return out;
+    }
+
+    function renderCalc(r) {
+      const C = [];
+      const item = (key, title, body) => C.push(`<div class="calc-item" id="calc-${key}"><h4>${title}</h4>${body}</div>`);
+      const g = r.gear;
+      if (S.view === 'param' && r.lim) {
+        const lim = r.lim;
+        item('answer', '⏱️ Combien de temps je peux rester ?', `<p>On essaie chaque durée, minute par minute, et on garde la plus courte des limites :</p>
+          <div class="f">Table sans palier : ${lim.noStop} min (ligne ${lim.d} m)<br>Bloc (réserve ${g.reserve} b gardée) : ${lim.gas} min<br>Oxygène (%SNC ≤ ${L.LIMITS.sncMax} %) : ${lim.snc} min<br>2 h d’immersion : ${lim.time} min<br>Fin de la table : ${lim.tableMax} min</div>
+          <p>→ <b>sans palier : ${lim.maxNoStop[1]} min</b> · <b>maximum : ${lim.max[1]} min</b></p>`);
       }
-      k.push(['Narcose', `${fmt(r.ppn2, 1)} b`, 'PpN₂ au fond', r.ppn2 > 5.6 ? 'danger' : r.ppn2 > 3.2 ? 'warn' : 'ok', 'narcose',
-        `PpN₂ ${fmt(r.ppn2, 1)} b ${r.ppn2 > 3.2 ? ': narcose probable, reste vigilant.' : ': pas de narcose attendue.'}`]);
-      el.kpis.innerHTML = k.map(([l, v, s, c, help, ex]) =>
-        `<div class="kpi ${c}">${H.btn(help, ex)}<div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+      if (!r.prof) { el.calc.innerHTML = C.join('') + `<div class="alert danger">${r.tab.err}</div>`; return; }
+      const st = L.stopList(r.tab.stops);
+      const first = st[0] || 0;
+      const tUp = (r.depth - first) / L.SPEED.asc;
+      const tStops = st.reduce((a, k) => a + r.tab.stops[k], 0);
+      const tInter = st.length ? (st.length - 1) * 3 / L.SPEED.ascStop + first / L.SPEED.ascStop : 0;
+      item('dtr', 'DTR : durée totale de remontée', `<div class="f">Table ${r.tab.d} m / ${r.tab.t} min → DTR <b>${r.tab.dtr} min</b></div>
+        <p>Vérification avec les vitesses MN90 :</p>
+        <div class="f">Fond → ${first ? first + ' m' : 'surface'} : (${r.depth} − ${first}) / 15 = ${fmt(tUp, 2)} min<br>` +
+        (st.length ? `Paliers : ${st.map(k => `${k} m ${r.tab.stops[k]}′`).join(' + ')} = ${tStops} min<br>Entre paliers et vers la surface à 6 m/min : ${fmt(tInter, 2)} min<br>` : '') +
+        `Total = ${fmt(r.dtrReal, 2)} min → la table donne ${r.tab.dtr} min</div>`);
+      item('total', 'Durée totale', `<div class="f">${S.view === 'draw' ? fmt(r.time, 1) : r.time} min de plongée + ${fmt(r.dtrReal, 1)} min de remontée = <b>${fmt(r.prof.total, 1)} min</b></div>`);
+      item('gps', 'Lettre GPS', `<div class="f">Ligne ${r.tab.d} m / ${r.tab.t} min → <b>${r.tab.gps}</b></div><p class="small muted">Elle mesure l’azote restant en sortant. 2e plongée : tableau I avec l’intervalle de surface.</p>`);
+      const ph = phasesList(r);
+      item('fin', 'Fin de plongée : consommation', `<p class="f">litres = durée × ${g.sac} L/min × pression absolue moyenne</p>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="text-align:left">Phase</th><th>Durée</th><th>Pabs moy.</th><th>Litres</th><th>Reste</th></tr></thead><tbody>` +
+        ph.map(x => `<tr><td style="text-align:left">${x.name}</td><td>${fmt(x.dt, 2)}</td><td>${fmt(x.pm, 2)}</td><td>${fmt(x.L, 0)}</td><td>${Math.round(x.p)} b</td></tr>`).join('') +
+        `</tbody></table></div><div class="f">Total ${fmt(r.gasL, 0)} L ÷ ${g.tank} L = ${fmt(r.gasBar, 1)} b → ${g.press} − ${fmt(r.gasBar, 1)} = <b>${Math.round(r.left)} b</b></div>`);
+      const D = r.deco;
+      item('deco', 'Pression de décollage', `<div class="f">GP : DTR × β + sécurité = ${D.dtr} × ${fmt(D.beta.value, 1)} + ${g.reserve} = ${fmt(D.gp, 0)} b<br>
+        Exact : remontée ${fmt(D.ascentL, 0)} L ÷ ${g.tank} L + ${g.reserve} = ${fmt(D.exact, 0)} b<br>
+        Tito : ${r.depth} + 2 × ${D.dtr} = ${D.tito} b<br>
+        Repère = max(GP, exact) arrondi à la dizaine supérieure = <b>${r.pdecoRec} b</b></div>
+        <p class="small muted">Au départ du fond, ton manomètre affichera environ ${Math.round(r.pBottom)} b.</p>`);
+      item('ppo2', 'PpO₂ au fond', `<div class="f">Pabs = ${r.depth} / 10 + 1 = ${fmt(L.pabs(r.depth), 1)} b<br>PpO₂ = Pabs × %O₂ = ${fmt(L.pabs(r.depth), 1)} × ${fmt(r.fo2, 2)} = <b>${fmt(r.ppo2, 2)} b</b> (max ${fmt(r.pmax, 1)} b)</div>`);
+      item('pea', 'PEA : profondeur équivalente air', r.nitrox
+        ? `<div class="f">PEA = [(P + 10) × %N₂ / 0,8] − 10<br>= [(${r.depth} + 10) × ${fmt(1 - r.fo2, 2)} / 0,8] − 10<br>= ${fmt((r.depth + 10) * (1 - r.fo2) / 0.8, 2)} − 10 = <b>${fmt(r.pea, 1)} m</b> → ligne ${r.tab.d} m</div>`
+        : `<p>À l’air, la PEA est la profondeur réelle : ${r.depth} m → ligne ${r.tab.d} m.</p>`);
+      item('mod', 'MOD', `<div class="f">MOD = (PpO₂ max / %O₂ − 1) × 10<br>= (${fmt(r.pmax, 1)} / ${fmt(r.fo2, 2)} − 1) × 10 = ${fmt((r.pmax / r.fo2 - 1) * 10, 2)} → <b>${fmt(r.mod, 1)} m</b> (arrondi vers le bas)</div>`);
+      const rows = [];
+      for (let i = 1; i < r.prof.pts.length; i++) {
+        const [t0, z0] = r.prof.pts[i - 1], [t1, z1] = r.prof.pts[i], dt = t1 - t0;
+        if (dt <= 1e-9) continue;
+        const pp = L.ppo2At((z0 + z1) / 2, r.fo2);
+        const lim = pp >= 0.6 ? L.noaaLimit(pp) : 0;
+        rows.push({ seg: z0 === z1 ? `à ${fmt(z0, 0)} m` : `${fmt(z0, 0)} → ${fmt(z1, 0)} m`, dt, pp, lim, v: lim ? dt / lim * 100 : 0 });
+      }
+      item('snc', '%SNC : la jauge cerveau', `<p class="f">%SNC = durée / durée max NOAA (ligne de PpO₂ immédiatement supérieure) × 100</p>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="text-align:left">Segment</th><th>Durée</th><th>PpO₂ moy.</th><th>Max NOAA</th><th>%SNC</th></tr></thead><tbody>` +
+        rows.map(x => `<tr><td style="text-align:left">${x.seg}</td><td>${fmt(x.dt, 1)}</td><td>${fmt(x.pp, 2)}</td><td>${x.lim ? x.lim + ' min' : '< 0,6 b'}</td><td>${fmt(x.v, 1)}</td></tr>`).join('') +
+        `</tbody></table></div><div class="f">Total = <b>${fmt(r.tox.snc, 0)} %</b> · OTU = ${fmt(r.tox.otu, 0)} / 850</div>`);
+      item('narc', 'Narcose', `<div class="f">PpN₂ = Pabs × %N₂ = ${fmt(L.pabs(r.depth), 1)} × ${fmt(1 - r.fo2, 2)} = <b>${fmt(r.ppn2, 2)} b</b></div><p class="small muted">Narcose probable au-delà de 3,2 b, maximum admis 5,6 b.</p>`);
+      el.calc.innerHTML = C.join('');
+    }
+
+    function openCalc(key) {
+      showPane('calc');
+      const t = document.getElementById('calc-' + key);
+      if (!t) return;
+      t.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      t.classList.add('flash');
+      setTimeout(() => t.classList.remove('flash'), 1200);
     }
 
     /* ---------- Jauges cerveau / poumons ---------- */
@@ -577,7 +650,6 @@
 
     /* ---------- Événements ---------- */
     [el.depth, el.time, el.o2, el.compare, el.scaleZ, el.scaleT, el.dtrMax].forEach(i => i.addEventListener('input', render));
-    el.modeSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.diveMode = b.dataset.v; render(); } });
     el.gasSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.gas = b.dataset.v; render(); } });
     el.ppSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.pmax = +b.dataset.v; render(); } });
     el.gearEdit.addEventListener('click', () => P.open());
@@ -588,6 +660,7 @@
       render();
     }));
     el.answerCard.addEventListener('click', e => {
+      if (e.target.closest('[data-calcopen]')) { openCalc('answer'); return; }
       const b = e.target.closest('[data-settime]');
       if (!b) return;
       el.time.value = b.dataset.settime;
@@ -595,6 +668,11 @@
     });
     el.reqs.addEventListener('click', e => { if (e.target.closest('[data-open-profile]')) P.open(); });
     el.ptabs.addEventListener('click', e => { const b = e.target.closest('.ptab'); if (b) showPane(b.dataset.pane); });
+    el.kpis.addEventListener('click', e => {
+      if (e.target.closest('.help-btn')) return;
+      const k = e.target.closest('.kpi[data-calc]');
+      if (k) openCalc(k.dataset.calc);
+    });
     el.undoPt.addEventListener('click', () => { if (S.draw.length > 2) { S.draw.pop(); render(); } });
     el.clearPts.addEventListener('click', () => { S.draw = [[0, 0], [2, 20], [3, 20]]; render(); });
     el.examplePts.addEventListener('click', () => {
@@ -608,7 +686,7 @@
     el.svg.addEventListener('pointercancel', onUp);
     el.svg.addEventListener('pointerleave', () => { if (!S.drag) hideTip(); });
     el.svg.addEventListener('dblclick', e => { if (S.view === 'draw') { const i = nearest(e); if (i > 0) removePoint(i); } });
-    P.onChange(() => { S.diveMode = null; render(); });
+    P.onChange(render);
     let rz = 0;
     window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { setNavH(); render(); }, 120); });
 

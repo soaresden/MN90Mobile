@@ -6,7 +6,7 @@
   'use strict';
 
   const NEEDED = ['o2', 'vO2', 'ppSeg', 'modBig', 'modTrio', 'reqMix', 'modSteps', 'modPlot',
-    'depth', 'vDepth', 'bestTrio', 'mixTbl', 'sncPlot', 'minutes', 'vMin', 'sncSteps'];
+    'depth', 'vDepth', 'bestTrio', 'mixTbl', 'sncPlot', 'minutes', 'vMin', 'sncSteps', 'genBtn', 'printBtn', 'genOut'];
   const PPS = [1.4, 1.5, 1.6];
 
   function init() {
@@ -20,9 +20,9 @@
 
     function render() {
       const conf = P.get().nitrox === 'PNC';
-      el.o2.max = conf ? 100 : 40;
       const pct = +el.o2.value, fo2 = pct / 100, depth = +el.depth.value;
       el.vO2.textContent = pct;
+      el.genBtn.textContent = `Générer la table de plongée pour ${pct >= 100 ? 'l’O₂ pur' : pct === 21 ? 'l’air' : 'ce Nx' + pct}`;
       el.vDepth.textContent = depth;
       el.vMin.textContent = el.minutes.value;
       el.ppSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.pmax));
@@ -36,11 +36,11 @@
       el.reqMix.innerHTML = reqs.map(x => `<div class="req ${x.status}"><span>${icon[x.status] || 'ℹ️'}</span><span><b>${x.code}</b> · ${x.text}</span></div>`).join('');
       const pa = S.pmax / fo2;
       el.modSteps.innerHTML = [
-        ['Pression max', `PpO₂ max / FO₂ = ${fmt(S.pmax, 1)} / ${fmt(fo2, 2)} = ${fmt(pa, 3)} b`],
+        ['Pression max', `PpO₂ max / %O₂ = ${fmt(S.pmax, 1)} / ${fmt(fo2, 2)} = ${fmt(pa, 3)} b`],
         ['Profondeur', `(${fmt(pa, 3)} − 1) × 10 = ${fmt((pa - 1) * 10, 2)} m → <b>${fmt(mod, 1)} m</b> (arrondi vers le bas : jamais au-delà)`],
         ['Sur le bloc', `on écrit la MOD et le % d’O₂ analysé, avec la date et ses initiales.`],
       ].map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('');
-      el.modPlot.innerHTML = modChart(fo2, conf);
+      el.modPlot.innerHTML = modChart(fo2, conf || pct > 40);
 
       // ----- Best mix et mélanges à cette profondeur -----
       el.bestTrio.innerHTML = PPS.map(p => {
@@ -74,6 +74,45 @@
         ['%SNC', `${min} / ${lim} × 100 = <b style="color:${snc > 80 ? 'var(--danger)' : snc > 50 ? 'var(--warn)' : 'var(--ok)'}">${fmt(snc, 0)} %</b> de la jauge cerveau.`],
         ['OTU', `${fmt(otu, 0)} OTU sur les 850 d’une journée (jauge poumons).`],
       ].map(([t, x]) => `<div><em>${t}</em>${x}</div>`).join('');
+    }
+
+    /* ---------- Table Nitrox générée (MN90 lue à la PEA, profondeurs réelles) ---------- */
+    let generated = false;
+    const noStopOf = rows => { let t = 0; for (const r of rows) { if (Object.keys(r[1]).length) break; t = r[0]; } return Math.min(t, L.LIMITS.immersion); };
+    const dur = v => (v >= L.LIMITS.immersion ? '> 2 h' : v + ' min');
+
+    function generate() {
+      const pct = +el.o2.value, fo2 = pct / 100, gear = P.get().gear;
+      const mod = L.mod(fo2, S.pmax);
+      const name = pct >= 100 ? 'O₂ pur' : pct === 21 ? 'Air' : 'Nx' + pct;
+      const depths = L.DEPTHS.filter(d => d <= mod + 1e-9 && d <= L.LIMITS.maxDepth);
+      if (!depths.length) { el.genOut.innerHTML = `<div class="alert danger">${name} : MOD ${fmt(mod, 1)} m à ${fmt(S.pmax, 1)} b, trop faible pour une table de fond.</div>`; return; }
+      const sum = [], det = [];
+      depths.forEach(d => {
+        const peaD = pct === 21 ? d : L.pea(d, fo2);
+        const line = L.DEPTHS.find(x => x >= Math.max(peaD, 0.1) - 1e-9);
+        const rows = L.MN90[line].filter(r => r[0] <= L.LIMITS.immersion);
+        const nsNx = noStopOf(L.MN90[line]);
+        const nsAir = noStopOf(L.MN90[L.DEPTHS.find(x => x >= d)]);
+        const gain = nsNx - nsAir;
+        sum.push(`<tr><td><b>${d} m</b></td><td>${fmt(peaD, 1)} → ${line} m</td><td>${dur(nsNx)}</td><td>${dur(nsAir)}</td><td class="gain">${gain > 0 ? '+' + gain + ' min' : '—'}</td><td>${fmt(L.ppo2At(d, fo2), 2)}</td></tr>`);
+        const cols = L.STOP_DEPTHS.filter(c => rows.some(r => r[1][c]));
+        const body = rows.map(r => {
+          const e = L.evaluate({ bottom: L.squareBottom(d, r[0]), fo2, nitrox: pct !== 21, gear });
+          const dtr = e.prof ? Math.ceil(e.dtrReal - 1e-9) : r[2];
+          return `<tr><td>${r[0]}′</td>${cols.map(c => r[1][c] ? `<td class="pd${c}" style="font-weight:800">${r[1][c]}</td>` : '<td class="dim">·</td>').join('')}<td>${dtr}′</td><td>${r[3]}</td></tr>`;
+        }).join('');
+        det.push(`<details class="gen-depth"><summary>${d} m réels · lu à ${line} m · sans palier ${dur(nsNx)}</summary>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Durée</th>${cols.map(c => `<th class="pd${c}">${c} m</th>`).join('')}<th>DTR réelle</th><th>GPS</th></tr></thead><tbody>${body}</tbody></table></div></details>`);
+      });
+      el.genOut.innerHTML = `
+        <h3 style="margin-bottom:6px">Table ${name} · PpO₂ max ${fmt(S.pmax, 1)} b · MOD ${fmt(mod, 1)} m</h3>
+        <div class="tbl-wrap"><table class="tbl gen-sum"><thead><tr><th>Profondeur réelle</th><th>PEA → ligne MN90</th><th>Sans palier</th><th>À l’air</th><th>Gain</th><th>PpO₂</th></tr></thead><tbody>${sum.join('')}</tbody></table></div>
+        <p class="hint" style="margin-top:6px">Touche une profondeur pour voir toutes ses durées, paliers et lettres GPS.</p>
+        ${det.join('')}
+        <p class="hint" style="margin-top:8px">Méthode du cours : PEA = [(P + 10) × %N₂ / 0,8] − 10, ligne MN90 immédiatement supérieure. Plongées successives : la lettre GPS se reporte comme à l’air. La table ne tient pas compte de la toxicité de l’O₂ : surveille le %SNC.</p>`;
+      generated = true;
+      el.printBtn.hidden = false;
     }
 
     function modChart(fo2, conf) {
@@ -118,7 +157,13 @@
     }
 
     [el.o2, el.depth, el.minutes].forEach(i => i.addEventListener('input', render));
-    el.ppSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.pmax = +b.dataset.v; render(); } });
+    el.o2.addEventListener('input', () => { if (generated) generate(); });
+    el.genBtn.addEventListener('click', generate);
+    el.printBtn.addEventListener('click', () => {
+      el.genOut.querySelectorAll('details').forEach(d => { d.open = true; });
+      window.print();
+    });
+    el.ppSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.pmax = +b.dataset.v; render(); if (generated) generate(); } });
     P.onChange(render);
     render();
   }

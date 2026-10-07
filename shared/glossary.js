@@ -25,17 +25,17 @@
     ppo2: {
       title: 'PpO₂ : pression partielle d’oxygène',
       simple: 'La « force » de l’oxygène que tu respires. Elle augmente quand tu descends. Trop forte, l’oxygène devient toxique pour le cerveau.',
-      cours: 'PpO₂ = Pabs × FO₂. Limite FFESSM 1,6 b ; DAN recommande 1,4 b en plongée ; best mix souvent calculé à 1,5 b pour limiter le %SNC.',
+      cours: 'PpO₂ = Pabs × %O₂. Limite FFESSM 1,6 b ; DAN recommande 1,4 b en plongée ; best mix souvent calculé à 1,5 b pour limiter le %SNC.',
     },
     mod: {
       title: 'MOD : profondeur maximale d’utilisation',
       simple: 'La profondeur à ne JAMAIS dépasser avec ce mélange. Elle est écrite sur ton bloc.',
-      cours: 'MOD = (PpO₂ max / FO₂ − 1) × 10, arrondie vers le bas. Exemple : Nx32 à 1,4 b → 4,375 b → 33,7 m.',
+      cours: 'MOD = (PpO₂ max / %O₂ − 1) × 10, arrondie vers le bas. Exemple : Nx32 à 1,4 b → 4,375 b → 33,7 m.',
     },
     pea: {
       title: 'PEA : profondeur équivalente air',
       simple: 'Au Nitrox tu respires moins d’azote : ta plongée se lit dans la table comme une plongée à l’air moins profonde.',
-      cours: 'PEA = [(P + 10) × FN₂ / 0,8] − 10 (pression absolue, diviseur 0,8 comme dans le cours FFESSM). On lit ensuite la table à la profondeur immédiatement supérieure. La DTR réelle se calcule depuis la vraie profondeur.',
+      cours: 'PEA = [(P + 10) × %N₂ / 0,8] − 10 (pression absolue, diviseur 0,8 comme dans le cours FFESSM). On lit ensuite la table à la profondeur immédiatement supérieure. La DTR réelle se calcule depuis la vraie profondeur.',
     },
     snc: {
       title: '%SNC : la jauge « cerveau »',
@@ -60,7 +60,7 @@
     narcose: {
       title: 'Narcose',
       simple: 'L’azote sous pression agit comme l’alcool : tu réfléchis moins bien. Elle apparaît vers 30 m et devient forte au-delà de 50 m.',
-      cours: 'PpN₂ = Pabs × FN₂. Seuil 3,2 b (≈ 30 m à l’air), maximum admis 5,6 b (≈ 60 m à l’air).',
+      cours: 'PpN₂ = Pabs × %N₂. Seuil 3,2 b (≈ 30 m à l’air), maximum admis 5,6 b (≈ 60 m à l’air).',
     },
   };
 
