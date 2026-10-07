@@ -16,10 +16,23 @@
   .app { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 30px; }
   .side, .center, .panel { min-width: 0; }
   .center { display: flex; flex-direction: column; gap: 12px; }
+  .side { display: flex; flex-direction: column; gap: 12px; }
+  .side .answer { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .side .ans { padding: 7px 8px; }
+  .side .ans .v { font-size: 1.45rem; }
+  .side .ans .why { font-size: .74rem; }
+  .side .ans-row { flex-wrap: wrap; gap: 4px; }
+  .side .answer > .alert, .side .answer > [data-calcopen] { grid-column: 1 / -1; }
+  @media (min-width: 1000px) and (min-height: 600px) {
+    .side .ans .det, .side .hint { display: none; }
+    .gear-box { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; align-items: center; }
+    .gear-box .gear-art svg { max-width: 112px; margin: 0; }
+    .gear-box .gear-line { flex-direction: column; align-items: stretch; text-align: center; }
+  }
   .side .tabs { margin-bottom: 12px; }
   .side .field { margin-bottom: 10px; }
   .gear-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .82rem; color: var(--text2); background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; }
-  .gear-box .gear-art svg { max-width: 230px; margin-bottom: 4px; }
+  .gear-box .gear-art svg { max-width: 175px; margin-bottom: 2px; }
   .chk { display: flex; gap: 8px; align-items: center; font-size: .86rem; color: var(--text2); cursor: pointer; margin-bottom: 10px; }
 
   /* Réponse directe */
@@ -31,7 +44,7 @@
   .ans .why { font-size: .82rem; color: var(--text); }
   .ans .det { font-size: .78rem; color: var(--text2); }
   .answer.blocked .v { color: var(--danger); }
-  .reqs { margin-top: 8px; gap: 5px; flex-direction: row; flex-wrap: wrap; }
+  .reqs { gap: 5px; flex-direction: row; flex-wrap: wrap; }
   .reqs .req { flex: 1 1 320px; }
   .req { padding: 5px 9px; font-size: .84rem; }
 
@@ -179,7 +192,8 @@
 
 <main class="app">
   <!-- ===== Réglages ===== -->
-  <aside class="side card">
+  <aside class="side">
+   <section class="card">
     <div class="tabs" role="tablist">
       <button class="tab on" data-mode="param" role="tab">🎯 Paramètres</button>
       <button class="tab" data-mode="draw" role="tab">✏️ Dessin</button>
@@ -217,17 +231,16 @@
     <label class="chk" id="cmpField" hidden><input type="checkbox" id="compare" checked> Comparer avec la même plongée à l’air</label>
     <div class="gear-box"><div class="gear-art" id="gearArt"></div>
       <div class="gear-line"><span id="gearTxt"></span><button type="button" class="btn btn-outline btn-sm" id="gearEdit">Modifier</button></div></div>
+   </section>
+   <section class="card" id="answerCard">
+     <h2>⏱️ Combien de temps je peux rester ?</h2>
+     <div class="answer" id="answer"></div>
+   </section>
   </aside>
 
   <!-- ===== Centre : réponse, courbe, indicateurs ===== -->
   <div class="center">
-    <section class="card" id="topCard" style="padding:10px 12px">
-      <div id="answerCard">
-        <h2 style="margin-bottom:8px">⏱️ Combien de temps je peux rester ?</h2>
-        <div class="answer" id="answer"></div>
-      </div>
-      <div class="reqs" id="reqs"></div>
-    </section>
+    <div class="reqs" id="reqs"></div>
 
     <section class="card chart-card">
       <div class="draw-tools" id="drawTools" hidden>
