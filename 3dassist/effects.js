@@ -1,6 +1,17 @@
 // effects.js — Effets visuels : masque monoverre, lampe torche, vision, houle
 'use strict';
 
+// ===== LE FILTRE DE L'IMAGE : hypoxie (manque d'air) + narcose =====
+const _fx={flouHypoxie:0,flouNarcose:0,satNarcose:1};
+function appliquerFiltre(){
+  if(G.isDead)return;
+  const flou=_fx.flouHypoxie+_fx.flouNarcose;
+  const f=[];
+  if(flou>0.05)f.push(`blur(${flou.toFixed(1)}px)`);
+  if(_fx.satNarcose>1.01)f.push(`saturate(${_fx.satNarcose.toFixed(2)})`);
+  document.getElementById('c').style.filter=f.length?f.join(' '):'none';
+}
+
 // ===== LAMPE TORCHE =====
 let torchEnabled=true; // ON par défaut
 let _torchLight=null;
@@ -17,18 +28,12 @@ function toggleTorch(){
   torchEnabled=!torchEnabled;
   if(_torchLight)_torchLight.intensity=torchEnabled?2.5:0;
   document.getElementById('torch-btn').textContent='LAMPE : '+(torchEnabled?'ON':'OFF');
-  if(!torchEnabled) return;
-  if(!G.isDead)document.getElementById('c').style.filter='none';
 }
 
 function updateTorch(){
   if(!_torchLight||!window._camera)return;
   const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(window._camera.quaternion);
   _torchLight.position.copy(window._camera.position).addScaledVector(fwd,0.5);
-  // La lampe éclaircit aussi le filtre CSS autour du faisceau
-  if(torchEnabled&&!G.isDead){
-    document.getElementById('c').style.filter='none';
-  }
 }
 
 // ===== MASQUE MONOVERRE (injecté dans le SVG existant) =====
@@ -52,7 +57,7 @@ function updateSway(dt){
   const cam=window._camera;
 
   // Balancement naturel sous l'eau (toujours un peu présent)
-  const baseRoll=Math.sin(_swayTime*0.7)*0.008;
+  const baseRoll=Math.sin(_swayTime*0.7)*0.008+Math.sin(_swayTime*0.35)*_narcoseRoulis*0.05;
   const basePitch=Math.sin(_swayTime*0.45)*0.005;
 
   // Houle en surface / eau ouverte
@@ -109,19 +114,19 @@ function applyDepthColor(depth,bar){
 // ===== VISION TROUBLE (hypoxie) =====
 function applyHypoxia(bar){
   const mc=document.getElementById('mask-color');
+  _fx.flouHypoxie=0;
   if(bar>100){
     mc.style.opacity=G.currentSite.maskOpacity;
-    document.getElementById('c').style.filter='none';
   } else if(bar>50){
     mc.style.opacity=G.currentSite.maskOpacity;
   } else if(bar>30){
     const t=(50-bar)/20;
-    document.getElementById('c').style.filter=`blur(${(t*3).toFixed(1)}px)`;
+    _fx.flouHypoxie=t*3;
     mc.style.background='rgba(120,0,0,1)';
     mc.style.opacity=0.15+Math.sin(G.gameTime*3)*0.1;
   } else if(bar>0){
     const t=(30-bar)/30;
-    document.getElementById('c').style.filter=`blur(${(t*6).toFixed(1)}px)`;
+    _fx.flouHypoxie=t*6;
     mc.style.background='rgba(160,0,0,1)';
     mc.style.opacity=0.25+Math.sin(G.gameTime*5)*0.2;
   }
@@ -141,38 +146,47 @@ function updateEffects(dt,depth,bar){
   applyDepthColor(depth,bar);
   applyHypoxia(bar);
   applyNarcose(depth,dt);
+  appliquerFiltre();
 }
 
 // ===== NARCOSE (ivresse des profondeurs) =====
-let _narcoseHalo=null;
-let _narcosePhase=0;
+// À l'air, elle se fait sentir vers 30 m et grandit avec la profondeur :
+// vision en tunnel, image un peu floue et trop colorée, tête qui balance,
+// et surtout une euphorie qui donne une fausse impression de sécurité.
+// Le remède : remonter de quelques mètres.
+let _narcoseHalo=null,_narcosePensee=null,_narcoseProchaine=0;
+let _narcoseRoulis=0;
+const PENSEES=['Tout va bien… on a le temps.','C’est beau ici, on reste encore un peu ?','Je compte mes bulles… une, deux…',
+  'Il est où, déjà, le blessé ?','Ma montre dit quoi ? Bof, plus tard.','Je me sens super bien !','On pourrait descendre encore un peu…'];
 function applyNarcose(depth,dt){
-  const NARCOSE_START=30;
-  const NARCOSE_FULL=50;
-  if(depth<NARCOSE_START){ 
-    if(_narcoseHalo){_narcoseHalo.style.opacity='0';} 
-    return; 
-  }
-  // Intensité 0→1 entre 30m et 50m
-  const intensity=Math.min(1,(depth-NARCOSE_START)/(NARCOSE_FULL-NARCOSE_START));
-  
-  // Halo coloré vignette (violet/bleu)
+  const DEBUT=30,FORTE=42;
+  const i=Math.max(0,Math.min(1,(depth-DEBUT)/(FORTE-DEBUT)));
   if(!_narcoseHalo){
     _narcoseHalo=document.createElement('div');
-    _narcoseHalo.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:15;transition:opacity 2s;background:radial-gradient(ellipse at center,transparent 40%,rgba(80,0,180,0.0) 60%,rgba(40,0,120,0.5) 100%)';
+    _narcoseHalo.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:15;transition:opacity 1.5s';
     document.body.appendChild(_narcoseHalo);
+    _narcosePensee=document.createElement('div');
+    _narcosePensee.style.cssText='position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);z-index:16;pointer-events:none;'
+      +'font:italic 600 clamp(14px,2.4vw,22px) Rajdhani,sans-serif;color:rgba(255,236,170,.85);text-shadow:0 0 12px rgba(255,200,80,.6);'
+      +'opacity:0;transition:opacity 1.2s;white-space:nowrap';
+    document.body.appendChild(_narcosePensee);
   }
-  _narcoseHalo.style.opacity=(intensity*0.7).toFixed(2);
-  
-  // Légère distorsion visuelle — balancement amplifié
-  _narcosePhase+=dt*(0.3+intensity*0.5);
-  const wobble=Math.sin(_narcosePhase)*intensity*1.5;
-  if(!G.isDead&&window._camera){
-    window._camera.rotation.z=wobble*Math.PI/180;
+  // Vision en tunnel : les bords s'assombrissent, le champ se resserre
+  const pouls=0.06*Math.sin(G.gameTime*1.1);
+  const centre=Math.round(40-24*i+pouls*20);
+  _narcoseHalo.style.background=`radial-gradient(ellipse at center,transparent ${centre}%,rgba(8,0,20,${Math.min(0.96,0.25+0.75*i).toFixed(2)}) 88%)`;
+  _narcoseHalo.style.opacity=i>0?'1':'0';
+  _fx.flouNarcose=i>0?0.3+1.4*i:0;
+  _fx.satNarcose=1+0.6*i;
+  // Roulis lent de la tête (appliqué avec la houle, voir updateSway)
+  _narcoseRoulis=i;
+  // Les pensées euphoriques, de temps en temps
+  if(i>0.15&&G.gameTime>_narcoseProchaine){
+    _narcosePensee.textContent=PENSEES[Math.floor(Math.random()*PENSEES.length)];
+    _narcosePensee.style.opacity='1';
+    setTimeout(()=>{if(_narcosePensee)_narcosePensee.style.opacity='0';},3200);
+    _narcoseProchaine=G.gameTime+18-10*i+Math.random()*6;
+    if(Math.random()<0.5)setAlert('NARCOSE — remontez de quelques mètres','warn');
   }
-  
-  // Alerte au joueur
-  if(intensity>0.3&&Math.random()<0.001){
-    setAlert('NARCOSE — Remontez !','warn');
-  }
+  if(i===0&&_narcosePensee)_narcosePensee.style.opacity='0';
 }

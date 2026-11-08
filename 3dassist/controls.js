@@ -85,7 +85,7 @@ function applyMovement(dt){
   cam.quaternion.multiplyQuaternions(_qYaw,_qPitch);
 
   const maxSpd=G.rescued?2.0:5.0;
-  const accel=4.0;
+  const accel=6.0;
   const friction=G.rescued?0.90:0.85;
 
   const fwd=new THREE.Vector3(0,0,-1).applyQuaternion(cam.quaternion);fwd.y=0;fwd.normalize();
@@ -99,11 +99,7 @@ function applyMovement(dt){
   if(jl.active&&(Math.abs(jl.dx)>0.05||Math.abs(jl.dy)>0.05)){
     inp.addScaledVector(fwd,-jl.dy);inp.addScaledVector(rgt,jl.dx);
   }
-  const jr=joyState.right;
-  if(jr.active&&(Math.abs(jr.dx)>0.05||Math.abs(jr.dy)>0.05)){
-    _applyYaw(jr.dx*2.5*dt);
-    _applyPitch(jr.dy*2.0*dt);
-  }
+  // (Le pavé de droite fait tourner la tête au fil du doigt : voir setupRegard.)
 
   // Mouvement horizontal uniquement dans velocity
   velocity.x*=Math.pow(friction,dt*60);
@@ -175,7 +171,33 @@ function setupJoystick(zoneId,stickId,side){
   zone.addEventListener('touchcancel',end,{passive:false});
 }
 setupJoystick('joy-left','joy-left-stick','left');
-setupJoystick('joy-right','joy-right-stick','right');
+
+// ===== REGARDER (pavé de droite) : la vue suit le doigt, comme la tête =====
+// Le doigt immobile ne fait plus tourner la caméra : seul le glissé compte.
+const SENS_REGARD=0.006;   // radians par pixel
+function setupRegard(zoneId,stickId){
+  const zone=document.getElementById(zoneId),stick=document.getElementById(stickId);
+  let id=null,lx=0,ly=0,cx=0,cy=0;
+  zone.addEventListener('touchstart',e=>{
+    e.preventDefault();const t=e.changedTouches[0];
+    id=t.identifier;lx=t.clientX;ly=t.clientY;
+    const r=zone.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;
+  },{passive:false});
+  zone.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier!==id)continue;
+      if(!G.regardHaut){_applyYaw((t.clientX-lx)*SENS_REGARD);_applyPitch((t.clientY-ly)*SENS_REGARD);}
+      lx=t.clientX;ly=t.clientY;
+      const dx=t.clientX-cx,dy=t.clientY-cy,dist=Math.min(Math.hypot(dx,dy),JOY_MAX),a=Math.atan2(dy,dx);
+      stick.style.transform=`translate(calc(-50% + ${Math.cos(a)*dist}px), calc(-50% + ${Math.sin(a)*dist}px))`;
+    }
+  },{passive:false});
+  const fin=e=>{for(const t of e.changedTouches)if(t.identifier===id){id=null;stick.style.transform='translate(-50%,-50%)';}};
+  zone.addEventListener('touchend',fin,{passive:false});
+  zone.addEventListener('touchcancel',fin,{passive:false});
+}
+setupRegard('joy-right','joy-right-stick');
 
 let touchCamId=null,lastTX=0,lastTY=0;
 canvas3dEl.addEventListener('touchstart',e=>{
@@ -190,8 +212,9 @@ canvas3dEl.addEventListener('touchmove',e=>{
   if(!G.simStarted)return;
   for(const t of e.changedTouches){
     if(t.identifier!==touchCamId)continue;
-    _applyYaw((t.clientX-lastTX)*0.0015);
-    _applyPitch((t.clientY-lastTY)*0.0015);
+    if(G.regardHaut)continue;
+    _applyYaw((t.clientX-lastTX)*SENS_REGARD*0.8);
+    _applyPitch((t.clientY-lastTY)*SENS_REGARD*0.8);
     lastTX=t.clientX;lastTY=t.clientY;
   }
 },{passive:true});

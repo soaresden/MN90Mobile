@@ -270,6 +270,9 @@ Un simulateur de sauvetage en temps réel (Three.js), avec 4 sites (Roussay, St-
 - **La vitesse de remontée de la MN90** : 15 m/min conseillés, 17 m/min au maximum, avec un variomètre et les flèches de l’ordinateur.
 - **Les couleurs absorbées par l’eau** : le rouge disparaît dès les premiers mètres, puis l’orange et le jaune ; il reste le bleu (ou le vert en lac). La lampe rend les couleurs de près.
 - **👀 Regarder en haut** (ou la touche R) : on voit la surface, avec la fenêtre de Snell au-dessus de soi.
+- **Au tactile** : le joystick de gauche fait nager ; à droite (ou en glissant le doigt sur l’écran), la vue suit le doigt comme la tête — un doigt immobile ne fait plus tourner la caméra.
+- **De la vie** : à St-Pierre, des bancs de poissons de récif, une tortue et une raie aigle ; à Roussay, perches, gardons, un brochet et le silure, près du fond. Les fosses restent des fosses.
+- **La narcose** au-delà de 30 m : vision en tunnel, image floue et trop colorée, tête qui balance, et des pensées euphoriques… Remonter de quelques mètres la fait passer.
 
 <p align="center"><img src="docs/screenshots/13-remontee-assistee-3d.jpg" width="520" alt="Remontée assistée 3D"></p>
 

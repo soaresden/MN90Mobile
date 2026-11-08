@@ -157,6 +157,17 @@ canvas{display:block;position:absolute;top:0;left:0}
   background:rgba(0,8,20,0.75);border:1px solid rgba(120,200,255,0.4);border-radius:22px;padding:8px 16px;color:rgba(170,225,255,0.95);
   font:700 11px 'Rajdhani',sans-serif;letter-spacing:2px;user-select:none;-webkit-user-select:none}
 #btn-haut.on{background:rgba(40,120,200,0.55);border-color:#9fd8ff;color:#fff}
+@media (max-height:520px){
+  .inflateur{top:34px;gap:2px}
+  .inf-tete{padding:2px 6px;min-width:70px}
+  .inf-vol{font-size:13px}
+  .inf-direct{zoom:.72}
+  .inf-gilet{height:84px;margin-top:15px;width:11px}
+  .inf-legende{display:none}
+  .inf-tirette .cordon{height:5px}
+  .inf-tirette .boule{width:18px;height:18px}
+  .inf-tirette .txt{font-size:7px}
+}
 
 /* ===== ÉCRAN TITRE ===== */
 #start-screen{
@@ -326,7 +337,7 @@ canvas{display:block;position:absolute;top:0;left:0}
   <div id="torch-btn" onclick="toggleTorch()">LAMPE : ON</div>
   <div id="loading-bar-wrap"><div id="loading-txt">CHARGEMENT DU MODÈLE</div><div id="loading-bar"><div id="loading-fill"></div></div></div>
   <div class="joystick-zone" id="joy-left"><div class="joy-base"></div><div class="joy-stick" id="joy-left-stick"></div><div class="joy-label">NAGER</div></div>
-  <div class="joystick-zone" id="joy-right"><div class="joy-base"></div><div class="joy-stick" id="joy-right-stick"></div><div class="joy-label">CAMÉRA</div></div>
+  <div class="joystick-zone" id="joy-right"><div class="joy-base"></div><div class="joy-stick" id="joy-right-stick"></div><div class="joy-label">REGARDER</div></div>
   <div id="btn-interact" onclick="tryRescue()">AIDER</div>
   <div class="inflateur" id="inf-moi">
     <div class="inf-tete"><span class="inf-nom">MA STAB</span><span class="inf-vol" id="inf-moi-vol">0.0 L</span></div>
@@ -469,15 +480,15 @@ canvas{display:block;position:absolute;top:0;left:0}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="config.js?v=1774300000"></script>
-<script src="hud.js?v=1774300000"></script>
-<script src="scene.js?v=1774300000"></script>
-<script src="buoyancy.js?v=1774300000"></script>
-<script src="sound.js?v=1774300000"></script>
-<script src="lowair.js?v=1774300000"></script>
-<script src="effects.js?v=1774300000"></script>
-<script src="controls.js?v=1774300000"></script>
-<script src="game.js?v=1774300000"></script>
+<script src="config.js?v=1774400000"></script>
+<script src="hud.js?v=1774400000"></script>
+<script src="scene.js?v=1774400000"></script>
+<script src="buoyancy.js?v=1774400000"></script>
+<script src="sound.js?v=1774400000"></script>
+<script src="lowair.js?v=1774400000"></script>
+<script src="effects.js?v=1774400000"></script>
+<script src="controls.js?v=1774400000"></script>
+<script src="game.js?v=1774400000"></script>
 
 <script>
 // Previews sites — après chargement de tous les scripts

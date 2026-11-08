@@ -34,6 +34,7 @@ window._ambient=null; // exposé pour hud.js applyDepthColor
 function buildScene(site,onReady){
   while(scene.children.length)scene.remove(scene.children[0]);
   bubbles3D=[];victimModel=null;victimMixer=null;armGroup=null;
+  _animaux.length=0;_silure=null;_catfishMixer=null;
   console.log('[scene] buildScene site:', site.name);
 
   renderer.setClearColor(site.fogColor);
@@ -48,6 +49,13 @@ function buildScene(site,onReady){
     _buildPoolScene(site);
   } else {
     _buildNaturalScene(site);
+    // Pas de rocher ni de corail dans la tête : on dégage 5 m autour de moi et du blessé
+    const prof=-G.selectedDepth;
+    scene.children.slice().forEach(o=>{
+      if(!o.isMesh||!o.geometry||o.geometry.type==='PlaneGeometry')return;
+      const dx=o.position.x,dz=o.position.z-5;
+      if(o.position.y<prof+1&&o.position.y>prof-4&&dx*dx+dz*dz<25)scene.remove(o);
+    });
   }
 
   document.getElementById('mask-color').style.background=site.maskColor;
@@ -225,7 +233,8 @@ function _loadCatfish(maxDepth){
       console.log('[scene] catfish.glb OK');
       const model=gltf.scene;
       model.scale.set(0.8,0.8,0.8);
-      model.position.set(12,-maxDepth+3,0);
+      model.position.set(12,-maxDepth-0.9,0);
+      _silureY=-maxDepth-0.9;
       scene.add(model);
       _silure=model;
       _silureAngle=0;
@@ -251,7 +260,7 @@ function _buildFallbackSilure(maxDepth){
     const barb=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.01,0.8,4),new THREE.MeshLambertMaterial({color:0x1a1008}));
     barb.position.set(1.5,0,b===0?0.35:-0.35); barb.rotation.z=0.4*(b===0?1:-1); sg.add(barb);
   }
-  sg.position.set(12,-maxDepth+3,0);
+  sg.position.set(12,-maxDepth-0.9,0);_silureY=-maxDepth-0.9;
   scene.add(sg); _silure=sg; _silureAngle=0;
 }
 
@@ -316,10 +325,12 @@ function _buildFallbackFish(maxDepth,site){
 // Stockage animaux pour updateScene
 const _fish=[];  // [{group, speed, radius, angle, y}]
 let _silure=null;
-let _silureAngle=0;
+let _silureAngle=0,_silureY=0;
 
 function _buildNaturalScene(site){
-  const maxDepth=Math.min(site.depthMax,42);
+  // Le fond est 1,6 m sous la profondeur choisie : le blessé et moi sommes
+  // près du fond (avant, il était toujours à 42-44 m, on flottait en pleine eau).
+  const maxDepth=Math.max(4,G.selectedDepth-0.4);
 
   // Sol
   const fg=new THREE.PlaneGeometry(200,200,40,40);
@@ -446,6 +457,8 @@ function _buildSiteVegetation(site,siteKey,maxDepth){
     }
     // Silure — charger catfish.glb si dispo, sinon fallback primitif
     _loadCatfish(maxDepth);
+    // La vie du lac : perches, gardons, un brochet
+    _vieLac(maxDepth);
 
   } else if(siteKey==='martinique'){
     // Coraux colorés denses
@@ -460,8 +473,8 @@ function _buildSiteVegetation(site,siteKey,maxDepth){
       m.rotation.set(0,0,(Math.random()-0.5)*0.3);
       scene.add(m);
     }
-    // Poissons — charger 250_fish_pack.glb si dispo, sinon fallback primitifs
-    _loadFishPack(maxDepth,site);
+    // La vie du récif : bancs de poissons, une tortue, une raie aigle
+    _vieRecif(maxDepth);
 
   } else if(siteKey==='nemo'){
     // Nemo 33 : rochers blancs calcaires + éponges
@@ -499,6 +512,141 @@ function _buildSiteVegetation(site,siteKey,maxDepth){
       scene.add(m);
     }
   }
+}
+
+// ===== LA VIE DANS L'EAU (dessinée : légère, pas de gros modèles) =====
+const _animaux=[];   // {update(dt,t)}
+const _mat={};
+const _m=c=>_mat[c]||(_mat[c]=new THREE.MeshLambertMaterial({color:c}));
+const _geo={sphere:new THREE.SphereGeometry(0.5,10,8),cone:new THREE.ConeGeometry(0.5,1,4),oeil:new THREE.SphereGeometry(0.5,6,4)};
+
+/**
+ * Un poisson, tête vers +x : corps ovale, rayures, queue qui bat, nageoire dorsale.
+ * o = {L longueur, h hauteur, w épaisseur (en fraction de L), corps, ventre, rayures:{n,c}, nageoires}
+ */
+function _poisson(o){
+  const g=new THREE.Group(),L=o.L;
+  const corps=new THREE.Mesh(_geo.sphere,_m(o.corps));corps.scale.set(L,L*o.h,L*o.w);g.add(corps);
+  if(o.ventre){const v=new THREE.Mesh(_geo.sphere,_m(o.ventre));v.scale.set(L*0.9,L*o.h*0.6,L*o.w*0.95);v.position.y=-L*o.h*0.18;g.add(v);}
+  if(o.rayures)for(let i=0;i<o.rayures.n;i++){
+    const r=new THREE.Mesh(_geo.sphere,_m(o.rayures.c));
+    r.scale.set(L*0.07,L*o.h*0.97,L*o.w*1.04);
+    r.position.x=L*(0.22-i*0.44/Math.max(1,o.rayures.n-1));g.add(r);
+  }
+  const pivot=new THREE.Group();pivot.position.x=-L*0.45;g.add(pivot);
+  const q=new THREE.Mesh(_geo.cone,_m(o.nageoires||o.corps));
+  q.rotation.z=Math.PI/2;q.scale.set(L*o.h*0.9,L*0.35,L*0.06);q.position.x=-L*0.16;pivot.add(q);
+  const d=new THREE.Mesh(_geo.cone,_m(o.nageoires||o.corps));
+  d.scale.set(L*0.35,L*o.h*0.45,L*0.04);d.position.set(-L*0.05,L*o.h*0.5,0);g.add(d);
+  for(const z of [1,-1]){const e=new THREE.Mesh(_geo.oeil,_m(0x0b0b0b));e.scale.setScalar(L*0.07);e.position.set(L*0.36,L*o.h*0.1,z*L*o.w*0.42);g.add(e);}
+  g.userData.queue=pivot;
+  return g;
+}
+
+/** Un banc : les poissons tournent ensemble autour d'un point, à leur hauteur. */
+function _banc(espece,n,cx,cz,y,rayon,vitesse){
+  const grp=new THREE.Group(),membres=[];
+  for(let i=0;i<n;i++){
+    const f=_poisson(espece);
+    f.position.set((Math.random()-0.5)*1.6,(Math.random()-0.5)*0.9,(Math.random()-0.5)*1.6);
+    grp.add(f);membres.push({f,ph:Math.random()*6.3,b:f.position.clone()});
+  }
+  scene.add(grp);
+  let a=Math.random()*Math.PI*2;
+  _animaux.push({update(dt,t){
+    a+=vitesse*dt/rayon;
+    grp.position.set(cx+Math.cos(a)*rayon,y+Math.sin(t*0.3+cx)*0.6,cz+Math.sin(a)*rayon);
+    grp.rotation.y=-a-Math.PI/2;           // nez dans le sens de la nage
+    for(const m of membres){
+      m.f.userData.queue.rotation.y=Math.sin(t*9+m.ph)*0.45;
+      m.f.position.y=m.b.y+Math.sin(t*1.3+m.ph)*0.12;
+      m.f.position.z=m.b.z+Math.sin(t*0.9+m.ph)*0.15;
+    }
+  }});
+}
+
+/** Une tortue verte qui croise lentement. */
+function _tortue(y,rayon){
+  const g=new THREE.Group();
+  const carap=new THREE.Mesh(_geo.sphere,_m(0x5b5a2a));carap.scale.set(1.0,0.32,0.8);g.add(carap);
+  for(let i=0;i<5;i++){const p=new THREE.Mesh(_geo.sphere,_m(0x3f3d1c));p.scale.set(0.24,0.06,0.2);p.position.set(0.3-i*0.15,0.15,(i%2?0.12:-0.12));g.add(p);}
+  const plastron=new THREE.Mesh(_geo.sphere,_m(0xc9b27a));plastron.scale.set(0.9,0.18,0.7);plastron.position.y=-0.06;g.add(plastron);
+  const tete=new THREE.Mesh(_geo.sphere,_m(0x6d6a3e));tete.scale.set(0.3,0.2,0.22);tete.position.set(0.62,0.02,0);g.add(tete);
+  const pattes=[];
+  for(const [x,z,l] of [[0.25,0.38,0.62],[0.25,-0.38,0.62],[-0.38,0.3,0.3],[-0.38,-0.3,0.3]]){
+    const pv=new THREE.Group();pv.position.set(x,0,z*0.9);
+    const pa=new THREE.Mesh(_geo.sphere,_m(0x6d6a3e));pa.scale.set(l*0.45,0.05,l);pa.position.z=Math.sign(z)*l*0.45;pv.add(pa);
+    g.add(pv);pattes.push({pv,s:Math.sign(z),avant:x>0});
+  }
+  scene.add(g);
+  let a=Math.random()*6.3;
+  _animaux.push({update(dt,t){
+    a+=0.35*dt/rayon;
+    g.position.set(Math.cos(a)*rayon,y+Math.sin(t*0.25)*0.5,5+Math.sin(a)*rayon);
+    g.rotation.y=-a-Math.PI/2;
+    for(const p of pattes)p.pv.rotation.x=p.s*Math.sin(t*1.4+(p.avant?0:1.2))*(p.avant?0.5:0.25);
+  }});
+}
+
+/** Une raie aigle : des ailes qui ondulent, une longue queue. */
+function _raie(y,rayon){
+  const g=new THREE.Group();
+  const corps=new THREE.Mesh(_geo.sphere,_m(0x1f2a36));corps.scale.set(0.9,0.14,0.45);g.add(corps);
+  const ailes=[];
+  for(const z of [1,-1]){
+    const pv=new THREE.Group();pv.position.z=z*0.18;
+    const ai=new THREE.Mesh(_geo.cone,_m(0x1f2a36));ai.rotation.x=z*Math.PI/2;ai.scale.set(0.55,1.1,0.05);ai.position.z=z*0.55;pv.add(ai);
+    for(let i=0;i<4;i++){const t=new THREE.Mesh(_geo.oeil,_m(0xe8e8e0));t.scale.setScalar(0.06);t.position.set(0.15-Math.random()*0.4,0.04,z*(0.25+Math.random()*0.6));pv.add(t);}
+    g.add(pv);ailes.push({pv,z});
+  }
+  const queue=new THREE.Mesh(_geo.cone,_m(0x141c24));queue.rotation.z=Math.PI/2;queue.scale.set(0.03,1.8,0.03);queue.position.x=-1.3;g.add(queue);
+  scene.add(g);
+  let a=Math.random()*6.3;
+  _animaux.push({update(dt,t){
+    a+=0.6*dt/rayon;
+    g.position.set(Math.cos(a)*rayon,y+Math.sin(t*0.4)*0.4,5+Math.sin(a)*rayon);
+    g.rotation.y=-a-Math.PI/2;
+    for(const w of ailes)w.pv.rotation.x=w.z*Math.sin(t*1.6)*0.35;
+  }});
+}
+
+/** Un brochet, presque immobile près des herbiers, qui démarre de temps en temps. */
+function _brochet(y){
+  const f=_poisson({L:0.9,h:0.17,w:0.13,corps:0x55663a,ventre:0xd8d6b0,rayures:{n:6,c:0x748a4c},nageoires:0x8a6a3a});
+  scene.add(f);
+  let a=1,x0=-6,z0=-2;
+  _animaux.push({update(dt,t){
+    const elan=Math.max(0,Math.sin(t*0.15))**8;     // de rares accélérations
+    a+=dt*(0.02+elan*0.6);
+    f.position.set(x0+Math.cos(a)*7,y+Math.sin(t*0.3)*0.15,z0+Math.sin(a)*7);
+    f.rotation.y=-a-Math.PI/2;
+    f.userData.queue.rotation.y=Math.sin(t*(3+elan*10))*0.25;
+  }});
+}
+
+function _vieRecif(fond){
+  const y=d=>Math.min(-2,-fond-1+d);
+  const especes=[
+    {L:0.16,h:0.55,w:0.22,corps:0xf2d23a,ventre:0xf6efc0,rayures:{n:5,c:0x1b1b1b},nageoires:0xe8c22a},   // sergents-majors
+    {L:0.25,h:0.55,w:0.18,corps:0x2d5fd6,rayures:null,nageoires:0x1d3f9a},                              // chirurgiens bleus
+    {L:0.38,h:0.42,w:0.26,corps:0x2fb38f,ventre:0xe07aa0,nageoires:0x7fd6ff},                           // perroquets
+    {L:0.55,h:0.38,w:0.18,corps:0xb8c3c9,ventre:0xe9eef0,nageoires:0x9fb0b8},                           // carangues
+  ];
+  _banc(especes[0],12,-4,0,y(2.5),5,0.6);
+  _banc(especes[1],9,6,-3,y(3.5),7,0.7);
+  _banc(especes[2],5,2,8,y(1.6),6,0.45);
+  _banc(especes[3],7,-8,-6,y(6),11,1.1);
+  _tortue(y(3),9);
+  _raie(y(1.2),15);
+}
+function _vieLac(fond){
+  const y=d=>Math.min(-2,-fond-1+d);
+  const perche={L:0.24,h:0.42,w:0.2,corps:0x6f7d3d,ventre:0xd9d6a8,rayures:{n:5,c:0x2c3318},nageoires:0xd06a2a};
+  const gardon={L:0.2,h:0.36,w:0.16,corps:0xb9c2c0,ventre:0xe8ece8,nageoires:0xc45a3a};
+  _banc(perche,8,-3,1,y(1.4),5,0.4);
+  _banc(gardon,12,5,-2,y(3),7,0.6);
+  _banc(perche,6,2,9,y(2.2),6,0.35);
+  _brochet(y(1.1));
 }
 
 // ===== BLESSÉ GLB =====
@@ -773,6 +921,9 @@ function sceneAnimate(dt,gameTime){
     f.group.position.y=f.y+Math.sin(f.wobble)*0.8;
     f.group.rotation.y=-f.angle+Math.PI/2;
   }
+
+  // La vie dans l'eau
+  for(const an of _animaux)an.update(dt,gameTime);
 
   // Animation silure Roussay
   if(_silure){
