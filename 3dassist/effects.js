@@ -70,49 +70,40 @@ function updateSway(dt){
   if(!G.rescued)cam.position.y+=houleY*dt*0.5;
 }
 
-// ===== PHYSIQUE COULEURS PROFONDEUR =====
-// (déplacé depuis hud.js pour centraliser les effets visuels)
+// ===== COULEURS : L'ABSORPTION DE LA LUMIÈRE PAR L'EAU =====
+// La lumière du jour qui descend perd ses couleurs avec la profondeur :
+// T = exp(−K·d) pour le rouge, le vert, le bleu (K : voir OPTIQUE dans
+// config.js). Le rouge disparaît dans les 5 premiers mètres, puis l'orange,
+// le jaune ; il reste le bleu (ou le vert en lac). Tout est fait dans la
+// scène 3D (lumières, couleur de l'eau, fenêtre de Snell) : la lampe, elle,
+// rend les couleurs de près.
 function applyDepthColor(depth,bar){
-  if(bar<=100)return; // hypoxie prend le dessus
-  // Luminosité forte variation : à 30m = 0.16, à 0m = 1.0
-  const brightness=Math.max(0.06,1.0-depth*0.030);
-  // Perte couleurs plus marquée
-  const redLoss=Math.min(1,Math.max(0,(depth-2)/5));
-  const orangeLoss=Math.min(1,Math.max(0,(depth-6)/8));
-  const yellowLoss=Math.min(1,Math.max(0,(depth-12)/12));
-  const greenLoss=Math.min(1,Math.max(0,(depth-25)/12));
-  const sat=Math.max(0.04,1.0-greenLoss*0.65-yellowLoss*0.35-redLoss*0.1);
-  const hue=depth*0.9;
-  // Halo lumineux en surface (<8m)
-  const surfaceGlow=Math.max(0,1.0-depth/8);
-
-  if(!G.isDead){
-    if(!torchEnabled){
-      document.getElementById('c').style.filter=
-        `brightness(${brightness.toFixed(2)}) saturate(${sat.toFixed(2)}) hue-rotate(${hue.toFixed(0)}deg)`;
-    } else {
-      document.getElementById('c').style.filter=`brightness(${Math.min(1,brightness+0.38).toFixed(2)})`;
-    }
-    const ov=document.getElementById('depth-color-overlay');
-    ov.style.background=`rgba(${Math.round((1-redLoss)*80)},${Math.round((1-orangeLoss)*20)},0,1)`;
-    ov.style.opacity=(redLoss>0.05&&!torchEnabled?(1-redLoss)*0.28:0).toFixed(2);
-
-    // Lueur turquoise en approchant la surface
-    const dc=document.getElementById('mask-color');
-    if(surfaceGlow>0.1&&bar>100){
-      dc.style.background=`rgba(30,140,200,1)`;
-      dc.style.opacity=(surfaceGlow*0.12).toFixed(2);
-    }
-
-    // Ambient light
-    if(window._ambient){
-      const intensity=G.currentSite.ambientInt*(torchEnabled?1:brightness+0.1);
-      const r=Math.max(0.02,0.14*(torchEnabled?1:1-redLoss));
-      const g2=Math.max(0.04,0.18*(torchEnabled?1:1-yellowLoss*0.5));
-      const b=torchEnabled?0.35:Math.max(0.1,0.28*brightness*2);
-      window._ambient.color.setRGB(r*intensity,g2*intensity,b*intensity);
-    }
+  const o=OPTIQUE[G.selectedSiteKey];
+  if(!o||!window._ambient)return;
+  const d=Math.max(0,depth);
+  const T=o.K.map(k=>Math.exp(-k*d));
+  // L'eau elle-même (le fond de l'image et le voile au loin)
+  if(scene.fog){
+    scene.fog.color.setRGB(o.eau[0]*T[0],o.eau[1]*T[1],o.eau[2]*T[2]);
+    renderer.setClearColor(scene.fog.color);
   }
+  // La lumière du jour qui arrive à cette profondeur
+  window._ambient.intensity=1;
+  window._ambient.color.setRGB(Math.max(0.012,o.jour*T[0]),Math.max(0.014,o.jour*T[1]),Math.max(0.02,o.jour*T[2]));
+  if(window._sun){window._sun.intensity=1;window._sun.color.setRGB(o.soleil*T[0],o.soleil*T[1],o.soleil*T[2]);}
+  // Le ciel vu à travers la fenêtre de Snell : même teinte, moins lumineux en profondeur
+  if(window._fenetreSnell){
+    const m=Math.max(...T),lum=0.8*Math.pow(m,0.8);
+    window._fenetreSnell.material.color.setRGB(T[0]/m*lum,T[1]/m*lum,T[2]/m*lum);
+  }
+  // La lampe : blanche, mais l'eau mange déjà le rouge sur l'aller-retour (≈ 2 m)
+  if(_torchLight){
+    const L=o.K.map(k=>Math.exp(-k*2));const mx=Math.max(...L);
+    _torchLight.color.setRGB(L[0]/mx,L[1]/mx,L[2]/mx);
+  }
+  // Plus aucun filtre CSS de couleur (il faussait les teintes)
+  const ov=document.getElementById('depth-color-overlay');
+  if(ov)ov.style.opacity='0';
 }
 
 // ===== VISION TROUBLE (hypoxie) =====
@@ -120,17 +111,17 @@ function applyHypoxia(bar){
   const mc=document.getElementById('mask-color');
   if(bar>100){
     mc.style.opacity=G.currentSite.maskOpacity;
-    if(!torchEnabled)document.getElementById('c').style.filter='none';
+    document.getElementById('c').style.filter='none';
   } else if(bar>50){
     mc.style.opacity=G.currentSite.maskOpacity;
   } else if(bar>30){
     const t=(50-bar)/20;
-    if(!torchEnabled)document.getElementById('c').style.filter=`blur(${(t*3).toFixed(1)}px)`;
+    document.getElementById('c').style.filter=`blur(${(t*3).toFixed(1)}px)`;
     mc.style.background='rgba(120,0,0,1)';
     mc.style.opacity=0.15+Math.sin(G.gameTime*3)*0.1;
   } else if(bar>0){
     const t=(30-bar)/30;
-    if(!torchEnabled)document.getElementById('c').style.filter=`blur(${(t*6).toFixed(1)}px)`;
+    document.getElementById('c').style.filter=`blur(${(t*6).toFixed(1)}px)`;
     mc.style.background='rgba(160,0,0,1)';
     mc.style.opacity=0.25+Math.sin(G.gameTime*5)*0.2;
   }

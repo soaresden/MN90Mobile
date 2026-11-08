@@ -265,6 +265,12 @@ C’est une appli native : elle fonctionne **sans téléphone et sans réseau**,
 
 Un simulateur de sauvetage en temps réel (Three.js), avec 4 sites (Roussay, St-Pierre, Fosse VLG, Nemo 33). Tu dois gérer la flottabilité, la vitesse de remontée, le palier et le tour d’horizon en surface. Il suit le thème choisi. À jouer en paysage.
 
+- **Une vraie physique** : poussée d’Archimède en kilos, loi de Boyle sur l’air des deux gilets (ils se dilatent en remontant) et sur la combinaison (écrasée au fond), traînée de l’eau, inertie des deux plongeurs. L’inflateur envoie l’air du bloc à la pression du fond ; la soupape de surpression lâche quand le gilet est plein.
+- **Deux inflateurs réalistes** : le mien à gauche, celui du blessé à droite, avec le bouton de gonflage, la purge au bout du direct system et la tirette de purge rapide. On les maintient enfoncés, comme sous l’eau.
+- **La vitesse de remontée de la MN90** : 15 m/min conseillés, 17 m/min au maximum, avec un variomètre et les flèches de l’ordinateur.
+- **Les couleurs absorbées par l’eau** : le rouge disparaît dès les premiers mètres, puis l’orange et le jaune ; il reste le bleu (ou le vert en lac). La lampe rend les couleurs de près.
+- **👀 Regarder en haut** (ou la touche R) : on voit la surface, avec la fenêtre de Snell au-dessus de soi.
+
 <p align="center"><img src="docs/screenshots/13-remontee-assistee-3d.jpg" width="520" alt="Remontée assistée 3D"></p>
 
 ---

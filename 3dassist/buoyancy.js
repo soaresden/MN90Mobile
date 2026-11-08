@@ -1,19 +1,42 @@
 // buoyancy.js — Flottabilité, stabs, poumon ballast, loi de Boyle
 'use strict';
 
-function buoyForce(){
-  // Equilibre : base + stab_joueur*coeff = 0 → base = -stab_equil * coeff
-  // On veut équilibre à playerStab=EQUIL_STAB (défini dans game.js)
-  // base = -1.0, coeff = 0.85 → équilibre à 1.0/0.85 = 1.176L
-  // Avec blessé : base = -3.5 → équilibre joueur+blessé ~2L chacun
-  const base=G.rescued?-3.5:-1.0;
-  const ps=G.playerStab*0.85;
-  const vs=G.victimStab*0.85;
-  const lf=(G.lung-LUNG_NEUTRAL)*0.7;
-  const force=base+ps+vs+lf;
-  if(G.simStarted&&Math.random()<0.008)
-    console.log('[buoy] force='+force.toFixed(2)+' player='+G.playerStab.toFixed(1)+' victim='+G.victimStab.toFixed(1)+' lung='+G.lung.toFixed(1)+' buoyV='+G.buoyVelocity.toFixed(3));
-  return force;
+// ---------- Les lois physiques ----------
+const rhoEau=()=>(G.currentSite&&G.currentSite.freshwater)?1000:1025;   // kg/m³
+/** Pression absolue (bar) à une profondeur (m) : 1 bar d'air + la colonne d'eau. */
+function pressionA(d){ return 1+rhoEau()*9.81*Math.max(0,d)/101325; }
+const combiSurface=()=>COMBI[G.selectedSiteKey]||5;
+
+/** Volume réel du gilet au fond : la quantité d'air divisée par la pression (Mariotte/Boyle). */
+function volumeGilet(gaz,P){ return Math.min(STAB_MAX,gaz/P); }
+
+/**
+ * Flottabilité de chacun en kg (positif = monte) : poussée d'Archimède des
+ * volumes d'air (gilet, combinaison écrasée par la pression, poumons) moins
+ * le reste (lest, corps, bloc) réglé pour être équilibré au départ.
+ */
+function flottabilites(d){
+  const P=pressionA(d),rho=rhoEau()/1000;
+  const combi=combiSurface()/P;
+  const poumon=(G.lung-LUNG_NEUTRAL)+(G.respiration||0);
+  const joueur=(volumeGilet(G.gazJoueur,P)+combi+poumon)*rho+G.lestJoueur;
+  const blesse=(volumeGilet(G.gazBlesse,P)+combi)*rho+G.lestBlesse;
+  return {joueur,blesse,total:G.rescued?joueur+blesse:joueur,P};
+}
+function buoyForce(){ return flottabilites(G.currentDepth||0).total; }
+
+/** Au départ : j'ai 1,5 L dans mon gilet et je suis parfaitement équilibré. */
+function equilibrerJoueur(d){
+  const P=pressionA(d),rho=rhoEau()/1000;
+  G.gazJoueur=1.5*P;
+  G.lestJoueur=-(1.5+combiSurface()/P)*rho;
+}
+/** Le blessé : un peu d'air dans son gilet, mais il coule (1 à 2,5 kg trop lourd). */
+function preparerBlesse(d){
+  const P=pressionA(d),rho=rhoEau()/1000;
+  const v=0.5+Math.random()*1.5;
+  G.gazBlesse=v*P;
+  G.lestBlesse=-(v+combiSurface()/P)*rho-(1+Math.random()*1.5);
 }
 
 function inflatePush(who,on){
@@ -23,12 +46,24 @@ function inflatePush(who,on){
     else stopInflateSound();
   }
 }
-function purgePush(who,on){
-  G.purging[who]=on;
+function purgePush(who,on,rapide=false){
+  G.purging[who]=on&&!rapide;
+  G.purgeRapide[who]=on&&rapide;
+  if(on)_bullesPurge(who,rapide);
   if(soundEnabled){
     if(on)startPurgeSound();
     else stopPurgeSound();
   }
+}
+// Les bulles de la purge (l'air qui sort du gilet)
+function _bullesPurge(who,rapide){
+  const cam=window._camera;
+  if(!cam||typeof spawnBubble!=='function')return;
+  const n=rapide?14:6;
+  for(let i=0;i<n;i++)setTimeout(()=>{
+    if(who==='victim'&&typeof victimModel!=='undefined'&&victimModel)spawnBubble(victimModel.position,true);
+    else spawnBubble(null,false);
+  },i*60);
 }
 
 // Poumon ballast : UN clic = 5 secondes automatiques (pas besoin de maintenir)
@@ -64,33 +99,44 @@ function _returnToNeutral(){
 }
 
 function processBuoyancy(dt,depth){
-  // Gonflage/purge actifs tout le temps
-  if(G.inflating.player) G.playerStab=Math.min(STAB_MAX,G.playerStab+1.5*dt);
-  if(G.inflating.victim) G.victimStab=Math.min(STAB_MAX,G.victimStab+1.5*dt);
-  const PURGE=STAB_MAX/2;
-  if(G.purging.player) G.playerStab=Math.max(0,G.playerStab-PURGE*dt);
-  if(G.purging.victim) G.victimStab=Math.max(0,G.victimStab-PURGE*dt);
-
-  // Loi de Boyle : dilatation en remontant
-  const ata=Math.max(1,depth/10+1);
-  const prevY=window._camera?window._camera.position.y-G.buoyVelocity*dt:0;
-  const prevAta=Math.max(1,Math.abs(Math.min(0,prevY))/10+1);
-  if(Math.abs(prevAta-ata)>0.0005){
-    const exp=prevAta/ata;
-    G.playerStab=Math.min(STAB_MAX,G.playerStab*exp);
-    if(G.rescued) G.victimStab=Math.min(STAB_MAX,G.victimStab*exp);
-  }
+  const P=pressionA(depth);
+  // Inflateur : l'air du bloc arrive à la pression du fond (moins de volume en profondeur)
+  if(G.inflating.player) G.gazJoueur+=PHYS.GONFLAGE*dt;
+  if(G.inflating.victim) G.gazBlesse+=PHYS.GONFLAGE*dt;
+  // Purges : un débit en volume réel (tuyau levé, ou tirette de purge rapide)
+  const purger=(gaz,normal,rapide)=>{
+    const debit=(rapide?PHYS.PURGE_RAPIDE:0)+(normal?PHYS.PURGE:0);
+    return debit?Math.max(0,gaz-debit*P*dt):gaz;
+  };
+  G.gazJoueur=purger(G.gazJoueur,G.purging.player,G.purgeRapide.player);
+  G.gazBlesse=purger(G.gazBlesse,G.purging.victim,G.purgeRapide.victim);
+  // Gilet plein : la soupape de surpression lâche le trop-plein
+  G.gazJoueur=Math.min(G.gazJoueur,STAB_MAX*P);
+  G.gazBlesse=Math.min(G.gazBlesse,STAB_MAX*P);
+  // Volumes réels (Boyle) : ils gonflent tout seuls quand on remonte
+  G.playerStab=volumeGilet(G.gazJoueur,P);
+  G.victimStab=volumeGilet(G.gazBlesse,P);
+  // La respiration : ±0,3 L autour du poumon ballast (on oscille un peu)
+  G.respiration=0.3*Math.sin(G.gameTime*2*Math.PI/4.5);
 
   updateBuoyHUD();
   updateLungWave();
 
-  const f=buoyForce();
-  G.buoyVelocity+=f*0.15*dt;
-  G.buoyVelocity*=(1-0.8*dt);
-  G.buoyVelocity=Math.max(-2.5,Math.min(2.5,G.buoyVelocity));
-
-  if(G.rescued&&G.buoyVelocity>0.8&&!G.inPalier)
-    setAlert('TROP VITE — PURGEZ !','danger');
+  // Newton : poussée nette − traînée de l'eau (en v²), sur la masse + l'eau entraînée
+  const f=flottabilites(depth);
+  G.flottabilite=f.total;
+  const rho=rhoEau();
+  const deux=G.rescued;
+  const masse=(deux?2:1)*PHYS.MASSE*(1+PHYS.MASSE_AJOUTEE);
+  const cda=deux?PHYS.CDA_DEUX:PHYS.CDA_SEUL;
+  const v=G.buoyVelocity;
+  const trainee=0.5*rho*cda*v*Math.abs(v);
+  G.buoyVelocity+=(f.total*9.81-trainee)/masse*dt;
+  G.buoyVelocity=Math.max(-2,Math.min(2,G.buoyVelocity));
+  // En surface, on ne monte plus
+  if(depth<=0.05&&G.buoyVelocity>0)G.buoyVelocity=0;
+  // Vitesse verticale affichée (m/min), lissée comme sur un ordinateur
+  G.currentAscentSpeed+=(G.buoyVelocity*60-G.currentAscentSpeed)*Math.min(1,dt*2);
 }
 
 // === SINUSOÏDE POUMON ===
@@ -127,24 +173,54 @@ function updateLungWave(){
 
 function updateBuoyHUD(){
   const set=(id,txt)=>{const e=document.getElementById(id);if(e)e.textContent=txt;};
-  const setW=(id,pct)=>{const e=document.getElementById(id);if(e)e.style.width=pct+'%';};
-  set('v-stab-val',G.victimStab.toFixed(1)+' L');
-  setW('v-stab-bar',G.victimStab/STAB_MAX*100);
-  set('v-purge-val',G.victimStab.toFixed(1)+' L');
-  setW('v-purge-bar',G.victimStab/STAB_MAX*100);
-  set('p-stab-val',G.playerStab.toFixed(1)+' L');
-  setW('p-stab-bar',G.playerStab/STAB_MAX*100);
-  set('p-purge-val',G.playerStab.toFixed(1)+' L');
-  setW('p-purge-bar',G.playerStab/STAB_MAX*100);
-  set('lung-val',G.lung.toFixed(1)+' L');
-  setW('lung-bar',(G.lung-LUNG_MIN)/(LUNG_MAX-LUNG_MIN)*100);
+  const setH=(id,pct)=>{const e=document.getElementById(id);if(e)e.style.height=Math.max(0,Math.min(100,pct))+'%';};
+  set('inf-moi-vol',G.playerStab.toFixed(1)+' L');
+  setH('inf-moi-jauge',G.playerStab/STAB_MAX*100);
+  set('inf-lui-vol',G.victimStab.toFixed(1)+' L');
+  setH('inf-lui-jauge',G.victimStab/STAB_MAX*100);
+  const plein=(id,v)=>{const e=document.getElementById(id);if(e)e.classList.toggle('plein',v>=STAB_MAX-0.05);};
+  plein('inf-moi',G.playerStab);plein('inf-lui',G.victimStab);
+  set('lung-val',(G.lung+(G.respiration||0)).toFixed(1)+' L');
+  const lb=document.getElementById('lung-bar');if(lb)lb.style.width=((G.lung-LUNG_MIN)/(LUNG_MAX-LUNG_MIN)*100)+'%';
   set('lung-sub',G.lung>LUNG_NEUTRAL+0.3?'INSPIRÉ':G.lung<LUNG_NEUTRAL-0.3?'EXPIRÉ':'NEUTRE');
 }
 
 function showBuoyPanels(show){
-  ['panel-victim','panel-victim-purge','panel-self','panel-purge-me','panel-lung'].forEach(id=>{
+  ['inf-moi','inf-lui','panel-lung'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el)el.style.setProperty('display',show?'block':'none','important');
+    if(el)el.style.setProperty('display',show?(id==='panel-lung'?'block':'flex'):'none','important');
   });
   if(show){ initLungWave(); updateBuoyHUD(); }
 }
+
+// ---------- Les boutons des inflateurs : maintenir pour gonfler / purger ----------
+(function brancherInflateurs(){
+  const lancer=()=>{
+    document.querySelectorAll('.inflateur [data-action]').forEach(b=>{
+      const qui=b.dataset.qui,action=b.dataset.action;
+      const on=e=>{
+        e.preventDefault();
+        try{b.setPointerCapture(e.pointerId);}catch(_){}
+        b.classList.add('actif');
+        if(action==='gonfler')inflatePush(qui,true);
+        else purgePush(qui,true,action==='rapide');
+      };
+      const off=()=>{
+        if(!b.classList.contains('actif'))return;
+        b.classList.remove('actif');
+        if(action==='gonfler')inflatePush(qui,false);
+        else purgePush(qui,false,action==='rapide');
+      };
+      b.addEventListener('pointerdown',on);
+      ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
+      b.addEventListener('contextmenu',e=>e.preventDefault());
+    });
+    const h=document.getElementById('btn-haut');
+    if(h){
+      h.addEventListener('pointerdown',e=>{e.preventDefault();try{h.setPointerCapture(e.pointerId);}catch(_){}setRegardHaut(true);});
+      ['pointerup','pointercancel','lostpointercapture'].forEach(t=>h.addEventListener(t,()=>setRegardHaut(false)));
+      h.addEventListener('contextmenu',e=>e.preventDefault());
+    }
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',lancer);else lancer();
+})();

@@ -8,8 +8,38 @@ const SITES={
   nemo:{name:'Nemo 33',depthMax:33,startDepth:20,fogColor:0x021c26,fogDensity:0.010,ambientColor:0x082830,ambientInt:1.4,sunColor:0x30d0c0,sunInt:1.0,waterColor:0x021c24,maskColor:'rgba(0,60,70,1)',maskOpacity:0.08,floorColor:0x0a2830,coralColors:[0x0a4048,0x085058,0x0d6070],temp:'33 °C',nodeco:73,causticColor:0x009999,freshwater:true}
 };
 
-// Flottabilité
+// L'eau de chaque site, pour la couleur :
+//  K   = coefficient d'atténuation diffuse (par mètre) du rouge, du vert, du bleu.
+//        Le rouge est absorbé dès les premiers mètres, le bleu va le plus loin ;
+//        en lac, les matières dissoutes mangent aussi le bleu (eau verte).
+//  eau = teinte de l'eau (diffusion) juste sous la surface ; elle s'assombrit
+//        avec la profondeur selon K.
+//  jour, soleil = intensité de la lumière du jour (ambiante, directe) à 0 m.
+const OPTIQUE={
+  roussay:   {K:[0.60,0.13,0.26],eau:[0.10,0.30,0.12],jour:0.75,soleil:0.9},
+  martinique:{K:[0.42,0.065,0.028],eau:[0.05,0.26,0.40],jour:0.75,soleil:1.6},
+  vlg:       {K:[0.32,0.06,0.05],eau:[0.04,0.10,0.18],jour:0.30,soleil:0.30},
+  nemo:      {K:[0.30,0.045,0.035],eau:[0.03,0.30,0.34],jour:0.60,soleil:1.0},
+};
+
+// Flottabilité (vraies unités : litres, kilos, bars)
+//  STAB_MAX : volume du gilet ; au-delà, la soupape de surpression lâche.
+//  GONFLAGE : débit de l'inflateur, en litres « surface » par seconde (le
+//             volume réellement ajouté au fond est divisé par la pression).
+//  PURGE    : débit de la purge de l'inflateur (tuyau levé), litres par seconde ;
+//  PURGE_RAPIDE : la tirette (purge haute/basse), bien plus forte.
+//  COMBI    : air piégé dans le néoprène à la surface (litres) : il s'écrase
+//             en profondeur (loi de Boyle) — on est plus lourd au fond.
+//  VMAX     : vitesse de remontée maximale (MN90 : 15 à 17 m/min).
 const STAB_MAX=16,LUNG_MIN=1.5,LUNG_MAX=6.0,LUNG_NEUTRAL=3.5;
+const PHYS={
+  GONFLAGE:2.5, PURGE:2.5, PURGE_RAPIDE:7,
+  MASSE:95,            // kg : plongeur + équipement (chacun)
+  MASSE_AJOUTEE:0.5,   // l'eau entraînée (+50 %)
+  CDA_SEUL:0.30, CDA_DEUX:0.50,   // traînée (m²) : un plongeur, puis les deux ensemble
+  VCONSEIL:15, VMAX:17,           // m/min
+};
+const COMBI={roussay:7,martinique:3,vlg:6,nemo:2.5};
 
 // État global partagé entre modules
 const G={
@@ -23,8 +53,14 @@ const G={
   gameTime:0,
   gasLevel:1.0,
   isDead:false,
-  playerStab:0,
+  playerStab:0,      // volume (L) dans le gilet, au fond
   victimStab:0,
+  gazJoueur:0,       // quantité d'air dans le gilet, en « litres surface » (bar·L)
+  gazBlesse:0,
+  lestJoueur:0,      // le reste du plongeur (lest, corps, bloc) : kg, négatif = coule
+  lestBlesse:0,
+  regardHaut:false,
+  purgeRapide:{player:false,victim:false},
   lung:LUNG_NEUTRAL,
   lungDir:0,
   buoyVelocity:0,

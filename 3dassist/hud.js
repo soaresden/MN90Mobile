@@ -133,13 +133,13 @@ function _arc(startDeg,endDeg,col,lw){
 // Flèches remontée style D5 — traits horizontaux empilés côté gauche
 function _drawAscentArrows(){
   const spd=G.rescued?Math.max(0,G.currentAscentSpeed):0;
-  // 5 niveaux : >0.5, >2, >5, >8, >11 m/min
+  // 5 niveaux (m/min) : vert jusqu'à 15, orange jusqu'à 17 (MN90), rouge au-delà
   const levels=[
-    {thr:0.5,  col:'#00cc44', label:'▲'},
-    {thr:2.0,  col:'#00cc44', label:'▲'},
-    {thr:5.0,  col:'#ffaa00', label:'▲'},
-    {thr:8.0,  col:'#ff6600', label:'▲'},
-    {thr:11.0, col:'#ff2200', label:'▲'},
+    {thr:3,  col:'#00cc44', label:'▲'},
+    {thr:7,  col:'#00cc44', label:'▲'},
+    {thr:11, col:'#00cc44', label:'▲'},
+    {thr:15, col:'#ffaa00', label:'▲'},
+    {thr:17, col:'#ff2200', label:'▲'},
   ];
   const x=CX-40, startY=CY+28;
   levels.forEach((lv,i)=>{
@@ -223,4 +223,21 @@ function _deathScreen(title,sub,col,btnCol){
   d.style.cssText='position:absolute;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);pointer-events:all;font-family:Courier New,monospace;';
   d.innerHTML=`<div style="color:${col};font-size:clamp(20px,4vw,38px);font-weight:bold;letter-spacing:6px;animation:db 1s infinite">${title}</div><div style="color:rgba(220,100,60,0.7);font-size:12px;letter-spacing:2px;margin-top:14px;max-width:400px;text-align:center;line-height:1.8">${sub}</div><button onclick="location.reload()" style="margin-top:28px;padding:11px 32px;background:rgba(150,60,0,0.2);border:1px solid rgba(200,80,0,0.4);border-radius:6px;color:${btnCol};font-family:Courier New,monospace;font-size:12px;letter-spacing:3px;cursor:pointer">RECOMMENCER</button><style>@keyframes db{0%,100%{opacity:1;text-shadow:0 0 24px ${col}}50%{opacity:0.5;text-shadow:0 0 48px ${col}}}</style>`;
   document.body.appendChild(d);
+}
+// ===== VARIOMÈTRE : la vitesse verticale, avec la limite MN90 =====
+function majVario(){
+  const el=document.getElementById('vario');
+  if(!el)return;
+  if(G.simStarted&&!G.isDead){
+    el.style.display='flex';
+    const h=document.getElementById('btn-haut');if(h)h.style.display='block';
+  }
+  const v=G.currentAscentSpeed||0;            // m/min, + = monte
+  const val=document.getElementById('vario-val');
+  if(val)val.textContent=(Math.abs(v)<0.5?'0':(v>0?'↑ ':'↓ ')+Math.abs(v).toFixed(0))+' m/min';
+  // Échelle 0 → 25 m/min : vert jusqu'à 15, orange jusqu'à 17, rouge au-delà
+  const c=document.getElementById('vario-curseur');
+  if(c)c.style.left=(Math.max(0,Math.min(25,v))/25*100)+'%';
+  el.classList.toggle('attention',v>PHYS.VCONSEIL&&v<=PHYS.VMAX);
+  el.classList.toggle('danger',v>PHYS.VMAX);
 }

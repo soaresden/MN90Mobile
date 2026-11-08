@@ -25,10 +25,11 @@ function startSim(){
     G.gasLevel=1.0;G.isDead=false;G.rescued=false;
     G.inPalier=false;G.palierDone=false;G.gameTime=0;
     G.fastAscentTime=0;G.buoyVelocity=0;
-    // Equilibre exact : base=-1.0 / coeff=0.85 = 1.176L
-    // Pas de variation aléatoire — on part strictement neutre
-    G.playerStab=1.18;
-    G.victimStab=0;G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;
+    // Au départ : parfaitement équilibré (1,5 L dans mon gilet)
+    G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;G.currentAscentSpeed=0;
+    G.gazBlesse=0;G.lestBlesse=0;
+    G.purgeRapide={player:false,victim:false};G.regardHaut=false;
+    equilibrerJoueur(G.selectedDepth);
     ascentLog.length=0;ascentLogTimer=0;
     gamePhase='dive';surface360Start=null;surface360TotalYaw=0;
     rescueTime=null;surfaceTime=null;
@@ -49,8 +50,8 @@ function startRescue(){
   document.getElementById('interact-prompt').style.display='none';
   document.getElementById('btn-interact').style.display='none';
   setAlert('BLESSÉ EN CHARGE','warn');
-  G.victimStab=0.5+Math.random()*1.5;
-  G.playerStab=Math.max(0.5,(4.12-G.victimStab));
+  // Le blessé est trop lourd : à moi de gérer les deux gilets
+  preparerBlesse(G.currentDepth||G.selectedDepth);
   G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;
   showBuoyPanels(true);
   updateBuoyHUD();
@@ -97,7 +98,7 @@ function triggerSuccess(){
   // Note — pénalité surpression
   let note=10;
   if(G.hadSurpression)note-=2;
-  if(maxSpeed>10)note-=2;else if(maxSpeed>8)note-=1;
+  if(maxSpeed>PHYS.VMAX)note-=2;else if(maxSpeed>PHYS.VCONSEIL)note-=1;
   if(gasUsed>150)note-=1;
   if(ascentTime>300)note-=1;
   if(ascentTime<60)note-=2;
@@ -213,20 +214,23 @@ function animate(){
     ascentLog.push({t:G.gameTime,depth:Math.round(depth*10)/10,speed:Math.abs(G.currentAscentSpeed)});
   }
 
-  const now=performance.now()/1000;
-  if(now-G.lastYTime>0.4){
-    G.currentAscentSpeed=(cam.position.y-G.lastY)/(now-G.lastYTime)*60;
-    G.lastY=cam.position.y;G.lastYTime=now;
-  }
+  // (La vitesse verticale vient de la physique : G.currentAscentSpeed, en m/min.)
+  majVario();
 
   // Phases
   if(gamePhase==='done')return;
 
-  if(G.rescued&&G.currentAscentSpeed>11){
+  if(G.rescued&&G.currentAscentSpeed>PHYS.VCONSEIL&&G.currentAscentSpeed<=PHYS.VMAX&&gamePhase==='dive'){
+    if(!G._lastSpeedAlert||G.gameTime-G._lastSpeedAlert>3){
+      G._lastSpeedAlert=G.gameTime;
+      setAlert('VITESSE LIMITE — PURGEZ UN PEU','warn');
+    }
+  }
+  if(G.rescued&&G.currentAscentSpeed>PHYS.VMAX){
     G.fastAscentTime+=dt;
     if(!G._lastSpeedAlert||G.gameTime-G._lastSpeedAlert>2){
       G._lastSpeedAlert=G.gameTime;
-      setAlert('TROP VITE ! MAX 10 m/min','danger');
+      setAlert('TROP VITE ! MAX '+PHYS.VCONSEIL+' m/min — PURGEZ','danger');
     }
     if(G.fastAscentTime>8&&!G.hadSurpression)triggerSurpressionPulmonaire();
   } else if(gamePhase==='surface_check'){

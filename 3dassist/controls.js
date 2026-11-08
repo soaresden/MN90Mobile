@@ -11,6 +11,21 @@ let _qYaw=null,_qPitch=null,_axisY=null,_axisX=null;
 function _applyYaw(delta){ yaw-=delta; while(yaw>Math.PI)yaw-=Math.PI*2; while(yaw<-Math.PI)yaw+=Math.PI*2; }
 function _applyPitch(delta){ pitch=Math.max(-Math.PI/2.5,Math.min(Math.PI/2.5,pitch-delta)); }
 
+// « Regarder en haut » : la tête bascule en douceur vers la surface tant
+// qu'on appuie, puis revient où elle était.
+let _pitchAvant=0,_retourRegard=false;
+function setRegardHaut(on){
+  if(on&&!G.regardHaut){_pitchAvant=pitch;_retourRegard=false;}
+  if(!on&&G.regardHaut)_retourRegard=true;
+  G.regardHaut=on;
+  const b=document.getElementById('btn-haut');if(b)b.classList.toggle('on',on);
+}
+function _suivreRegard(dt){
+  const k=Math.min(1,dt*3.5);
+  if(G.regardHaut)pitch+=(Math.PI/2.5-pitch)*k;
+  else if(_retourRegard){pitch+=(_pitchAvant-pitch)*k;if(Math.abs(_pitchAvant-pitch)<0.01)_retourRegard=false;}
+}
+
 document.addEventListener('keydown',e=>{
   if(!G.simStarted)return;
   switch(e.code){
@@ -23,6 +38,7 @@ document.addEventListener('keydown',e=>{
     case 'ControlLeft':case 'ControlRight':moveD=true;e.preventDefault();break;
     case 'KeyE':tryRescue();break;
     case 'KeyF':toggleTorch();break;
+    case 'KeyR':setRegardHaut(true);break;
   }
 });
 document.addEventListener('keyup',e=>{
@@ -33,6 +49,7 @@ document.addEventListener('keyup',e=>{
     case 'KeyD':moveR=false;break;
     case 'Space':moveU=false;break;
     case 'ShiftLeft':case 'ShiftRight':case 'ControlLeft':case 'ControlRight':moveD=false;break;
+    case 'KeyR':setRegardHaut(false);break;
   }
 });
 
@@ -62,6 +79,7 @@ function applyMovement(dt){
     _axisY=new THREE.Vector3(0,1,0);
     _axisX=new THREE.Vector3(1,0,0);
   }
+  _suivreRegard(dt);
   _qYaw.setFromAxisAngle(_axisY,yaw);
   _qPitch.setFromAxisAngle(_axisX,pitch);
   cam.quaternion.multiplyQuaternions(_qYaw,_qPitch);

@@ -11,6 +11,7 @@ const camera=new THREE.PerspectiveCamera(85,W/H,0.05,300);
 window._camera=camera; // exposé pour hud.js
 
 let ambient,caustic,water,armGroup=null;
+let fenetreSnell=null;
 let victimModel=null,victimMixer=null;
 let bubbles3D=[];
 // VP sera défini dynamiquement quand la caméra est positionnée
@@ -40,6 +41,7 @@ function buildScene(site,onReady){
   ambient=new THREE.AmbientLight(site.ambientColor,site.ambientInt);scene.add(ambient);
   window._ambient=ambient;
   const sun=new THREE.DirectionalLight(site.sunColor,site.sunInt);sun.position.set(5,20,3);scene.add(sun);
+  window._sun=sun;fenetreSnell=null;
   caustic=new THREE.PointLight(site.causticColor,0.5,30);caustic.position.set(0,-5,0);scene.add(caustic);
 
   if(G.selectedSiteKey==='vlg'||G.selectedSiteKey==='nemo'){
@@ -178,13 +180,38 @@ function _buildPoolScene(site){
   }
 
   // Surface
-  water=new THREE.Mesh(
-    new THREE.CircleGeometry(radius,32),
-    new THREE.MeshLambertMaterial({color:site.waterColor,transparent:true,opacity:0.6,side:THREE.DoubleSide})
-  );
-  water.rotation.set(-Math.PI/2,0,0);water.position.y=0.3;scene.add(water);
+  _surfaceEau(new THREE.CircleGeometry(radius,32),site);
 
   console.log('[scene]',isNemo?'Nemo 33':'Fosse VLG','construite — r='+radius+' depth='+depth);
+}
+
+// ===== LA SURFACE, VUE D'EN DESSOUS =====
+// Hors d'un cône de 97° au-dessus de soi, la lumière du ciel ne passe pas
+// (réflexion totale) : la surface y fait miroir et paraît sombre. Dans le
+// cône, la « fenêtre de Snell » : un disque lumineux, centré au-dessus du
+// plongeur, de rayon profondeur × tan(48,6°).
+function _surfaceEau(geo,site){
+  water=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:site.waterColor,transparent:true,opacity:0.88,side:THREE.DoubleSide}));
+  water.rotation.set(-Math.PI/2,0,0);water.position.y=0.4;scene.add(water);
+  const c=document.createElement('canvas');c.width=c.height=256;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(128,128,0,128,128,128);
+  g.addColorStop(0,'rgba(255,255,255,1)');
+  g.addColorStop(0.6,'rgba(225,245,255,0.95)');
+  g.addColorStop(0.88,'rgba(160,215,245,0.75)');
+  g.addColorStop(0.97,'rgba(120,190,235,0.35)');
+  g.addColorStop(1,'rgba(120,190,235,0)');
+  x.fillStyle=g;x.fillRect(0,0,256,256);
+  // Le soleil, un peu décentré, et quelques rides de la surface
+  const s=x.createRadialGradient(160,100,0,160,100,34);
+  s.addColorStop(0,'rgba(255,255,240,1)');s.addColorStop(1,'rgba(255,255,240,0)');
+  x.fillStyle=s;x.fillRect(0,0,256,256);
+  x.strokeStyle='rgba(255,255,255,0.25)';x.lineWidth=2;
+  for(let i=0;i<26;i++){const a=Math.random()*Math.PI*2,r=Math.random()*100;x.beginPath();x.arc(128+Math.cos(a)*r,128+Math.sin(a)*r,4+Math.random()*10,0,Math.PI*(0.6+Math.random()));x.stroke();}
+  fenetreSnell=new THREE.Mesh(new THREE.CircleGeometry(1,48),
+    new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,side:THREE.DoubleSide}));
+  fenetreSnell.rotation.set(-Math.PI/2,0,0);fenetreSnell.renderOrder=2;scene.add(fenetreSnell);
+  window._fenetreSnell=fenetreSnell;
 }
 
 // ===== CHARGEMENT ANIMAUX GLB =====
@@ -329,11 +356,7 @@ function _buildNaturalScene(site){
   scene.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x88bbcc,size:0.055,transparent:true,opacity:0.3})));
 
   // Surface
-  water=new THREE.Mesh(
-    new THREE.PlaneGeometry(200,200,8,8),
-    new THREE.MeshLambertMaterial({color:site.waterColor,transparent:true,opacity:0.5,side:THREE.DoubleSide})
-  );
-  water.rotation.set(-Math.PI/2,0,0);water.position.y=0.5;scene.add(water);
+  _surfaceEau(new THREE.PlaneGeometry(200,200,8,8),site);
 
   // Bateaux en surface
   _buildBoats(siteKey);
@@ -721,11 +744,19 @@ function updateBubbles(dt){
 // ===== SCENE ANIMATE =====
 function sceneAnimate(dt,gameTime){
   if(caustic){
-    caustic.intensity=0.4+Math.sin(gameTime*1.9)*0.14;
+    // Les caustiques (le soleil ondulé par la surface) s'effacent avec la profondeur
+    const prof=Math.max(0,-camera.position.y);
+    caustic.intensity=(0.4+Math.sin(gameTime*1.9)*0.14)*Math.exp(-prof/7);
     caustic.position.x=Math.sin(gameTime*0.4)*4;
     caustic.position.z=Math.cos(gameTime*0.35)*4;
   }
   if(water)water.position.y=0.4+Math.sin(gameTime*0.6)*0.07;
+  if(fenetreSnell&&water){
+    const d=Math.max(0.3,water.position.y-camera.position.y);
+    const r=d*Math.tan(48.6*Math.PI/180);
+    fenetreSnell.scale.set(r,r,1);
+    fenetreSnell.position.set(camera.position.x,water.position.y-0.03,camera.position.z);
+  }
   updateVictim(dt,gameTime);
   updateArmPosition(gameTime);
 

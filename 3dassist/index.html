@@ -104,11 +104,59 @@ canvas{display:block;position:absolute;top:0;left:0}
 .btn-purge{background:rgba(200,80,0,0.14);border-color:rgba(200,80,0,0.35);color:#ff8844}
 .btn-insp{background:rgba(0,180,100,0.16);border-color:rgba(0,180,100,0.35);color:#44dd88}
 .btn-exp{background:rgba(180,60,0,0.14);border-color:rgba(180,60,0,0.3);color:#ff6633}
-#panel-victim{top:12px;right:10px;width:148px}
-#panel-self{bottom:155px;left:10px;width:140px}
-#panel-victim-purge{top:12px;left:10px;width:148px}
-#panel-purge-me{top:200px;left:10px;width:140px}
-#panel-lung{top:45%;right:170px;transform:translateY(-50%);width:148px}
+#panel-lung{top:45%;right:128px;transform:translateY(-50%);width:140px}
+
+/* ===== INFLATEURS (direct system) : le mien à gauche, le sien à droite ===== */
+.inflateur{position:absolute;top:44px;display:none;flex-direction:column;align-items:center;gap:3px;z-index:60;pointer-events:all;
+  font-family:'Rajdhani',sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#inf-moi{left:8px}
+#inf-lui{right:8px}
+.inf-tete{display:flex;flex-direction:column;align-items:center;line-height:1.05;background:rgba(0,8,20,0.7);border:1px solid rgba(80,160,220,0.25);
+  border-radius:8px;padding:3px 8px;min-width:84px}
+.inf-nom{font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(120,190,255,0.75)}
+#inf-lui .inf-nom{color:rgba(205,150,255,0.85)}
+.inf-vol{font-size:15px;font-weight:700;color:#fff}
+.inf-corps{display:flex;align-items:flex-start;gap:5px}
+#inf-lui .inf-corps{flex-direction:row-reverse}
+.inf-gilet{width:14px;height:118px;margin-top:22px;border-radius:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);
+  position:relative;overflow:hidden}
+.inf-jauge{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,#1a7fd6,#7cc4ff);transition:height .2s}
+#inf-lui .inf-jauge{background:linear-gradient(0deg,#8a3fc6,#d39bff)}
+.inflateur.plein .inf-gilet{border-color:#ff5533;box-shadow:0 0 8px #ff5533}
+.inf-direct{position:relative;width:60px;height:160px}
+.inf-direct svg{position:absolute;inset:0;width:60px;height:160px;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+.inf-btn{position:absolute;border:0;padding:0;cursor:pointer;color:#fff;font:700 15px/1 'Rajdhani',sans-serif;display:grid;place-items:center;
+  touch-action:none;transition:transform .06s,filter .06s;-webkit-tap-highlight-color:transparent}
+.inf-btn.gonfler{left:14px;top:79px;width:32px;height:32px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#bcd8f7 0,#5f93cf 45%,#2a5a96 100%);
+  box-shadow:inset 0 -3px 4px rgba(0,0,0,.35),0 0 0 3px #1c2f45,0 2px 3px rgba(0,0,0,.5)}
+.inf-btn.purger{left:15px;top:132px;width:30px;height:19px;border-radius:8px 8px 10px 10px;
+  background:radial-gradient(ellipse at 40% 30%,#ffc0a3 0,#ef6a3c 50%,#a8300f 100%);
+  box-shadow:inset 0 -3px 4px rgba(0,0,0,.35),0 0 0 2px #3b1a10,0 2px 3px rgba(0,0,0,.5)}
+.inf-btn.actif{transform:scale(.88);filter:brightness(1.25)}
+.inf-legende{font-size:8.5px;font-weight:600;letter-spacing:.5px;color:rgba(200,225,255,0.6);text-align:center;line-height:1.25}
+.inf-tirette{display:flex;flex-direction:column;align-items:center;gap:0;border:0;background:none;padding:0;cursor:pointer;touch-action:none}
+.inf-tirette .cordon{width:2px;height:10px;background:#bbb}
+.inf-tirette .boule{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9b8a 0,#e0251b 55%,#8b0e08 100%);
+  box-shadow:0 2px 4px rgba(0,0,0,.5);transition:transform .06s}
+.inf-tirette.actif .boule{transform:translateY(6px) scale(.92)}
+.inf-tirette .txt{font-size:8px;font-weight:700;letter-spacing:1px;color:rgba(255,150,130,0.8);margin-top:2px}
+
+/* ===== VARIOMÈTRE et « regarder en haut » ===== */
+#vario{position:absolute;top:60px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:8px;pointer-events:none;
+  background:rgba(0,8,20,0.72);border:1px solid rgba(80,160,220,0.25);border-radius:8px;padding:4px 10px;font-family:'Rajdhani',sans-serif}
+#vario .v-val{font-size:18px;font-weight:700;color:#fff;min-width:92px;text-align:right}
+#vario .v-echelle{position:relative;width:110px;height:8px;border-radius:4px;
+  background:linear-gradient(90deg,#1d8f4e 0,#1d8f4e 60%,#d99a1c 60%,#d99a1c 68%,#c62a1e 68%,#c62a1e 100%)}
+#vario .v-curseur{position:absolute;top:-4px;width:3px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 4px #000;transform:translateX(-1px)}
+#vario .v-aide{font-size:9px;letter-spacing:1px;color:rgba(200,225,255,0.6)}
+#vario.attention .v-val{color:#ffb23a}
+#vario.danger .v-val{color:#ff4433;animation:vario-cli .5s infinite}
+@keyframes vario-cli{50%{opacity:.35}}
+#btn-haut{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:none;pointer-events:all;touch-action:none;cursor:pointer;
+  background:rgba(0,8,20,0.75);border:1px solid rgba(120,200,255,0.4);border-radius:22px;padding:8px 16px;color:rgba(170,225,255,0.95);
+  font:700 11px 'Rajdhani',sans-serif;letter-spacing:2px;user-select:none;-webkit-user-select:none}
+#btn-haut.on{background:rgba(40,120,200,0.55);border-color:#9fd8ff;color:#fff}
 
 /* ===== ÉCRAN TITRE ===== */
 #start-screen{
@@ -280,29 +328,56 @@ canvas{display:block;position:absolute;top:0;left:0}
   <div class="joystick-zone" id="joy-left"><div class="joy-base"></div><div class="joy-stick" id="joy-left-stick"></div><div class="joy-label">NAGER</div></div>
   <div class="joystick-zone" id="joy-right"><div class="joy-base"></div><div class="joy-stick" id="joy-right-stick"></div><div class="joy-label">CAMÉRA</div></div>
   <div id="btn-interact" onclick="tryRescue()">AIDER</div>
-  <div class="buoy-panel" id="panel-victim">
-    <div class="buoy-title">Stab blessé</div>
-    <div class="buoy-val" id="v-stab-val">0.0 L</div>
-    <div class="buoy-bar-wrap"><div class="buoy-bar" id="v-stab-bar" style="background:#aa44cc;width:0%"></div></div>
-    <div class="buoy-btn btn-inflate" onmousedown="inflatePush('victim',true)" onmouseup="inflatePush('victim',false)" ontouchstart="inflatePush('victim',true);event.preventDefault()" ontouchend="inflatePush('victim',false)">▲ SON GONFLAGE</div>
+  <div class="inflateur" id="inf-moi">
+    <div class="inf-tete"><span class="inf-nom">MA STAB</span><span class="inf-vol" id="inf-moi-vol">0.0 L</span></div>
+    <div class="inf-corps">
+      <div class="inf-gilet" title="Volume d'air dans le gilet"><div class="inf-jauge" id="inf-moi-jauge"></div></div>
+      <div class="inf-direct">
+        <svg viewBox="0 0 60 160" aria-hidden="true">
+          <defs>
+            <linearGradient id="gaine-inf-moi" x1="0" x2="1"><stop offset="0" stop-color="#15181b"/><stop offset=".45" stop-color="#4a5057"/><stop offset="1" stop-color="#121417"/></linearGradient>
+            <linearGradient id="tete-inf-moi" x1="0" x2="1"><stop offset="0" stop-color="#1c2024"/><stop offset=".4" stop-color="#5a626b"/><stop offset="1" stop-color="#181b1f"/></linearGradient>
+          </defs>
+          <rect x="21" y="0" width="18" height="70" fill="url(#gaine-inf-moi)"/>
+          <g stroke="#0b0c0e" stroke-width="1.6" opacity=".75"><line x1="21" y1="4" x2="39" y2="4"/><line x1="21" y1="9" x2="39" y2="9"/><line x1="21" y1="14" x2="39" y2="14"/><line x1="21" y1="19" x2="39" y2="19"/><line x1="21" y1="24" x2="39" y2="24"/><line x1="21" y1="29" x2="39" y2="29"/><line x1="21" y1="34" x2="39" y2="34"/><line x1="21" y1="39" x2="39" y2="39"/><line x1="21" y1="44" x2="39" y2="44"/><line x1="21" y1="49" x2="39" y2="49"/><line x1="21" y1="54" x2="39" y2="54"/><line x1="21" y1="59" x2="39" y2="59"/><line x1="21" y1="64" x2="39" y2="64"/><line x1="21" y1="69" x2="39" y2="69"/></g>
+          <rect x="17" y="66" width="26" height="9" rx="2" fill="#8a9097"/>
+          <rect x="12" y="72" width="36" height="82" rx="13" fill="url(#tete-inf-moi)"/>
+          <rect x="47" y="112" width="11" height="15" rx="4" fill="#2a2e33"/>
+          <rect x="49" y="115" width="8" height="9" rx="2" fill="#15181b"/>
+        </svg>
+        <button class="inf-btn gonfler" data-qui="player" data-action="gonfler" title="Gonfler (maintenir)">＋</button>
+        <button class="inf-btn purger" data-qui="player" data-action="purger" title="Purger (tuyau levé, maintenir)">−</button>
+      </div>
+    </div>
+    <div class="inf-legende">＋ gonfler · − purger</div>
+    <button class="inf-tirette" data-qui="player" data-action="rapide" title="Purge rapide (tirette)"><span class="cordon"></span><span class="boule"></span><span class="txt">PURGE RAPIDE</span></button>
   </div>
-  <div class="buoy-panel" id="panel-self">
-    <div class="buoy-title">Mon direct system</div>
-    <div class="buoy-val" id="p-stab-val">0.0 L</div>
-    <div class="buoy-bar-wrap"><div class="buoy-bar" id="p-stab-bar" style="background:#0088dd;width:0%"></div></div>
-    <div class="buoy-btn btn-inflate" onmousedown="inflatePush('player',true)" onmouseup="inflatePush('player',false)" ontouchstart="inflatePush('player',true);event.preventDefault()" ontouchend="inflatePush('player',false)">▲ MON GONFLAGE</div>
+  <div class="inflateur" id="inf-lui">
+    <div class="inf-tete"><span class="inf-nom">SA STAB</span><span class="inf-vol" id="inf-lui-vol">0.0 L</span></div>
+    <div class="inf-corps">
+      <div class="inf-gilet" title="Volume d'air dans le gilet"><div class="inf-jauge" id="inf-lui-jauge"></div></div>
+      <div class="inf-direct">
+        <svg viewBox="0 0 60 160" aria-hidden="true">
+          <defs>
+            <linearGradient id="gaine-inf-lui" x1="0" x2="1"><stop offset="0" stop-color="#15181b"/><stop offset=".45" stop-color="#4a5057"/><stop offset="1" stop-color="#121417"/></linearGradient>
+            <linearGradient id="tete-inf-lui" x1="0" x2="1"><stop offset="0" stop-color="#1c2024"/><stop offset=".4" stop-color="#5a626b"/><stop offset="1" stop-color="#181b1f"/></linearGradient>
+          </defs>
+          <rect x="21" y="0" width="18" height="70" fill="url(#gaine-inf-lui)"/>
+          <g stroke="#0b0c0e" stroke-width="1.6" opacity=".75"><line x1="21" y1="4" x2="39" y2="4"/><line x1="21" y1="9" x2="39" y2="9"/><line x1="21" y1="14" x2="39" y2="14"/><line x1="21" y1="19" x2="39" y2="19"/><line x1="21" y1="24" x2="39" y2="24"/><line x1="21" y1="29" x2="39" y2="29"/><line x1="21" y1="34" x2="39" y2="34"/><line x1="21" y1="39" x2="39" y2="39"/><line x1="21" y1="44" x2="39" y2="44"/><line x1="21" y1="49" x2="39" y2="49"/><line x1="21" y1="54" x2="39" y2="54"/><line x1="21" y1="59" x2="39" y2="59"/><line x1="21" y1="64" x2="39" y2="64"/><line x1="21" y1="69" x2="39" y2="69"/></g>
+          <rect x="17" y="66" width="26" height="9" rx="2" fill="#8a9097"/>
+          <rect x="12" y="72" width="36" height="82" rx="13" fill="url(#tete-inf-lui)"/>
+          <rect x="47" y="112" width="11" height="15" rx="4" fill="#2a2e33"/>
+          <rect x="49" y="115" width="8" height="9" rx="2" fill="#15181b"/>
+        </svg>
+        <button class="inf-btn gonfler" data-qui="victim" data-action="gonfler" title="Gonfler (maintenir)">＋</button>
+        <button class="inf-btn purger" data-qui="victim" data-action="purger" title="Purger (tuyau levé, maintenir)">−</button>
+      </div>
+    </div>
+    <div class="inf-legende">＋ gonfler · − purger</div>
+    <button class="inf-tirette" data-qui="victim" data-action="rapide" title="Purge rapide (tirette)"><span class="cordon"></span><span class="boule"></span><span class="txt">PURGE RAPIDE</span></button>
   </div>
-
-  <div class="buoy-panel" id="panel-victim-purge">
-    <div class="buoy-title">Stab blessé — purge</div>
-    <div class="buoy-val" id="v-purge-val">0.0 L</div>
-    <div class="buoy-bar-wrap"><div class="buoy-bar" id="v-purge-bar" style="background:#aa44cc;width:0%"></div></div>
-    <div class="buoy-btn btn-purge" onmousedown="purgePush('victim',true)" onmouseup="purgePush('victim',false)" ontouchstart="purgePush('victim',true);event.preventDefault()" ontouchend="purgePush('victim',false)">▼ SA PURGE</div>
-  </div>
-  <div class="buoy-panel" id="panel-purge-me">
-    <div class="buoy-title">Ma stab</div>
-    <div class="buoy-btn btn-purge" onmousedown="purgePush('player',true)" onmouseup="purgePush('player',false)" ontouchstart="purgePush('player',true);event.preventDefault()" ontouchend="purgePush('player',false)">▼ MA PURGE</div>
-  </div>
+  <div id="vario"><span class="v-val" id="vario-val">0 m/min</span><span class="v-echelle"><span class="v-curseur" id="vario-curseur"></span></span><span class="v-aide">max 15</span></div>
+  <div id="btn-haut" title="Regarder la surface (maintenir) — touche R">👀 REGARDER EN HAUT</div>
   <div class="buoy-panel" id="panel-lung">
     <div class="buoy-title">Poumon ballast</div>
     <div class="buoy-val" id="lung-val">3.5 L</div>
@@ -326,7 +401,7 @@ canvas{display:block;position:absolute;top:0;left:0}
       <div class="ss-obj-title">Objectifs</div>
       <div class="ss-objectives">
         <div class="ss-obj"><span class="ss-obj-n">1</span><div><span class="ss-obj-t">Trouvez le blessé</span><span class="ss-obj-d">Approchez-vous · touche E</span></div></div>
-        <div class="ss-obj"><span class="ss-obj-n">2</span><div><span class="ss-obj-t">Gérez la flottabilité</span><span class="ss-obj-d">Stabs + poumon · max 10 m/min</span></div></div>
+        <div class="ss-obj"><span class="ss-obj-n">2</span><div><span class="ss-obj-t">Gérez la flottabilité</span><span class="ss-obj-d">Stabs + poumon · 15 m/min max (MN90)</span></div></div>
         <div class="ss-obj"><span class="ss-obj-n">3</span><div><span class="ss-obj-t">Palier 3 m · 60 s</span><span class="ss-obj-d">Stop obligatoire avant surface</span></div></div>
         <div class="ss-obj"><span class="ss-obj-n">4</span><div><span class="ss-obj-t">360° en surface</span><span class="ss-obj-d">Stabilisez à 5–6 m · guettez bateaux</span></div></div>
       </div>
@@ -394,15 +469,15 @@ canvas{display:block;position:absolute;top:0;left:0}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="config.js?v=1774199920"></script>
-<script src="hud.js?v=1774199920"></script>
-<script src="scene.js?v=1774199920"></script>
-<script src="buoyancy.js?v=1774199920"></script>
-<script src="sound.js?v=1774199920"></script>
-<script src="lowair.js?v=1774199920"></script>
-<script src="effects.js?v=1774199920"></script>
-<script src="controls.js?v=1774199920"></script>
-<script src="game.js?v=1774199920"></script>
+<script src="config.js?v=1774300000"></script>
+<script src="hud.js?v=1774300000"></script>
+<script src="scene.js?v=1774300000"></script>
+<script src="buoyancy.js?v=1774300000"></script>
+<script src="sound.js?v=1774300000"></script>
+<script src="lowair.js?v=1774300000"></script>
+<script src="effects.js?v=1774300000"></script>
+<script src="controls.js?v=1774300000"></script>
+<script src="game.js?v=1774300000"></script>
 
 <script>
 // Previews sites — après chargement de tous les scripts
