@@ -120,8 +120,8 @@ function applyMovement(dt){
   // Flottabilité Y — appliquée séparément, jamais écrasée
   cam.position.y+=G.buoyVelocity*dt;
   const minY=-(G.currentSite.depthMax+0.5);
-  const floorY=-G.selectedDepth; // plancher = profondeur de départ
-  // Empêcher de descendre plus bas que la profondeur choisie
+  // Le vrai fond (les yeux restent ~0,7 m au-dessus, allongé) : trop lourd, on coule jusqu'à lui
+  const floorY=(G.fondY!=null?G.fondY:-G.selectedDepth-1.6)+0.7;
   if(cam.position.y<floorY&&G.buoyVelocity<0){
     G.buoyVelocity=0;
     cam.position.y=floorY;

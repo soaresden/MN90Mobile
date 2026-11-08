@@ -180,6 +180,12 @@ function updateBuoyHUD(){
   setH('inf-lui-jauge',G.victimStab/STAB_MAX*100);
   const plein=(id,v)=>{const e=document.getElementById(id);if(e)e.classList.toggle('plein',v>=STAB_MAX-0.05);};
   plein('inf-moi',G.playerStab);plein('inf-lui',G.victimStab);
+  // Le gilet s'allume quand il se remplit (gonflage, ou l'air qui se dilate en montant) ou se vide
+  const etat=(id,qui,vol)=>{const e=document.getElementById(id);if(!e)return;
+    const prev=e._vol??vol;e._vol=vol;
+    e.classList.toggle('gonfle',G.inflating[qui]||vol-prev>0.0004);
+    e.classList.toggle('purge',G.purging[qui]||G.purgeRapide[qui]||vol-prev<-0.0004);};
+  etat('inf-moi','player',G.playerStab);etat('inf-lui','victim',G.victimStab);
   set('lung-val',(G.lung+(G.respiration||0)).toFixed(1)+' L');
   const lb=document.getElementById('lung-bar');if(lb)lb.style.width=((G.lung-LUNG_MIN)/(LUNG_MAX-LUNG_MIN)*100)+'%';
   set('lung-sub',G.lung>LUNG_NEUTRAL+0.3?'INSPIRÉ':G.lung<LUNG_NEUTRAL-0.3?'EXPIRÉ':'NEUTRE');

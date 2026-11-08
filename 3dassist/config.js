@@ -60,6 +60,7 @@ const G={
   lestJoueur:0,      // le reste du plongeur (lest, corps, bloc) : kg, négatif = coule
   lestBlesse:0,
   regardHaut:false,
+  fondY:null,        // hauteur du fond (y), posée par la scène
   purgeRapide:{player:false,victim:false},
   lung:LUNG_NEUTRAL,
   lungDir:0,

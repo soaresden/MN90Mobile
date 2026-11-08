@@ -85,6 +85,7 @@ function _buildPoolScene(site){
     new THREE.MeshLambertMaterial({color:floorCol})
   );
   floor.rotation.set(-Math.PI/2,0,0);floor.position.y=-depth;scene.add(floor);
+  G.fondY=-depth;
 
   // Grille sol
   const step=isNemo?1.25:1;
@@ -355,6 +356,7 @@ function _buildNaturalScene(site){
   fg.computeVertexNormals();
   const fl=new THREE.Mesh(fg,new THREE.MeshLambertMaterial({color:site.floorColor}));
   fl.rotation.set(-Math.PI/2,0,0);fl.position.y=-maxDepth-2;scene.add(fl);
+  G.fondY=-maxDepth-2;
 
   // Rochers
   for(let i=0;i<30;i++){

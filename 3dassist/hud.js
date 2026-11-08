@@ -238,6 +238,9 @@ function majVario(){
   // Échelle 0 → 25 m/min : vert jusqu'à 15, orange jusqu'à 17, rouge au-delà
   const c=document.getElementById('vario-curseur');
   if(c)c.style.left=(Math.max(0,Math.min(25,v))/25*100)+'%';
+  // Flottabilité de l'ensemble (moi + le blessé) : + monte, − coule
+  const pd=document.getElementById('vario-poids'),B=G.flottabilite||0;
+  if(pd){pd.textContent='⚖ '+(B>0.05?'+':'')+B.toFixed(1)+' kg';pd.classList.toggle('lourd',B<-0.3);pd.classList.toggle('leger',B>0.3);}
   el.classList.toggle('attention',v>PHYS.VCONSEIL&&v<=PHYS.VMAX);
   el.classList.toggle('danger',v>PHYS.VMAX);
 }
