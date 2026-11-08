@@ -220,7 +220,23 @@ function _surfaceEau(geo,site){
     new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,side:THREE.DoubleSide}));
   fenetreSnell.rotation.set(-Math.PI/2,0,0);fenetreSnell.renderOrder=2;scene.add(fenetreSnell);
   window._fenetreSnell=fenetreSnell;
+  // La surface est la chose la plus claire sous l'eau : le voile de l'eau ne l'efface pas
+  water.material.fog=false;fenetreSnell.material.fog=false;
+  window._water=water;
+  // Les rayons de soleil qui descendent de la surface (sites naturels)
+  _rayons.length=0;
+  if(G.selectedSiteKey!=='vlg'&&G.selectedSiteKey!=='nemo'){
+    for(let i=0;i<7;i++){
+      const h=14+Math.random()*10;
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(0.4+Math.random()*0.6,1.6+Math.random()*1.8,h,14,1,true),
+        new THREE.MeshBasicMaterial({color:0xbfe6ff,transparent:true,opacity:0.05,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false}));
+      m.userData={dx:(Math.random()-0.5)*18,dz:(Math.random()-0.5)*18,h,ph:Math.random()*6.3,op:0.035+Math.random()*0.04};
+      m.rotation.z=0.12;m.rotation.x=0.05;
+      scene.add(m);_rayons.push(m);
+    }
+  }
 }
+const _rayons=[];
 
 // ===== CHARGEMENT ANIMAUX GLB =====
 let _catfishMixer=null;
@@ -904,6 +920,13 @@ function sceneAnimate(dt,gameTime){
     const r=d*Math.tan(48.6*Math.PI/180);
     fenetreSnell.scale.set(r,r,1);
     fenetreSnell.position.set(camera.position.x,water.position.y-0.03,camera.position.z);
+  }
+  // Les rayons suivent le plongeur (comme le soleil), ondulent et s'éteignent en profondeur
+  const profR=Math.max(0,-camera.position.y);
+  for(const r of _rayons){
+    const u=r.userData;
+    r.position.set(camera.position.x+u.dx,0.4-u.h/2,camera.position.z+u.dz);
+    r.material.opacity=u.op*(0.6+0.4*Math.sin(gameTime*0.7+u.ph))*Math.exp(-profR/18);
   }
   updateVictim(dt,gameTime);
   updateArmPosition(gameTime);

@@ -98,8 +98,13 @@ function applyDepthColor(depth,bar){
   if(window._sun){window._sun.intensity=1;window._sun.color.setRGB(o.soleil*T[0],o.soleil*T[1],o.soleil*T[2]);}
   // Le ciel vu à travers la fenêtre de Snell : même teinte, moins lumineux en profondeur
   if(window._fenetreSnell){
-    const m=Math.max(...T),lum=0.8*Math.pow(m,0.8);
-    window._fenetreSnell.material.color.setRGB(T[0]/m*lum,T[1]/m*lum,T[2]/m*lum);
+    const m=Math.max(...T),lum=0.5+0.5*Math.pow(m,0.5);
+    window._fenetreSnell.material.color.setRGB(Math.min(1,T[0]/m*lum+0.15),T[1]/m*lum,T[2]/m*lum);
+  }
+  // Hors de la fenêtre, la surface fait miroir : un plafond plus clair que l'eau autour
+  if(window._water){
+    const f=scene.fog?scene.fog.color:{r:0,g:0,b:0};
+    window._water.material.color.setRGB(Math.min(1,f.r*3+0.04),Math.min(1,f.g*3+0.07),Math.min(1,f.b*3+0.1));
   }
   // La lampe : blanche, mais l'eau mange déjà le rouge sur l'aller-retour (≈ 2 m)
   if(_torchLight){

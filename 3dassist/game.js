@@ -195,15 +195,19 @@ const clock=new THREE.Clock();
 
 function animate(){
   requestAnimationFrame(animate);
-  const dt=Math.min(clock.getDelta(),0.05); // cap à 50ms max (20fps min)
+  const dt=Math.min(clock.getDelta(),0.15); // un téléphone qui rame ne doit pas ralentir la physique
   if(!G.simStarted){sceneAnimate(dt,0);return;}
   if(G.isDead&&gamePhase==='done'){renderer.render(scene,window._camera);return;}
 
   G.gameTime+=dt;
   const cam=window._camera;
 
-  applyMovement(dt);
-  processBuoyancy(dt,Math.abs(Math.min(0,cam.position.y)));
+  // La physique avance par petits pas (≤ 25 ms), même quand l'image rame
+  const pas=Math.ceil(dt/0.025);
+  for(let i=0;i<pas;i++){
+    applyMovement(dt/pas);
+    processBuoyancy(dt/pas,Math.abs(Math.min(0,cam.position.y)));
+  }
 
   const depth=Math.abs(Math.min(0,cam.position.y));
 
