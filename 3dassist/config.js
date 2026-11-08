@@ -34,7 +34,7 @@ const OPTIQUE={
 const STAB_MAX=16,LUNG_MIN=1.5,LUNG_MAX=6.0,LUNG_NEUTRAL=3.5;
 const PHYS={
   GONFLAGE:2.5, PURGE:5, PURGE_RAPIDE:12,
-  MASSE:95,            // kg : plongeur + équipement (chacun)
+  MASSE:95,            // kg : plongeur + équipement (valeur par défaut ; tirée au hasard par plongeur)
   MASSE_AJOUTEE:0.5,   // l'eau entraînée (+50 %)
   CDA_SEUL:0.30, CDA_DEUX:0.50,   // traînée (m²) : un plongeur, puis les deux ensemble
   VCONSEIL:15, VMAX:17,           // m/min

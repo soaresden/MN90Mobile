@@ -25,18 +25,23 @@ function flottabilites(d){
 }
 function buoyForce(){ return flottabilites(G.currentDepth||0).total; }
 
-/** Au départ : j'ai 1,5 L dans mon gilet et je suis parfaitement équilibré. */
-function equilibrerJoueur(d){
+/**
+ * Chacun part équilibré, mais pas avec le même air dans le gilet : on ne
+ * pèse pas pareil, on n'a pas le même lest. Le volume (et la masse, pour
+ * l'inertie) est tiré au hasard ; le lest est réglé pour être neutre.
+ */
+function _equilibrer(d){
   const P=pressionA(d),rho=rhoEau()/1000;
-  G.gazJoueur=1.5*P;
-  G.lestJoueur=-(1.5+combiSurface()/P)*rho;
+  const v=1+Math.random()*3;                      // 1 à 4 L dans le gilet
+  return {gaz:v*P,lest:-(v+combiSurface()/P)*rho,masse:75+Math.random()*35};   // 75 à 110 kg équipé
 }
-/** Le blessé : un peu d'air dans son gilet, mais il coule (1 à 2,5 kg trop lourd). */
+function equilibrerJoueur(d){
+  const e=_equilibrer(d);
+  G.gazJoueur=e.gaz;G.lestJoueur=e.lest;G.masseJoueur=e.masse;
+}
 function preparerBlesse(d){
-  const P=pressionA(d),rho=rhoEau()/1000;
-  const v=0.5+Math.random()*1.5;
-  G.gazBlesse=v*P;
-  G.lestBlesse=-(v+combiSurface()/P)*rho-(1+Math.random()*1.5);
+  const e=_equilibrer(d);
+  G.gazBlesse=e.gaz;G.lestBlesse=e.lest;G.masseBlesse=e.masse;
 }
 
 function inflatePush(who,on){
@@ -127,7 +132,7 @@ function processBuoyancy(dt,depth){
   G.flottabilite=f.total;
   const rho=rhoEau();
   const deux=G.rescued;
-  const masse=(deux?2:1)*PHYS.MASSE*(1+PHYS.MASSE_AJOUTEE);
+  const masse=((G.masseJoueur||PHYS.MASSE)+(deux?(G.masseBlesse||PHYS.MASSE):0))*(1+PHYS.MASSE_AJOUTEE);
   const cda=deux?PHYS.CDA_DEUX:PHYS.CDA_SEUL;
   const v=G.buoyVelocity;
   const trainee=0.5*rho*cda*v*Math.abs(v);

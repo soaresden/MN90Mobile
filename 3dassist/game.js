@@ -25,7 +25,7 @@ function startSim(){
     G.gasLevel=1.0;G.isDead=false;G.rescued=false;
     G.inPalier=false;G.palierDone=false;G.gameTime=0;
     G.fastAscentTime=0;G.buoyVelocity=0;
-    // Au départ : parfaitement équilibré (1,5 L dans mon gilet)
+    // Au départ : équilibré (l'air dans mon gilet dépend de mon poids, tiré au hasard)
     G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;G.currentAscentSpeed=0;
     G.gazBlesse=0;G.lestBlesse=0;
     G.purgeRapide={player:false,victim:false};G.regardHaut=false;
@@ -50,7 +50,7 @@ function startRescue(){
   document.getElementById('interact-prompt').style.display='none';
   document.getElementById('btn-interact').style.display='none';
   setAlert('BLESSÉ EN CHARGE','warn');
-  // Le blessé est trop lourd : à moi de gérer les deux gilets
+  // Le blessé est équilibré lui aussi, avec son propre volume d'air : à moi de gérer les deux gilets
   preparerBlesse(G.currentDepth||G.selectedDepth);
   G.lung=LUNG_NEUTRAL;G.buoyVelocity=0;
   showBuoyPanels(true);
