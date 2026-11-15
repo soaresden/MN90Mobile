@@ -9,6 +9,7 @@
 <script src="../shared/mn90.js" defer></script>
 <script src="../shared/profile.js" defer></script>
 <script src="../shared/glossary.js" defer></script>
+<script src="exercices.js" defer></script>
 <script src="app.js" defer></script>
 <style>
   /* Empilé sur téléphone, tableau de bord plein écran sur ordinateur */
@@ -69,6 +70,41 @@
     .pane[data-pane="gen"] { display: block !important; }
     .gen-depth { break-inside: avoid; }
   }
+  /* Exercices commentés */
+  details.exo { border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); margin: 6px 0; }
+  details.exo > summary { cursor: pointer; padding: 9px 11px; font-size: .9rem; line-height: 1.35; list-style-position: inside; }
+  details.exo[open] > summary { border-bottom: 1px solid var(--border); }
+  .exo-body { padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; font-size: .88rem; line-height: 1.45; }
+  .exo-body h4 { margin: 8px 0 0; font-size: .86rem; color: var(--accent); }
+  .exo-tag { display: inline-block; font-size: .68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); margin-left: 3px; vertical-align: 1px; }
+  .exo-q { margin: 0; font-weight: 600; padding: 8px 10px; border-radius: 8px; background: var(--surface); border-left: 3px solid var(--text3); }
+  details.exo-cor { border: 1px dashed var(--accent); border-radius: 8px; }
+  details.exo-cor > summary { cursor: pointer; padding: 7px 10px; font-weight: 800; color: var(--accent); }
+  details.exo-cor[open] { padding: 0 9px 10px; display: flex; flex-direction: column; gap: 8px; }
+  details.exo-cor[open] > summary { padding-left: 1px; }
+  .exo-note { padding: 7px 10px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 9%, transparent); font-size: .84rem; }
+  .exo-note::before { content: "💡 "; }
+  .exo-note.warn { background: color-mix(in srgb, #e0a100 16%, transparent); }
+  .exo-note.warn::before { content: "⚠️ "; }
+  .exo-rep { padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, #2e9e5b 15%, transparent); border-left: 4px solid #2e9e5b; font-size: .9rem; }
+  .exo-rep::before { content: "✅ "; }
+  .exo-tbl { font-size: .8rem; }
+  .exo-tbl th { white-space: nowrap; text-transform: none; letter-spacing: 0; }
+  .exo-tbl td:first-child { text-align: left; font-weight: 700; white-space: nowrap; }
+  .exo-tbl tr.tot td { font-weight: 800; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  /* Onglet Exercices : toute la largeur (pas de graphiques à côté) */
+  .nx-app.exo-plein { grid-template-columns: minmax(0, 1fr) !important; }
+  .nx-app.exo-plein > .nx-side, .nx-app.exo-plein > .nx-center { display: none !important; }
+  .nx-app.exo-plein #exoOut, .nx-app.exo-plein .pane[data-pane="exo"] > h3 { max-width: 980px; margin-left: auto; margin-right: auto; }
+  .nx-app.exo-plein .ptabs { justify-content: center; }
+  .sch { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; }
+  .sch svg { flex: 1 1 280px; max-width: 440px; display: block; }
+  .sch-int { font-size: .8rem; font-weight: 800; color: #3b8fd6; padding: 2px 10px; border: 1.5px dashed #3b8fd6; border-radius: 999px; white-space: nowrap; }
+  .sch-surf { stroke: #3b8fd6; stroke-width: 2; stroke-dasharray: 5 4; }
+  .sch-prof { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+  .sch-z { fill: var(--text3); font-size: 11px; font-weight: 700; }
+  .sch-lbl { fill: var(--text); font-size: 11px; font-weight: 700; }
+  .sch-is { fill: #3b8fd6; font-size: 11px; font-weight: 800; }
 </style>
 </head>
 <body data-ask-profile>
@@ -151,6 +187,7 @@
       <button type="button" class="ptab conf-only" data-pane="decogas" hidden>🟢 Gaz de déco</button>
       <button type="button" class="ptab conf-only" data-pane="o2stops" hidden>⏱️ Paliers O₂</button>
       <button type="button" class="ptab conf-only" data-pane="gonf" hidden>⛽ Gonflage</button>
+      <button type="button" class="ptab" data-pane="exo">📝 Exercices commentés</button>
     </div>
     <div class="pbody">
       <div class="pane" data-pane="mix">
@@ -190,6 +227,10 @@
           <label class="field">% O₂ du reste<input class="input" type="number" id="gFi" value="21" min="21" max="100" step="1"></label>
         </div>
         <div id="gonfOut"></div>
+      </div>
+      <div class="pane" data-pane="exo" hidden>
+        <h3>📝 Exercices commentés</h3>
+        <div id="exoOut" class="notranslate" lang="fr"></div>
       </div>
       <div class="pane" data-pane="gen" hidden id="genCard">
         <h3>📋 Ma table de plongée pour ce Nitrox</h3>

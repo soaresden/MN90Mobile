@@ -345,6 +345,9 @@
       if (!b) return;
       el.ntabs.querySelectorAll('.ptab').forEach(x => x.classList.toggle('on', x === b));
       document.querySelectorAll('.pane[data-pane]').forEach(pn => { pn.hidden = pn.dataset.pane !== b.dataset.pane; });
+      const exo = document.getElementById('exoOut');
+      document.querySelector('.nx-app')?.classList.toggle('exo-plein', b.dataset.pane === 'exo');
+      if (b.dataset.pane === 'exo' && exo && !exo.childElementCount && window.NitroxExercices) window.NitroxExercices.rendre(exo);
     });
     // Hauteur de la barre du haut, et graphiques redessinés quand leur zone change de taille
     const nav = document.querySelector('.navbar');
