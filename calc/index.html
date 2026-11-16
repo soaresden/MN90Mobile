@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Nitrox Calc</title>
+<meta name="description" content="Calculatrice de révision Nitrox Confirmé : les énoncés types du cours, ligne par ligne.">
+<meta name="theme-color" content="#0b1418">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root { --bg: #0b1418; --key: #1d2a30; --key2: #26363d; --txt: #f2f7f8; --txt2: #8fa5ad; --acc: #2ec4d6; --acc2: #0e8fa0; --warn: #ffb347; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  .app { height: 100dvh; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; padding: env(safe-area-inset-top) 12px calc(10px + env(safe-area-inset-bottom)); }
+  header { display: flex; align-items: center; gap: 10px; padding: 10px 2px 6px; }
+  header .logo { width: 30px; height: 30px; border-radius: 8px; }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: .01em; }
+  header h1 span { color: var(--acc); }
+  header small { margin-left: auto; color: var(--txt2); font-size: .72rem; text-align: right; line-height: 1.2; }
+  #menu { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; flex: 0 0 auto; }
+  #menu::-webkit-scrollbar { display: none; }
+  #menu button { flex: 0 0 auto; border: 1px solid #2f444c; background: var(--key); color: var(--txt); border-radius: 999px; padding: 8px 12px; font-size: .86rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
+  #menu button.on { background: var(--acc); border-color: var(--acc); color: #04252b; }
+  #ruban { flex: 1 1 auto; min-height: 60px; overflow-y: auto; padding: 4px 2px 6px; display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums; }
+  #ruban > :first-child { margin-top: auto; }
+  .r-h { color: var(--acc); font-weight: 800; font-size: .84rem; margin-top: 8px; text-transform: uppercase; letter-spacing: .04em; }
+  .r-t { color: var(--txt2); font-size: .86rem; }
+  .r-v { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; color: var(--txt2); border-bottom: 1px dashed #24343a; padding: 2px 0; }
+  .r-v b { color: var(--txt); }
+  .r-l { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; gap: 6px; font-size: 1.05rem; text-align: right; }
+  .r-l .k { color: #cfe0e4; }
+  .r-l .eg { color: var(--acc); font-weight: 800; }
+  .r-l b { color: #fff; font-size: 1.12rem; }
+  .r-l small, .r-t small { flex-basis: 100%; display: block; color: var(--warn); font-size: .76rem; text-align: right; }
+  .r-t small { text-align: left; }
+  .r-rep { margin-top: 6px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--acc) 18%, transparent); border-left: 4px solid var(--acc); font-weight: 800; font-size: 1rem; }
+  .r-x { margin-top: 4px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--warn) 14%, transparent); font-size: .86rem; line-height: 1.4; }
+  #invite { color: var(--acc); font-size: .86rem; font-weight: 700; text-align: right; min-height: 1.2em; padding-top: 4px; }
+  #invite, #affichage { flex: 0 0 auto; }
+  #affichage { line-height: 1.2; overflow-y: hidden; font-size: clamp(2rem, 11vw, 3.2rem); font-weight: 600; text-align: right; padding: 0 2px 8px; white-space: nowrap; overflow-x: auto; scrollbar-width: none; font-variant-numeric: tabular-nums; }
+  #affichage.vide { color: #5d7178; }
+  #affichage.err { color: #ff6b6b; }
+  #clavier { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; flex: 0 0 auto; }
+  .t { height: min(10.5vh, 68px); border: 0; border-radius: 18px; background: var(--key); color: var(--txt); font-size: 1.6rem; font-weight: 600; cursor: pointer; user-select: none; touch-action: manipulation; }
+  .t:active { filter: brightness(1.35); }
+  .t.fn { color: var(--acc); background: var(--key2); font-size: 1.3rem; }
+  .t.op { color: var(--acc); font-size: 1.8rem; }
+  .t.egal { grid-column: 1 / -1; background: var(--acc); color: #04252b; font-weight: 800; font-size: 1.9rem; height: min(9vh, 58px); }
+</style>
+<script src="../shared/mn90.js" defer></script>
+<script src="../nitrox/examen.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<div class="app">
+  <header>
+    <img class="logo" src="icon.svg" alt="">
+    <h1><span>Nitrox</span> Calc</h1>
+    <small>Révision Nitrox Confirmé<br>tables MN90 · NOAA · OTU</small>
+  </header>
+  <nav id="menu" aria-label="Énoncés"></nav>
+  <div id="ruban" aria-live="polite"></div>
+  <div id="invite"></div>
+  <div id="affichage">0</div>
+  <div id="clavier"></div>
+</div>
+</body>
+</html>

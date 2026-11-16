@@ -338,5 +338,5 @@
     montrer();
   }
 
-  window.NitroxExamen = { rendre, plongee, coefIntervalle, colonne, QUESTIONS };
+  window.NitroxExamen = { rendre, plongee, coefIntervalle, colonne, lire, NOAA, OTU, COEF_COURS, QUESTIONS };
 })();
