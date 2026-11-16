@@ -551,9 +551,152 @@
     return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Le bloc et son étiquette Nitrox">${s}</svg>`;
   }
 
+  /* ---------- Journée plongée : la frise (profil, %SNC, OTU) et les jauges, avec un curseur ---------- */
+  const SNCC = '#e28343', OTUC = '#a855f7';
+  // Les points de la journée, toutes les 0,25 min ; les intervalles sont resserrés (largeur fixe) mais étiquetés
+  function modeleJournee(j) {
+    const pts = [], marques = [];
+    let vt = 0, snc = 0, otu = 0;
+    j.res.forEach((e, i) => {
+      if (!e.r || e.r.err) return;
+      if (i && e.interval != null) {
+        const L = 30, a = snc, b2 = e.depart;
+        marques.push({ type: 'is', t0: vt, t1: vt + L, txt: hm(e.interval), coef: e.coef?.coef });
+        for (let t = 0; t <= L; t += 0.5) pts.push({ vt: vt + t, z: 0, snc: a > 0 ? a * Math.pow(b2 / a || 0, t / L) : 0, otu, pp: 0, i, phase: `intervalle ${hm(e.interval)}`, calc: `%SNC = ${n(a, 2)} × ${n(e.coef?.coef, 3)} (coefficient ${hm(e.coef?.col ?? 0)}) = ${n(b2, 2)} % · les OTU ne baissent pas (${n(otu, 0)})${e.maj ? ` · majoration de la plongée ${i + 1} : +${e.maj} min` : ''}` });
+        vt += L; snc = b2;
+      }
+      const r = e.r, [fond, rem, ...reste] = r.rows, prem = r.paliers[0]?.z ?? 0;
+      marques.push({ type: 'p', t0: vt, i, txt: `P${i + 1} · ${gazNom(r.fo2)} · ${n(r.prof, 0)} m` });
+      const phase = (d, zA, zB, row, nom, desc = 0) => {
+        const t0 = vt;
+        for (let t = 0; t <= d + 1e-9; t += Math.min(0.25, d || 0.25)) {
+          const z = desc && t < desc ? zB * t / desc : zA + (zB - zA) * (desc ? 1 : t / (d || 1));
+          pts.push({ vt: t0 + t, z, snc: snc + row.sncP * (d ? t / d : 1), otu: otu + row.otuP * (d ? t / d : 1), pp: row.pp, i, phase: nom,
+            calc: `PpO₂ ${n(row.pp, 3)} b → ${row.c == null ? 'sous 0,6 : 0' : `colonne ${n(row.c, 1)}`} · %SNC = ${n(row.snc, 2)} × ${n(d, 2)} min = ${n(row.sncP, 2)} % · OTU = ${n(row.otu, 2)} × ${n(d, 2)} = ${n(row.otuP, 1)}` });
+          if (!d) break;
+        }
+        vt = t0 + d; snc += row.sncP; otu += row.otuP;
+      };
+      phase(fond.d, r.prof, r.prof, fond, 'fond', Math.min(r.prof / 20, fond.d * 0.3));
+      phase(rem.d, r.prof, prem, rem, 'remontée');
+      r.paliers.forEach((p, k) => phase(reste[k].d, p.z, p.z, reste[k], `palier ${p.z} m${p.enO2 ? ' O₂' : ''}`));
+      if (r.paliers.length) { const s = reste[r.paliers.length], z = r.paliers[r.paliers.length - 1].z; phase(s.d, z, 0, s, 'remontée surface'); }
+    });
+    return { pts, marques, fin: vt, snc, otu };
+  }
+
+  function dessinerFrise(box, j) {
+    const M = modeleJournee(j);
+    if (!M.pts.length) { box.innerHTML = ''; return; }
+    const W = Math.max(320, box.clientWidth), H = Math.max(260, box.clientHeight);
+    const gJ = W >= 560 ? 132 : 96, g = 40, d = W - gJ - 34, haut = 22, milieu = Math.round(H * 0.42), bas = H - 26;
+    const x = t => g + t / M.fin * (d - g);
+    const zMax = Math.max(10, ...M.pts.map(p => p.z));
+    const yz = z => haut + 8 + z / zMax * (milieu - haut - 16);
+    const sMax = Math.max(110, Math.ceil(Math.max(...M.pts.map(p => p.snc)) / 10) * 10 + 10);
+    const oMax = Math.max(300, Math.ceil(Math.max(...M.pts.map(p => p.otu)) * 1.15 / 50) * 50);
+    const b0 = milieu + 22;
+    const ys = v => bas - v / sMax * (bas - b0), yo = v => bas - v / oMax * (bas - b0);
+    let s = '';
+    // intervalles et étiquettes des plongées
+    for (const m of M.marques) {
+      if (m.type === 'is') s += `<rect x="${x(m.t0)}" y="${haut}" width="${x(m.t1) - x(m.t0)}" height="${bas - haut}" class="fr-is"/><text x="${(x(m.t0) + x(m.t1)) / 2}" y="${haut + 4}" class="fr-lbl" text-anchor="middle">⏱ ${m.txt}</text>`;
+      else s += `<text x="${x(m.t0) + 2}" y="${haut - 6}" class="fr-p">${m.txt}</text>`;
+    }
+    // profil
+    s += `<line x1="${g}" x2="${d}" y1="${yz(0)}" y2="${yz(0)}" class="fr-surf"/>`;
+    for (let z = 10; z <= zMax; z += zMax > 40 ? 20 : 10) s += `<text x="${g - 5}" y="${yz(z) + 4}" class="fr-lbl" text-anchor="end">${z} m</text><line x1="${g}" x2="${d}" y1="${yz(z)}" y2="${yz(z)}" class="fr-grille"/>`;
+    const prof = M.pts.map((p, k) => `${k ? 'L' : 'M'}${x(p.vt).toFixed(1)},${yz(p.z).toFixed(1)}`).join('');
+    s += `<path d="${prof}L${x(M.fin)},${yz(0)}L${g},${yz(0)}Z" class="fr-aire"/><path d="${prof}" class="fr-prof"/>`;
+    // %SNC et OTU, avec leurs limites
+    for (const [v, c, t] of [[50, '#f59e0b', '50 %'], [90, '#f97316', '90 %'], [100, '#ef4444', '100 %']]) if (v <= sMax) s += `<line x1="${g}" x2="${d}" y1="${ys(v)}" y2="${ys(v)}" stroke="${c}" stroke-dasharray="5 4"/><text x="${g - 5}" y="${ys(v) + 4}" class="fr-lbl" fill="${c}" text-anchor="end">${t}</text>`;
+    if (850 <= oMax) s += `<line x1="${g}" x2="${d}" y1="${yo(850)}" y2="${yo(850)}" stroke="${OTUC}" stroke-dasharray="2 4"/><text x="${d + 4}" y="${yo(850) + 4}" class="fr-lbl" fill="${OTUC}">850</text>`;
+    s += `<text x="${d + 4}" y="${b0 + 4}" class="fr-lbl" fill="${OTUC}">${oMax}</text><text x="${d + 4}" y="${bas}" class="fr-lbl" fill="${OTUC}">0</text>`;
+    s += `<line x1="${g}" x2="${d}" y1="${bas}" y2="${bas}" class="fr-grille"/>`;
+    s += `<path d="${M.pts.map((p, k) => `${k ? 'L' : 'M'}${x(p.vt).toFixed(1)},${ys(p.snc).toFixed(1)}`).join('')}" fill="none" stroke="${SNCC}" stroke-width="2.5"/>`;
+    s += `<path d="${M.pts.map((p, k) => `${k ? 'L' : 'M'}${x(p.vt).toFixed(1)},${yo(p.otu).toFixed(1)}`).join('')}" fill="none" stroke="${OTUC}" stroke-width="2" stroke-dasharray="6 3"/>`;
+    s += `<text x="${g}" y="${b0 - 6}" class="fr-lbl"><tspan fill="${SNCC}" font-weight="800">━ %SNC</tspan><tspan dx="10" fill="${OTUC}" font-weight="800">┅ OTU</tspan></text>`;
+    // les jauges
+    const jx = W - gJ + 8, jw = gJ >= 120 ? 34 : 26, jy0 = haut + 20, jy1 = bas;
+    const jauge = (xx, v, max, lims, c, titre, id) => {
+      let t = `<text x="${xx + jw / 2}" y="${jy0 - 8}" class="fr-lbl" text-anchor="middle" font-weight="800">${titre}</text><rect x="${xx}" y="${jy0}" width="${jw}" height="${jy1 - jy0}" rx="6" class="fr-jauge"/>`;
+      t += `<rect id="${id}" x="${xx}" y="${jy1}" width="${jw}" height="0" rx="6" fill="${c}"/>`;
+      for (const [l, lc] of lims) { const yy = jy1 - Math.min(1, l / max) * (jy1 - jy0); t += `<line x1="${xx - 4}" x2="${xx + jw + 4}" y1="${yy}" y2="${yy}" stroke="${lc}" stroke-width="2"/><text x="${xx + jw + 6}" y="${yy + 4}" class="fr-lbl" fill="${lc}">${l}</text>`; }
+      t += `<text id="${id}-v" x="${xx + jw / 2}" y="${jy1 + 16}" class="fr-val" text-anchor="middle"></text>`;
+      return t;
+    };
+    const jMaxS = Math.max(110, sMax), jMaxO = Math.max(900, oMax);
+    s += jauge(jx, 0, jMaxS, [[50, '#f59e0b'], [100, '#ef4444']], SNCC, '%SNC', 'fr-js') + jauge(jx + jw + (gJ >= 120 ? 34 : 22), 0, jMaxO, [[850, '#ef4444']], OTUC, 'OTU', 'fr-jo');
+    s += `<line id="fr-cur" y1="${haut}" y2="${bas}" class="fr-cur"/>`;
+    box.innerHTML = `<svg class="fr" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="La journée : profil, %SNC et OTU">${s}</svg><div class="fr-lecture"></div>`;
+    const svg = box.querySelector('svg'), lect = box.querySelector('.fr-lecture');
+    const remplir = (id, v, max) => { const r = svg.querySelector('#' + id), hh = Math.min(1, v / max) * (jy1 - jy0); r.setAttribute('y', jy1 - hh); r.setAttribute('height', hh); };
+    const montrer = vt => {
+      vt = Math.max(0, Math.min(M.fin, vt));
+      let p = M.pts[0];
+      for (const q of M.pts) { if (q.vt <= vt) p = q; else break; }
+      const c = svg.querySelector('#fr-cur'); c.setAttribute('x1', x(vt)); c.setAttribute('x2', x(vt));
+      remplir('fr-js', p.snc, jMaxS); remplir('fr-jo', p.otu, jMaxO);
+      svg.querySelector('#fr-js-v').textContent = `${n(p.snc, 1)} %`; svg.querySelector('#fr-jo-v').textContent = n(p.otu, 0);
+      lect.innerHTML = `<div><b>P${p.i + 1}</b> · ${p.phase}${p.z > 0 ? ` · <b>${n(p.z, 1)} m</b> · PpO₂ <b>${n(p.pp, 2)}</b>` : ''} · <span style="color:${SNCC}">%SNC <b>${n(p.snc, 1)} %</b></span> · <span style="color:${OTUC}">OTU <b>${n(p.otu, 0)}</b></span></div>${p.calc ? `<div class="fr-calc">${p.calc}</div>` : ''}`;
+    };
+    const versT = ev => { const r = svg.getBoundingClientRect(); return ((ev.clientX - r.left) / r.width * W - g) / (d - g) * M.fin; };
+    svg.addEventListener('pointerdown', ev => { svg.setPointerCapture?.(ev.pointerId); montrer(versT(ev)); });
+    svg.addEventListener('pointermove', ev => montrer(versT(ev)));
+    montrer(M.fin);
+  }
+
+  /* ---------- Gonflage : les bouteilles (ce qu'on a, ce qu'on veut), source d'O₂ au choix ---------- */
+  function bloc(x, y, w, h, couches, pMax, titre, sous) {
+    // couches : du bas vers le haut, { v (bar), c (couleur), t (texte) }
+    let s = `<rect x="${x + w / 2 - 10}" y="${y - 22}" width="20" height="16" rx="3" fill="#9aa4ab"/><rect x="${x + w / 2 - 26}" y="${y - 16}" width="52" height="8" rx="4" fill="#7b858c"/>`;
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${w / 2.6}" fill="var(--bg2)" stroke="var(--text3)" stroke-width="2"/>`;
+    s += `<clipPath id="cl${x}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${w / 2.6}"/></clipPath><g clip-path="url(#cl${x})">`;
+    let yy = y + h;
+    for (const k of couches) {
+      const hh = Math.max(0, k.v) / pMax * h;
+      if (hh <= 0) continue;
+      yy -= hh;
+      s += `<rect x="${x}" y="${yy}" width="${w}" height="${hh}" fill="${k.c}"/>`;
+      if (hh >= 16 && k.t) s += `<text x="${x + w / 2}" y="${yy + hh / 2 + 4}" class="bt-in" text-anchor="middle">${k.t}</text>`;
+    }
+    s += `</g><text x="${x + w / 2}" y="${y + h + 18}" class="viz-val" text-anchor="middle">${titre}</text><text x="${x + w / 2}" y="${y + h + 34}" class="viz-lbl" text-anchor="middle">${sous}</text>`;
+    return s;
+  }
+  function svgGonflage(v, g, res) {
+    const W = 560, H = 330, y = 40, h = 230, w = 92, pMax = Math.max(v.pf, 230, res ? v.p2 : 0) * 1.02;
+    const C = { o2: '#e5484d', n2: '#3b8fd6', reste: '#7c8b93', air: '#5fb0ea' };
+    const fi = v.fi / 100;
+    let s = bloc(30, y, w, h, [{ v: v.pi * (1 - fi), c: C.n2, t: v.pi * (1 - fi) >= 8 ? `N₂ ${n(v.pi * (1 - fi), 1)}` : '' }, { v: v.pi * fi, c: C.o2, t: v.pi * fi >= 8 ? `O₂ ${n(v.pi * fi, 1)}` : '' }].reverse().reverse(),
+      pMax, 'On a', `${v.pi} b de ${nxNom(v.fi)}`);
+    s += `<text x="${30 + w / 2}" y="${y - 30}" class="viz-lbl" text-anchor="middle">bloc ${v.v1} L</text>`;
+    const ok = g.o2 >= -1e-9 && g.dN >= -1e-9;
+    s += bloc(W - 30 - w, y, w, h, ok ? [
+      { v: v.pi, c: C.reste, t: v.pi >= 10 ? `reste ${v.pi}` : '' },
+      { v: g.o2, c: C.o2, t: `O₂ pur ${n(g.o2, 1)}` },
+      { v: g.air, c: C.air, t: `air ${n(g.air, 1)}` }] : [], pMax, 'On veut', `${v.pf} b de ${nxNom(v.ff)}`);
+    s += `<text x="${W - 30 - w / 2}" y="${y - 30}" class="viz-lbl" text-anchor="middle">O₂ ${n(v.pf * v.ff / 100, 1)} · N₂ ${n(v.pf * (1 - v.ff / 100), 1)}</text>`;
+    // les étapes, au milieu
+    const mx = W / 2;
+    if (ok) {
+      s += `<text x="${mx}" y="${y + 50}" class="viz-val" text-anchor="middle" fill="${C.o2}">① O₂ pur</text><text x="${mx}" y="${y + 68}" class="viz-lbl" text-anchor="middle">${v.pi} → ${n(v.pi + g.o2, 1)} b (+${n(g.o2, 1)})</text>`;
+      s += `<text x="${mx}" y="${y + 110}" class="viz-val" text-anchor="middle" fill="#2b7fc0">② Air</text><text x="${mx}" y="${y + 128}" class="viz-lbl" text-anchor="middle">${n(v.pi + g.o2, 1)} → ${v.pf} b (+${n(g.air, 1)})</text>`;
+      s += `<text x="${mx}" y="${y + 146}" class="viz-lbl" text-anchor="middle">dont O₂ ${n(g.dN / 4, 1)} · N₂ ${n(g.dN, 1)}</text>`;
+      s += `<path d="M${30 + w + 16} ${y + h / 2} H${W - 30 - w - 16}" stroke="var(--text3)" stroke-width="2" marker-end="url(#fl)"/>`;
+    } else s += `<text x="${mx}" y="${y + 90}" class="viz-val" text-anchor="middle" fill="${C.o2}">Impossible tel quel</text><text x="${mx}" y="${y + 108}" class="viz-lbl" text-anchor="middle">trop ${g.dN < 0 ? 'd’azote' : 'd’O₂'} dans le bloc : vider d’abord</text>`;
+    if (res) {
+      const ok2 = res.peq >= v.pi + g.o2 - 1e-9;
+      s += `<text x="${mx}" y="${y + 186}" class="viz-val" text-anchor="middle">Réserve ${v.v2} L à ${v.p2} b</text>`;
+      s += `<text x="${mx}" y="${y + 204}" class="viz-lbl" text-anchor="middle">monte le bloc au plus à ${n(res.peq, 1)} b</text>`;
+      s += `<text x="${mx}" y="${y + 222}" class="viz-val" text-anchor="middle" fill="${ok2 ? '#16a34a' : C.o2}">${ok2 ? `✓ suffit (elle finit à ${n(res.apres, 1)} b)` : '✗ ne suffit pas'}</text>`;
+    }
+    return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gonflage : ce qu'on a, ce qu'on veut"><defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--text3)"/></marker></defs>${s}</svg>`;
+  }
+  const nxNom = pct => (pct >= 100 ? 'O₂ pur' : pct <= 21 ? 'air' : 'Nx' + pct);
+
   /* ---------- Le mode « Assistant » de la page Nitrox : volet à gauche, valeurs, résultat à droite ---------- */
   const LISTE = [['pp', '🫧 Pressions partielles'], ['mod', '📏 Profondeur max'], ['pea', '🟰 Prof. équivalente air'], ['best', '🎯 Best mix'],
-    ['journee', '🧠 Journée plongée'], ['gonf', '⛽ Gonflage'], ['mariotte', '⚗️ Réserve d’O₂ (Mariotte)']];
+    ['journee', '🧠 Journée plongée'], ['gonf', '⛽ Gonflage']];
   const CLE_APP = 'mn90:assistant';
   const PLONGEE_DEF = [{ prof: 30, duree: 70, o2: 35, palierO2: 1 }, { prof: 25, duree: 40, o2: 45, palierO2: 0 }, { prof: 20, duree: 45, o2: 32, palierO2: 0 }, { prof: 15, duree: 50, o2: 32, palierO2: 0 }];
 
@@ -627,12 +770,18 @@
       const calculer = () => {
         const j = calcJournee(J.pl.slice(0, J.nb), J.is);
         const tab = `<div class="tbl-wrap asx-tab"><table class="tbl exo-tbl as-tab duo"><thead><tr>${TETE2.map((h, k) => `<th class="${k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''}">${h}</th>`).join('')}</tr></thead><tbody>` +
-          j.rows.map(r => { const cs = r.tot ? r.c : r; return `<tr${r.tot ? ' class="tot"' : ''}>${cs.map((c, k) => { const cls = k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''; if (c == null || c === '') return `<td class="${cls}"></td>`; if (typeof c === 'string') return `<td class="${cls}">${c}</td>`; return c.d ? `<td class="as-c ${cls}" data-d="${esc(c.d)}">${c.v}</td>` : `<td class="${cls}">${c.v}</td>`; }).join('')}</tr>`; }).join('') + '</tbody></table></div>';
+          j.rows.map(r => { const cs = r.tot ? r.c : r; return `<tr${r.tot ? ' class="tot"' : ''}>${cs.map((c, k) => { const cls = k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''; if (c == null || c === '') return `<td class="${cls}"></td>`; if (typeof c === 'string') return `<td class="${cls}">${c}</td>`; return c.d ? `<td class="${cls}">${c.v}<small class="asx-d">${c.d}</small></td>` : `<td class="${cls}">${c.v}</td>`; }).join('')}</tr>`; }).join('') + '</tbody></table></div>';
         zOut.innerHTML = `<div class="exo-rep">${j.err ? '⚠ ' + j.err : j.rep}</div>` +
           (j.depassements.length ? `<div class="exo-note warn">${j.depassements.join('<br>')}</div>` : '') +
           (j.alertes.length ? `<details class="asx-rq"><summary>⚠ ${j.alertes.length} remarque${j.alertes.length > 1 ? 's' : ''} sur la lecture de la table</summary>${[...new Set(j.alertes)].map(a => `<div>${a}</div>`).join('')}</details>` : '') +
-          `<div class="seg asx-vue"><button type="button" data-vue="courbe" class="${etat.vue === 'courbe' ? 'on' : ''}">📈 Courbe</button><button type="button" data-vue="tableau" class="${etat.vue === 'tableau' ? 'on' : ''}">📋 Tableau %SNC · OTU</button></div>` +
-          `<div class="asx-vue-corps">${etat.vue === 'courbe' && j.schema.length ? schemaJournee(j.schema) : tab}</div>` + detailHTML;
+          `<div class="seg asx-vue"><button type="button" data-vue="courbe" class="${etat.vue === 'courbe' ? 'on' : ''}">📈 Courbe</button><button type="button" data-vue="schema" class="${etat.vue === 'schema' ? 'on' : ''}">🧾 Schéma</button><button type="button" data-vue="tableau" class="${etat.vue === 'tableau' ? 'on' : ''}">📋 Tableau</button></div>` +
+          `<div class="asx-vue-corps ${etat.vue}">${etat.vue === 'schema' && j.schema.length ? schemaJournee(j.schema) : etat.vue === 'tableau' ? tab : ''}</div>` + detailHTML;
+        if (etat.vue === 'courbe' || !['schema', 'tableau'].includes(etat.vue)) {
+          const boite = zOut.querySelector('.asx-vue-corps');
+          boite.classList.add('courbe');
+          requestAnimationFrame(() => dessinerFrise(boite, j));
+          zOut._frise = () => dessinerFrise(boite, j);
+        } else zOut._frise = null;
         garder();
       };
       zIn.oninput = e => {
@@ -653,6 +802,50 @@
       calculer();
     };
 
+    // --- Gonflage : ce qu'on a, ce qu'on veut, la source d'O₂ (bouteille ou réserve limitée) ---
+    const gonflage = () => {
+      const G = (etat.gonf2 = etat.gonf2 || { v1: 15, pi: 30, fi: 40, pf: 200, ff: 60, src: 'bouteille', v2: 50, p2: 100 });
+      const champ = (id, lbl) => `<label class="field exam-champ"><span class="field-row">${lbl}</span><span class="exam-pas"><button type="button" data-m="${id}" aria-label="moins">−</button><input class="input" type="number" inputmode="decimal" data-c="${id}" value="${G[id]}"><button type="button" data-p="${id}" aria-label="plus">＋</button></span></label>`;
+      zIn.innerHTML = `<h3>⛽ Gonflage</h3>
+        <div class="asx-groupe"><b>Ce qu’on a</b><div class="asx-2">${champ('v1', 'Bloc (L)')}${champ('pi', 'Reste (b)')}${champ('fi', 'Reste : % O₂')}</div></div>
+        <div class="asx-groupe"><b>Ce qu’on veut</b><div class="asx-2">${champ('pf', 'Pression finale (b)')}${champ('ff', 'Nitrox (% O₂)')}</div></div>
+        <div class="asx-groupe"><b>Source d’O₂</b><div class="seg" data-src><button type="button" data-v="bouteille" class="${G.src === 'bouteille' ? 'on' : ''}">Bouteille d’O₂</button><button type="button" data-v="reserve" class="${G.src === 'reserve' ? 'on' : ''}">Réserve limitée</button></div>
+          ${G.src === 'reserve' ? `<div class="asx-2">${champ('v2', 'Réserve (L)')}${champ('p2', 'Réserve (b)')}</div>` : '<p class="small muted">Assez de pression pour monter le bloc où il faut.</p>'}</div>
+        <button type="button" class="btn btn-outline btn-sm asx-reset">↺ Exemple du cours</button>`;
+      const calculer = () => {
+        const q = Q.find(x => x.id === 'gonf'), r = q.calc(G);
+        const fi = G.fi / 100, ff = G.ff / 100, dN = G.pf * (1 - ff) - G.pi * (1 - fi), dO = G.pf * ff - G.pi * fi, o2 = dO - dN / 4, air = dN / 0.8;
+        const g = { dN, dO, o2, air };
+        let res = null, plus = [];
+        if (G.src === 'reserve') {
+          const peq = (G.pi * G.v1 + G.p2 * G.v2) / (G.v1 + G.v2), apres = G.p2 - Math.max(0, o2) * G.v1 / G.v2;
+          res = { peq, apres };
+          plus.push({ h: 'Avec la réserve (Mariotte)' }, lig(`P équilibre = (${G.pi} × ${G.v1} + ${G.p2} × ${G.v2}) / (${G.v1} + ${G.v2})`, `${n(peq, 1)} bar`, 'le plus haut où la réserve peut monter le bloc'));
+          if (peq >= G.pi + o2 - 1e-9) plus.push(lig(`Réserve après = ${G.p2} − ${n(o2, 1)} × ${G.v1} / ${G.v2}`, `${n(apres, 1)} bar`, `on s’arrête à ${n(G.pi + o2, 1)} b : elle suffit`));
+          else {
+            const m = Q.find(x => x.id === 'mariotte').calc({ v1: G.v1, p1: G.pi, f1: G.fi, v2: G.v2, p2: G.p2, pf: G.pf });
+            plus.push({ txt: `Il faudrait monter à ${n(G.pi + o2, 1)} b : la réserve ne suffit pas pour du ${nxNom(G.ff)}. Le meilleur possible :` }, ...m.l);
+            r.rep = `${r.rep} · ⚠ réserve insuffisante → ${m.rep}`;
+          }
+        }
+        const ligneHTML = x => (x.h ? `<h4>${x.h}</h4>` : x.txt != null ? `<div class="as-t">${x.txt}${x.c ? `<small>${x.c}</small>` : ''}</div>` : `<div class="as-l"><span>${x.k}</span> <i>=</i> <b>${x.r}</b>${x.c ? `<small>${x.c}</small>` : ''}</div>`);
+        zOut.innerHTML = `<div class="exo-rep">${r.rep}</div>` + svgGonflage(G, g, res) + `<div class="as-res asx-2col">${[...r.l, ...plus].map(ligneHTML).join('')}</div>` + (r.x ? `<div class="exo-note">${r.x}</div>` : '');
+        garder();
+      };
+      zIn.oninput = e => { const i = e.target.closest('input[data-c]'); if (!i || i.value === '' || isNaN(+i.value)) return; G[i.dataset.c] = +i.value; calculer(); };
+      zIn.onclick = e => {
+        if (e.target.closest('.asx-reset')) { delete etat.gonf2; return montrer(); }
+        const sb = e.target.closest('[data-src] button');
+        if (sb) { G.src = sb.dataset.v; return montrer(); }
+        const b2 = e.target.closest('button[data-m],button[data-p]');
+        if (!b2) return;
+        const id = b2.dataset.m || b2.dataset.p, i = zIn.querySelector(`input[data-c="${id}"]`), pas = { pf: 10, pi: 5, p2: 5, v2: 5 }[id] || 1;
+        i.value = Math.max(0, Math.round(((+i.value || 0) + (b2.dataset.m ? -pas : pas)) * 100) / 100);
+        i.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      calculer();
+    };
+
     zOut.addEventListener('click', e => {
       const v = e.target.closest('.asx-vue button');
       if (v) { etat.vue = v.dataset.vue; garder(); return montrer(); }
@@ -664,10 +857,12 @@
       d.textContent = td.dataset.d; d.hidden = false;
     });
     nav.addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (!b) return; etat.a = b.dataset.a; garder(); montrer(); });
+    let rt = null;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => zOut._frise && zOut.isConnected && zOut._frise(), 150); });
     function montrer() {
       nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.a === etat.a));
       box.querySelector('.asx').dataset.a = etat.a;
-      if (etat.a === 'journee') journee(); else champsSimples(Q.find(x => x.id === etat.a));
+      if (etat.a === 'journee') journee(); else if (etat.a === 'gonf') gonflage(); else champsSimples(Q.find(x => x.id === etat.a));
     }
     montrer();
   }
