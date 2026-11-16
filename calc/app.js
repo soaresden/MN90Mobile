@@ -200,6 +200,11 @@
       } },
   ];
 
+  // L'ordre du corrigé de révision (Q1 → Q11), les pressions partielles à la fin
+  const ORDRE = { mod: 'Q1', pea: 'Q2', best: 'Q3', tmax: 'Q4', portion: 'Q7', snc: 'Q7-8', inter: 'Q8', jour: 'Q8', otu: 'Q9', gonf: 'Q10', mariotte: 'Q11', pp: 'Cours' };
+  const RANG = Object.keys(ORDRE);
+  Q.sort((a, b) => RANG.indexOf(a.id) - RANG.indexOf(b.id));
+
   /* ---------- l'état ---------- */
   const S = { q: null, i: 0, v: {}, saisie: '', fini: false, expl: false, ruban: [] };
   const ruban = $('#ruban'), affichage = $('#affichage'), invite = $('#invite'), liste = $('#liste');
@@ -288,7 +293,7 @@
     if (k) { e.preventDefault(); touche(k); }
   });
   liste.innerHTML = `<button type="button" data-q="">Calculatrice simple<small>sans énoncé</small></button>` +
-    Q.map(x => `<button type="button" data-q="${x.id}">${x.t}<small>${x.e}</small></button>`).join('');
+    Q.map(x => `<button type="button" data-q="${x.id}">${x.t}<small>${ORDRE[x.id]} · ${x.e}</small></button>`).join('');
   const vue = v => {
     document.querySelectorAll('header button[data-vue]').forEach(b => b.classList.toggle('on', b.dataset.vue === v));
     document.querySelectorAll('.vue').forEach(x => { x.hidden = x.dataset.vue !== v; });
