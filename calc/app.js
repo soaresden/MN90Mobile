@@ -268,12 +268,14 @@
   ruban.classList.add('plie');
   const esc = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   // Déplier = tout voir, explications comprises ; replier = les 2 dernières lignes
-  const plier = oui => { ruban.classList.toggle('plie', oui); S.expl = !oui; S.detail = null; rendre(); };
+  // Déplier = toutes les lignes de calcul (sans explications) ; replier = les 2 dernières
+  const plier = oui => { ruban.classList.toggle('plie', oui); S.expl = false; S.detail = null; rendre(); };
   ruban.addEventListener('click', e => {
     const td = e.target.closest('td[data-d]');
     if (td) {
       S.detail = S.detail && S.detail.id === td.dataset.id ? null : { id: td.dataset.id, t: td.dataset.d, tab: td.closest('.r-tab').dataset.i };
-      if (ruban.classList.contains('plie')) { ruban.classList.remove('plie'); S.expl = true; }
+      if (ruban.classList.contains('plie')) ruban.classList.remove('plie');
+      S.expl = false;   // une case touchée : son calcul seulement
       return rendre();
     }
     if (e.target.closest('.r-tab') && !ruban.classList.contains('plie')) return;   // une case sans calcul : rien
@@ -312,7 +314,7 @@
       const c = S.q.champs[S.i];
       invite.textContent = `${c.q}  (${String(c.v).replace('.', ',')} si vide)`;
     } else if (S.detail) invite.textContent = S.detail.t;
-    else invite.textContent = S.expl && S.ruban.some(x => x.tab) ? 'Touche une case du tableau pour voir son calcul' : '';
+    else invite.textContent = '';
     invite.classList.toggle('detail', !!S.detail);
     affichage.textContent = S.saisie || '0';
     affichage.classList.toggle('vide', !S.saisie);
@@ -351,7 +353,10 @@
       } catch (e) { flash(); }
       return rendre();
     }
-    if (S.q && S.fini && ruban.classList.contains('plie')) plier(false);
+    if (S.q && S.fini) {
+      if (ruban.classList.contains('plie')) return plier(false);   // 2e = : tout le calcul
+      if (!S.expl) { S.expl = true; S.detail = null; rendre(); }    // 3e = : les explications
+    }
   }
   function flash() { affichage.classList.add('err'); setTimeout(() => affichage.classList.remove('err'), 350); }
 
