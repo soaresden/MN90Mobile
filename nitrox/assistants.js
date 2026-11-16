@@ -520,6 +520,37 @@
     return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Profondeur max">${s}</svg>`;
   }
 
+  // Best mix : la bouteille et son étiquette Nitrox remplie
+  function svgBouteille(prof, duree) {
+    const p = pa(prof), pp = duree > 45 ? 1.5 : 1.6, nx = Math.min(100, Math.floor(pp / p * 100 + 1e-9));
+    const mod = (pp / (nx / 100) - 1) * 10, ppReel = p * nx / 100;
+    const W = 520, H = 392, bx = 160, bw = 200, by = 58, bh = 322;
+    const nom = nx >= 100 ? 'O₂ PUR' : nx <= 21 ? 'AIR' : 'NITROX';
+    let s = '';
+    // le corps du bloc, l'ogive verte (code couleur Nitrox), la robinetterie
+    s += `<rect x="${bx + bw / 2 - 16}" y="6" width="32" height="26" rx="5" fill="#9aa4ab"/><rect x="${bx + bw / 2 - 40}" y="14" width="80" height="12" rx="6" fill="#7b858c"/>`;
+    s += `<path d="M${bx} ${by + 40} Q${bx} ${by} ${bx + bw / 2} ${by - 4} Q${bx + bw} ${by} ${bx + bw} ${by + 40} L${bx + bw} ${by + bh - 18} Q${bx + bw} ${by + bh} ${bx + bw - 18} ${by + bh} L${bx + 18} ${by + bh} Q${bx} ${by + bh} ${bx} ${by + bh - 18} Z" fill="#f2d800" stroke="#a89600" stroke-width="2"/>`;
+    s += `<path d="M${bx} ${by + 40} Q${bx} ${by} ${bx + bw / 2} ${by - 4} Q${bx + bw} ${by} ${bx + bw} ${by + 40} Z" fill="#1a9b3a"/>`;
+    s += `<rect x="${bx + 12}" y="${by + 8}" width="14" height="${bh - 30}" rx="7" fill="#fff" opacity=".25"/>`;
+    // l'étiquette
+    const ex = bx + 16, ew = bw - 32, ey = by + 78;
+    s += `<rect x="${ex}" y="${ey}" width="${ew}" height="176" rx="8" fill="#fff" stroke="#1a9b3a" stroke-width="3"/>`;
+    s += `<rect x="${ex}" y="${ey}" width="${ew}" height="40" rx="8" fill="#1a9b3a"/><rect x="${ex}" y="${ey + 30}" width="${ew}" height="10" fill="#1a9b3a"/>`;
+    s += `<text x="${ex + ew / 2}" y="${ey + 29}" class="et-titre" text-anchor="middle">${nom}</text>`;
+    const ligne = (yy, lbl, val) => `<text x="${ex + 8}" y="${yy}" class="et-lbl">${lbl}</text><rect x="${ex + 72}" y="${yy - 22}" width="${ew - 80}" height="30" rx="4" fill="#fffbe0" stroke="#1a9b3a" stroke-width="1.5"/><text x="${ex + 72 + (ew - 80) / 2}" y="${yy}" class="et-val" text-anchor="middle">${val}</text>`;
+    s += ligne(ey + 74, 'O₂ %', `${nx} %`);
+    s += ligne(ey + 112, 'MOD', `${Math.floor(mod + 1e-9)} m`);
+    s += ligne(ey + 150, `PpO₂ ${n(pp, 1)}`, `${n(ppReel, 2)} b`);
+    s += `<text x="${ex + ew / 2}" y="${ey + 170}" class="et-pied" text-anchor="middle">pour ${n(prof, 1)} m${duree ? ` · ${duree} min` : ''}</text>`;
+    // à côté : la profondeur prévue et la MOD
+    s += `<text x="${bx - 14}" y="${by + 60}" class="viz-val" text-anchor="end">Pa à ${n(prof, 1)} m</text><text x="${bx - 14}" y="${by + 80}" class="viz-lbl" text-anchor="end">${n(p, 2)} bar</text>`;
+    s += `<text x="${bx - 14}" y="${by + 130}" class="viz-val" text-anchor="end">%O₂ max</text><text x="${bx - 14}" y="${by + 150}" class="viz-lbl" text-anchor="end">${n(pp, 1)} / ${n(p, 2)} = ${n(pp / p, 3)}</text>`;
+    s += `<text x="${bx - 14}" y="${by + 200}" class="viz-val" text-anchor="end">arrondi vers le bas</text><text x="${bx - 14}" y="${by + 220}" class="viz-lbl" text-anchor="end">→ ${nom === 'NITROX' ? 'Nx' + nx : nom}</text>`;
+    s += `<text x="${bx + bw + 14}" y="${by + 80}" class="viz-val">PpO₂ max</text><text x="${bx + bw + 14}" y="${by + 100}" class="viz-lbl">${duree > 45 ? '1,5 b (plus de 45 min)' : '1,6 b'}</text>`;
+    s += `<text x="${bx + bw + 14}" y="${by + 150}" class="viz-val">Vérification</text><text x="${bx + bw + 14}" y="${by + 170}" class="viz-lbl">${n(p, 2)} × ${n(nx / 100, 2)} = ${n(ppReel, 2)} ≤ ${n(pp, 1)} ✓</text>`;
+    return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Le bloc et son étiquette Nitrox">${s}</svg>`;
+  }
+
   /* ---------- Le mode « Assistant » de la page Nitrox : volet à gauche, valeurs, résultat à droite ---------- */
   const LISTE = [['pp', '🫧 Pressions partielles'], ['mod', '📏 Profondeur max'], ['pea', '🟰 Prof. équivalente air'], ['best', '🎯 Best mix'],
     ['journee', '🧠 Journée plongée'], ['gonf', '⛽ Gonflage'], ['mariotte', '⚗️ Réserve d’O₂ (Mariotte)']];
@@ -553,7 +584,7 @@
       const calculer = () => {
         let r;
         try { r = q.calc(v); } catch (e) { r = { l: [{ txt: 'Calcul impossible : ' + e.message }], rep: '', x: '' }; }
-        const viz = q.id === 'pp' ? svgPP(+v.prof, v.o2 / 100) : q.id === 'mod' ? svgMOD(v.o2 / 100, +v.pp) : '';
+        const viz = q.id === 'pp' ? svgPP(+v.prof, v.o2 / 100) : q.id === 'mod' ? svgMOD(v.o2 / 100, +v.pp) : q.id === 'best' ? svgBouteille(+v.prof, +v.duree) : '';
         zOut.innerHTML = (r.rep ? `<div class="exo-rep">${r.rep}</div>` : '') + viz + `<div class="as-res">${r.l.map(x => (x.h ? `<h4>${x.h}</h4>`
           : x.txt != null ? `<div class="as-t">${x.txt}${x.c ? `<small>${x.c}</small>` : ''}</div>`
             : `<div class="as-l"><span>${x.k}</span> <i>=</i> <b>${x.r}</b>${x.c ? `<small>${x.c}</small>` : ''}</div>`)).join('')}</div>` +
