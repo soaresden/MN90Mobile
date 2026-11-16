@@ -172,12 +172,43 @@
         det.push(`<details class="gen-depth"><summary>${d} m réels · lu à ${line} m · sans palier ${dur(nsNx)}</summary>
           <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Durée</th>${cols.map(c => `<th class="pd${c}">${c} m</th>`).join('')}<th>DTR réelle</th><th>GPS</th></tr></thead><tbody>${body}</tbody></table></div></details>`);
       });
+      // La carte, comme une table plastifiée : une ligne par durée, les profondeurs en gros
+      const hm2 = m => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
+      const avec6 = depths.some(d => { const pe = pct === 21 ? d : L.pea(d, fo2); const ln = L.DEPTHS.find(x => x >= Math.max(pe, 0.1) - 1e-9); return L.MN90[ln].some(r => r[0] <= L.LIMITS.immersion && (r[1][6] || r[1][9] || r[1][12])); });
+      const lignesProf = depths.map(d => {
+        const peaD = pct === 21 ? d : L.pea(d, fo2);
+        const line = L.DEPTHS.find(x => x >= Math.max(peaD, 0.1) - 1e-9);
+        const toutes = L.MN90[line].filter(r => r[0] <= L.LIMITS.immersion);
+        // Comme une carte : quelques durées, dont la plus longue sans palier
+        let ns = -1; toutes.forEach((r, i) => { if (!Object.keys(r[1]).length && ns === i - 1) ns = i; });
+        const pris = new Set();
+        if (ns > 1) pris.add(Math.floor(ns / 2));
+        if (ns >= 0) pris.add(ns); else pris.add(0);
+        const apres = toutes.length - 1 - Math.max(ns, 0), k = Math.min(3, apres);
+        for (let j = 1; j <= k; j++) pris.add(Math.max(ns, 0) + Math.round(j * apres / k));
+        const rows = [...pris].filter(i => i >= 0 && i < toutes.length).sort((a, b) => a - b).map(i => toutes[i]);
+        const pp = L.ppo2At(d, fo2), surl = pp > 1.5 + 1e-9 ? ' pp15' : pp > 1.4 + 1e-9 ? ' pp14' : '';
+        return rows.map((r, i) => {
+          const p3 = r[1][3] || 0, p6 = (r[1][6] || 0) + (r[1][9] || 0) + (r[1][12] || 0);
+          const o2 = p3 ? Math.max(5, Math.ceil(p3 * 2 / 3 - 1e-9)) : 0;
+          return `<tr class="${i % 2 ? 'jaune' : ''}">${i ? '' : `<th rowspan="${rows.length}" class="prof${surl}">${d}<small>m</small></th>`}<td class="duree">${hm2(r[0])}</td>${avec6 ? `<td>${p6 ? `${r[1][12] ? r[1][12] + ' à 12 · ' : ''}${r[1][9] ? r[1][9] + ' à 9 · ' : ''}${r[1][6] || ''}` : ''}</td>` : ''}<td>${p3 || ''}</td><td>${o2 || ''}</td><td class="gps">${r[3]}</td></tr>`;
+        }).join('');
+      });
+      const titreCarte = pct >= 100 ? 'O₂ pur' : `${pct}/${100 - pct}`;
       el.genOut.innerHTML = `
+        <div class="cartes-nx">${Array.from({ length: Math.ceil(lignesProf.length / 5) }, (_, c) => `
+        <div class="carte-nx">
+          <div class="carte-nx-titre">Tables <b>NITROX ${titreCarte}</b><span>${c + 1}/${Math.ceil(lignesProf.length / 5)}</span></div>
+          <table><thead><tr><th>Profondeur</th><th>Durée de la plongée</th>${avec6 ? '<th>Paliers 6 m (et plus)</th>' : ''}<th>Durée du palier à 3 m</th><th>Durée du palier O₂ à 3 m</th><th>GPS</th></tr></thead><tbody>${lignesProf.slice(c * 5, c * 5 + 5).join('')}</tbody></table>
+          <div class="carte-nx-pied"><span>Vitesse de remontée 15 m/min. En cas de palier : 30 secondes pour passer de 3 mètres à la surface.</span>
+            <span>Profondeurs surlignées : PpO₂ au-delà de 1,4 bar <i class="pp14"></i> et de 1,5 bar <i class="pp15"></i>. MOD ${fmt(mod, 1)} m à ${fmt(S.pmax, 1)} b.</span></div>
+        </div>`).join('')}</div>
+        <details class="gen-depth" style="margin-top:12px"><summary>🔎 Le détail : PEA, ligne MN90, gain par rapport à l’air</summary><div style="padding:0 8px 8px">
         <h3 style="margin-bottom:6px">Table ${name} · PpO₂ max ${fmt(S.pmax, 1)} b · MOD ${fmt(mod, 1)} m</h3>
         <div class="tbl-wrap"><table class="tbl gen-sum"><thead><tr><th>Profondeur réelle</th><th>PEA → ligne MN90</th><th>Sans palier</th><th>À l’air</th><th>Gain</th><th>PpO₂</th></tr></thead><tbody>${sum.join('')}</tbody></table></div>
         <p class="hint" style="margin-top:6px">Touche une profondeur pour voir toutes ses durées, paliers et lettres GPS.</p>
         ${det.join('')}
-        <p class="hint" style="margin-top:8px">Méthode du cours : PEA = [(P + 10) × %N₂ / 0,8] − 10, ligne MN90 immédiatement supérieure. Plongées successives : la lettre GPS se reporte comme à l’air. La table ne tient pas compte de la toxicité de l’O₂ : ${S.conf ? 'surveille le %SNC' : 'immersion limitée à 2 h'}.</p>`;
+        <p class="hint" style="margin-top:8px">Méthode du cours : PEA = [(P + 10) × %N₂ / 0,8] − 10, ligne MN90 immédiatement supérieure. Plongées successives : la lettre GPS se reporte comme à l’air. La table ne tient pas compte de la toxicité de l’O₂ : ${S.conf ? 'surveille le %SNC' : 'immersion limitée à 2 h'}.</p></div></details>`;
       generated = true;
       el.printBtn.hidden = false;
     }
@@ -383,6 +414,7 @@
       document.querySelectorAll('.pane[data-pane]').forEach(pn => { pn.hidden = pn.dataset.pane !== b.dataset.pane; });
       const exo = document.getElementById('exoOut');
       document.querySelector('.nx-app')?.classList.toggle('exo-plein', b.dataset.pane === 'exo' || b.dataset.pane === 'exam');
+      document.querySelector('.nx-app')?.classList.toggle('gen-large', b.dataset.pane === 'gen');
       if (b.dataset.pane === 'exo' && exo && !exo.childElementCount && window.NitroxExercices) window.NitroxExercices.rendre(exo);
       const exam = document.getElementById('examOut');
       if (b.dataset.pane === 'exam' && exam && !exam.childElementCount && window.NitroxAssistants) window.NitroxAssistants.rendre(exam);

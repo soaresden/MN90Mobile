@@ -471,6 +471,55 @@
     montrer();
   }
 
+  /* ---------- Les images : pressions partielles et profondeur max ---------- */
+  const O2C = '#e5484d', N2C = '#3b8fd6';
+  // Pressions partielles : PpO₂ et PpN₂ selon la profondeur, les limites, et la barre de Dalton à la profondeur choisie
+  function svgPP(prof, f) {
+    const W = 520, H = 300, g = 42, d = 360, top = 18, bas = 268, zMax = Math.max(60, Math.ceil((prof + 10) / 10) * 10), pMax = 7;
+    const x = p => g + p / pMax * (d - g), y = z => top + z / zMax * (bas - top);
+    let s = '';
+    for (let z = 0; z <= zMax; z += 10) s += `<line x1="${g}" x2="${d}" y1="${y(z)}" y2="${y(z)}" class="viz-grille"/><text x="${g - 6}" y="${y(z) + 4}" class="viz-lbl" text-anchor="end">${z} m</text>`;
+    for (let p = 0; p <= pMax; p++) s += `<text x="${x(p)}" y="${bas + 16}" class="viz-lbl" text-anchor="middle">${p}</text>`;
+    s += `<text x="${(g + d) / 2}" y="${bas + 30}" class="viz-lbl" text-anchor="middle">pression partielle (bar)</text>`;
+    const lim = (p, c, t, dash) => `<line x1="${x(p)}" x2="${x(p)}" y1="${top}" y2="${bas}" stroke="${c}" stroke-width="1.5" ${dash ? 'stroke-dasharray="5 4"' : ''}/><text x="${x(p) + 3}" y="${top + 10}" class="viz-lbl" fill="${c}">${t}</text>`;
+    s += lim(1.6, O2C, 'O₂ 1,6', false) + lim(3.2, '#f59e0b', 'narcose 3,2', true) + lim(5.6, N2C, 'N₂ max 5,6', true);
+    const ligne = (fx, c) => `<polyline fill="none" stroke="${c}" stroke-width="3" points="${Array.from({ length: zMax + 1 }, (_, z) => `${x(Math.min(pMax, (1 + z / 10) * fx))},${y(z)}`).join(' ')}"/>`;
+    s += ligne(f, O2C) + ligne(1 - f, N2C);
+    const P = 1 + prof / 10, po = P * f, pn = P * (1 - f);
+    s += `<line x1="${g}" x2="${d}" y1="${y(prof)}" y2="${y(prof)}" stroke="var(--text)" stroke-dasharray="3 3"/>`;
+    s += `<circle cx="${x(Math.min(pMax, po))}" cy="${y(prof)}" r="5" fill="${O2C}"/><circle cx="${x(Math.min(pMax, pn))}" cy="${y(prof)}" r="5" fill="${N2C}"/>`;
+    s += `<text x="${x(Math.min(pMax, po)) + 7}" y="${y(prof) - 7}" class="viz-val" fill="${O2C}">${n(po, 2)}</text><text x="${x(Math.min(pMax, pn)) + 7}" y="${y(prof) - 7}" class="viz-val" fill="${N2C}">${n(pn, 2)}</text>`;
+    // La barre de Dalton : la pression absolue, coupée en O₂ et N₂
+    const bx = 400, bw = 70, hb = v => v / pMax * (bas - top);
+    s += `<rect x="${bx}" y="${bas - hb(P)}" width="${bw}" height="${hb(pn)}" fill="${N2C}" rx="4"/><rect x="${bx}" y="${bas - hb(po)}" width="${bw}" height="${hb(po)}" fill="${O2C}" rx="4"/>`;
+    s += `<text x="${bx + bw / 2}" y="${bas - hb(P) - 8}" class="viz-val" text-anchor="middle">Pa ${n(P, 2)} b</text>`;
+    if (hb(pn) > 16) s += `<text x="${bx + bw / 2}" y="${bas - hb(po) - hb(pn) / 2 + 4}" class="viz-in" text-anchor="middle">N₂ ${n(pn, 2)}</text>`;
+    if (hb(po) > 16) s += `<text x="${bx + bw / 2}" y="${bas - hb(po) / 2 + 4}" class="viz-in" text-anchor="middle">O₂ ${n(po, 2)}</text>`;
+    s += `<text x="${bx + bw / 2}" y="${bas + 16}" class="viz-lbl" text-anchor="middle">à ${n(prof, 1)} m</text>`;
+    return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pressions partielles selon la profondeur">${s}</svg>`;
+  }
+  // Profondeur max : la PpO₂ qui monte avec la profondeur, la limite, la MOD, la zone interdite
+  function svgMOD(f, ppmax) {
+    const mod = (ppmax / f - 1) * 10;
+    const W = 520, H = 290, g = 42, d = W - 12, top = 28, bas = 248, zMax = Math.max(20, Math.min(100, Math.ceil((mod * 1.35 + 5) / 10) * 10)), pMax = Math.max(2.2, Math.ceil((1 + zMax / 10) * f * 10) / 10);
+    const x = z => g + z / zMax * (d - g), y = p => bas - p / pMax * (bas - top);
+    let s = '';
+    for (let p = 0; p <= pMax + 1e-9; p += 0.4) s += `<line x1="${g}" x2="${d}" y1="${y(p)}" y2="${y(p)}" class="viz-grille"/><text x="${g - 6}" y="${y(p) + 4}" class="viz-lbl" text-anchor="end">${n(p, 1)}</text>`;
+    const pasZ = zMax > 60 ? 20 : 10;
+    for (let z = 0; z <= zMax; z += pasZ) s += `<text x="${x(z)}" y="${bas + 16}" class="viz-lbl" text-anchor="middle">${z} m</text>`;
+    s += `<text x="${(g + d) / 2}" y="${bas + 32}" class="viz-lbl" text-anchor="middle">profondeur</text><text x="${g}" y="${top - 12}" class="viz-lbl" text-anchor="middle">PpO₂ (b)</text>`;
+    s += `<rect x="${x(Math.min(mod, zMax))}" y="${top}" width="${Math.max(0, d - x(Math.min(mod, zMax)))}" height="${bas - top}" fill="${O2C}" opacity=".12"/>`;
+    s += `<text x="${(x(Math.min(mod, zMax)) + d) / 2}" y="${top + 16}" class="viz-val" fill="${O2C}" text-anchor="middle">interdit</text>`;
+    for (const [p, dash] of [[1.4, true], [1.5, true], [1.6, false]]) if (p <= pMax) s += `<line x1="${g}" x2="${d}" y1="${y(p)}" y2="${y(p)}" stroke="${O2C}" stroke-width="${p === ppmax ? 2 : 1}" ${dash ? 'stroke-dasharray="4 4"' : ''} opacity="${p === ppmax ? 1 : .5}"/>` + (p === ppmax ? `<text x="${g + 4}" y="${y(p) - 5}" class="viz-val" fill="${O2C}">limite ${n(p, 1)} b</text>` : '');
+    s += `<polyline fill="none" stroke="var(--accent)" stroke-width="3" points="${Array.from({ length: 101 }, (_, i) => { const z = i / 100 * zMax; return `${x(z)},${y((1 + z / 10) * f)}`; }).join(' ')}"/>`;
+    if (mod <= zMax) {
+      s += `<line x1="${x(mod)}" x2="${x(mod)}" y1="${y(ppmax)}" y2="${bas}" stroke="var(--text)" stroke-dasharray="4 3"/><circle cx="${x(mod)}" cy="${y(ppmax)}" r="6" fill="var(--accent)" stroke="#fff" stroke-width="2"/>`;
+      s += `<text x="${x(mod) - 8}" y="${y(ppmax) - 10}" class="viz-val" text-anchor="end">MOD ${n(mod, 1)} m</text>`;
+    }
+    s += `<text x="${x(zMax * 0.08)}" y="${y((1 + zMax * 0.08 / 10) * f) - 10}" class="viz-lbl" fill="var(--accent)">PpO₂ du ${f >= 0.995 ? 'O₂ pur' : f <= 0.21 ? 'air' : 'Nx' + Math.round(f * 100)}</text>`;
+    return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Profondeur max">${s}</svg>`;
+  }
+
   /* ---------- Le mode « Assistant » de la page Nitrox : volet à gauche, valeurs, résultat à droite ---------- */
   const LISTE = [['pp', '🫧 Pressions partielles'], ['mod', '📏 Profondeur max'], ['pea', '🟰 Prof. équivalente air'], ['best', '🎯 Best mix'],
     ['journee', '🧠 Journée plongée'], ['gonf', '⛽ Gonflage'], ['mariotte', '⚗️ Réserve d’O₂ (Mariotte)']];
@@ -504,7 +553,8 @@
       const calculer = () => {
         let r;
         try { r = q.calc(v); } catch (e) { r = { l: [{ txt: 'Calcul impossible : ' + e.message }], rep: '', x: '' }; }
-        zOut.innerHTML = (r.rep ? `<div class="exo-rep">${r.rep}</div>` : '') + `<div class="as-res">${r.l.map(x => (x.h ? `<h4>${x.h}</h4>`
+        const viz = q.id === 'pp' ? svgPP(+v.prof, v.o2 / 100) : q.id === 'mod' ? svgMOD(v.o2 / 100, +v.pp) : '';
+        zOut.innerHTML = (r.rep ? `<div class="exo-rep">${r.rep}</div>` : '') + viz + `<div class="as-res">${r.l.map(x => (x.h ? `<h4>${x.h}</h4>`
           : x.txt != null ? `<div class="as-t">${x.txt}${x.c ? `<small>${x.c}</small>` : ''}</div>`
             : `<div class="as-l"><span>${x.k}</span> <i>=</i> <b>${x.r}</b>${x.c ? `<small>${x.c}</small>` : ''}</div>`)).join('')}</div>` +
           (q.id === 'pea' && onTable ? `<button type="button" class="btn btn-primary asx-table">📋 Générer la table Nitrox pour le Nx${v.o2}</button>` : '') +
