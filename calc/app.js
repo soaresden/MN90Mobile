@@ -236,7 +236,7 @@
   function choisir(id) {
     S.q = Q.find(x => x.id === id) || null;
     S.i = 0; S.v = {}; S.saisie = ''; S.fini = false; S.expl = false;
-    S.ruban = S.q ? [{ txt: `${S.q.t} : ${S.q.e}`, c: '' }] : [];
+    S.ruban = [];
     rendre();
   }
 
