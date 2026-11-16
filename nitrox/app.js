@@ -349,10 +349,10 @@
       document.querySelector('.nx-app')?.classList.toggle('exo-plein', b.dataset.pane === 'exo' || b.dataset.pane === 'exam');
       if (b.dataset.pane === 'exo' && exo && !exo.childElementCount && window.NitroxExercices) window.NitroxExercices.rendre(exo);
       const exam = document.getElementById('examOut');
-      if (b.dataset.pane === 'exam' && exam && !exam.childElementCount && window.NitroxExamen) window.NitroxExamen.rendre(exam);
+      if (b.dataset.pane === 'exam' && exam && !exam.childElementCount && window.NitroxAssistants) window.NitroxAssistants.rendre(exam);
     });
     // nitrox/index.html#examen ou #exercices : ouvre directement l'onglet
-    const ouvrir = { '#examen': 'exam', '#exercices': 'exo' }[location.hash];
+    const ouvrir = { '#examen': 'exam', '#assistants': 'exam', '#exercices': 'exo' }[location.hash];
     if (ouvrir) el.ntabs.querySelector(`[data-pane="${ouvrir}"]`)?.click();
     // Hauteur de la barre du haut, et graphiques redessinés quand leur zone change de taille
     const nav = document.querySelector('.navbar');

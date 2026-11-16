@@ -11,6 +11,7 @@
 <script src="../shared/glossary.js" defer></script>
 <script src="exercices.js" defer></script>
 <script src="examen.js" defer></script>
+<script src="assistants.js" defer></script>
 <script src="app.js" defer></script>
 <style>
   /* Empilé sur téléphone, tableau de bord plein écran sur ordinateur */
@@ -97,6 +98,37 @@
   .nx-app.exo-plein { grid-template-columns: minmax(0, 1fr) !important; }
   .nx-app.exo-plein > .nx-side, .nx-app.exo-plein > .nx-center { display: none !important; }
   .nx-app.exo-plein #exoOut, .nx-app.exo-plein #examOut, .nx-app.exo-plein .pane > h3 { max-width: 980px; margin-left: auto; margin-right: auto; }
+  /* Assistants */
+  .as-groupes { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .as-g { display: flex; gap: 8px; align-items: baseline; }
+  .as-g > span { flex: 0 0 92px; font-size: .78rem; font-weight: 800; color: var(--text2); }
+  .as-g > div { display: flex; flex-wrap: wrap; gap: 4px; }
+  .as-tete { margin-bottom: 8px; }
+  .as-reset { margin: -2px 0 8px; }
+  .as-expl { display: inline-flex; gap: 6px; align-items: center; font-size: .84rem; color: var(--text2); margin-bottom: 8px; cursor: pointer; }
+  .as-res { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; line-height: 1.45; }
+  .as-res h4 { margin: 10px 0 2px; font-size: .86rem; color: var(--accent); }
+  .as-l { font-variant-numeric: tabular-nums; }
+  .as-l i { font-style: normal; color: var(--text3); margin: 0 2px; }
+  .as-l small, .as-t small { display: block; color: var(--text3); font-size: .78rem; }
+  .as-t { color: var(--text2); }
+  .as-fin { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+  .as-tab td.as-c { cursor: pointer; }
+  .as-tab td.as-c:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .as-tab td.sel { background: color-mix(in srgb, var(--accent) 24%, transparent); font-weight: 800; }
+  .as-detail { position: sticky; bottom: 8px; z-index: 3; margin-top: 8px; padding: 9px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: 0 4px 16px rgba(0,0,0,.15); font-size: .9rem; line-height: 1.4; }
+  .as-ligne { display: grid; grid-template-columns: 92px 1fr; gap: 8px; align-items: start; padding: 8px 0; border-top: 1px solid var(--border); }
+  .as-ligne > span { font-weight: 800; font-size: .86rem; padding-top: 4px; color: var(--accent); }
+  .as-champs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0 10px; }
+  .as-champs .exam-champ { margin-bottom: 4px; }
+  .as-sch { margin: 6px 0 4px; }
+  .as-sch svg { flex: 1 1 320px; max-width: 560px; }
+  .as-sch .sch-lbl { font-size: 12px; }
+  .as-sch .sch-z { font-size: 11.5px; }
+  .sch-val { fill: var(--accent); font-size: 12px; font-weight: 800; }
+  .sch-tot { fill: var(--text); font-size: 13px; font-weight: 800; }
+  @media (max-width: 520px) { .as-ligne { grid-template-columns: 1fr; gap: 2px; } }
+  @media (max-width: 520px) { .as-g { flex-direction: column; gap: 3px; } .as-g > span { flex: none; } }
   /* Calculatrice examen */
   .exam-types { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; scrollbar-width: thin; }
   .exam-types .ptab { flex: 0 0 auto; white-space: nowrap; }
@@ -202,7 +234,7 @@
       <button type="button" class="ptab conf-only" data-pane="o2stops" hidden>⏱️ Paliers O₂</button>
       <button type="button" class="ptab conf-only" data-pane="gonf" hidden>⛽ Gonflage</button>
       <button type="button" class="ptab" data-pane="exo">📝 Exercices commentés</button>
-      <button type="button" class="ptab" data-pane="exam">🎓 Calculs types</button>
+      <button type="button" class="ptab conf-only" data-pane="exam" hidden>🧮 Assistants</button>
     </div>
     <div class="pbody">
       <div class="pane" data-pane="mix">
@@ -244,7 +276,7 @@
         <div id="gonfOut"></div>
       </div>
       <div class="pane" data-pane="exam" hidden>
-        <h3>🎓 Calculs types (révision)</h3>
+        <h3>🧮 Assistants de calcul Nitrox Confirmé</h3>
         <div id="examOut" class="notranslate" lang="fr"></div>
       </div>
       <div class="pane" data-pane="exo" hidden>
