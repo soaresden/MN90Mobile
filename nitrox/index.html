@@ -10,6 +10,7 @@
 <script src="../shared/profile.js" defer></script>
 <script src="../shared/glossary.js" defer></script>
 <script src="exercices.js" defer></script>
+<script src="examen.js" defer></script>
 <script src="app.js" defer></script>
 <style>
   /* Empilé sur téléphone, tableau de bord plein écran sur ordinateur */
@@ -95,7 +96,20 @@
   /* Onglet Exercices : toute la largeur (pas de graphiques à côté) */
   .nx-app.exo-plein { grid-template-columns: minmax(0, 1fr) !important; }
   .nx-app.exo-plein > .nx-side, .nx-app.exo-plein > .nx-center { display: none !important; }
-  .nx-app.exo-plein #exoOut, .nx-app.exo-plein .pane[data-pane="exo"] > h3 { max-width: 980px; margin-left: auto; margin-right: auto; }
+  .nx-app.exo-plein #exoOut, .nx-app.exo-plein #examOut, .nx-app.exo-plein .pane > h3 { max-width: 980px; margin-left: auto; margin-right: auto; }
+  /* Calculatrice examen */
+  .exam-types { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; scrollbar-width: thin; }
+  .exam-types .ptab { flex: 0 0 auto; white-space: nowrap; }
+  .exam-q { margin-bottom: 8px; }
+  .exam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0 10px; }
+  .exam-champ { margin-bottom: 10px; }
+  .exam-hint { font-style: normal; font-weight: 800; color: var(--accent); }
+  .exam-pas { display: flex; gap: 4px; }
+  .exam-pas .input { flex: 1; min-width: 0; text-align: center; font-weight: 800; font-size: 1.05rem; padding-left: 4px; padding-right: 4px; }
+  .exam-pas button { flex: 0 0 40px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); border-radius: 10px; font-size: 1.2rem; font-weight: 800; cursor: pointer; }
+  .exam-champ .seg button { flex: 1; }
+  .exam-res { display: flex; flex-direction: column; gap: 8px; font-size: .88rem; line-height: 1.45; }
+  .exam-res h4 { margin: 8px 0 0; font-size: .9rem; color: var(--accent); }
   .nx-app.exo-plein .ptabs { justify-content: center; }
   .sch { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; }
   .sch svg { flex: 1 1 280px; max-width: 440px; display: block; }
@@ -188,6 +202,7 @@
       <button type="button" class="ptab conf-only" data-pane="o2stops" hidden>⏱️ Paliers O₂</button>
       <button type="button" class="ptab conf-only" data-pane="gonf" hidden>⛽ Gonflage</button>
       <button type="button" class="ptab" data-pane="exo">📝 Exercices commentés</button>
+      <button type="button" class="ptab" data-pane="exam">🎓 Calculs types</button>
     </div>
     <div class="pbody">
       <div class="pane" data-pane="mix">
@@ -227,6 +242,10 @@
           <label class="field">% O₂ du reste<input class="input" type="number" id="gFi" value="21" min="21" max="100" step="1"></label>
         </div>
         <div id="gonfOut"></div>
+      </div>
+      <div class="pane" data-pane="exam" hidden>
+        <h3>🎓 Calculs types (révision)</h3>
+        <div id="examOut" class="notranslate" lang="fr"></div>
       </div>
       <div class="pane" data-pane="exo" hidden>
         <h3>📝 Exercices commentés</h3>

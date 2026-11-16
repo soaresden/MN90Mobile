@@ -1,13 +1,13 @@
 /* MN90 Mobile — service worker : appli installable et utilisable hors ligne.
    Stratégie "réseau d'abord" : en ligne on a toujours la dernière version ;
    hors ligne, on sert la dernière copie gardée en cache. */
-const CACHE = 'mn90-v6';
+const CACHE = 'mn90-v7';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './shared/style.css', './shared/theme.js', './shared/mn90.js', './shared/profile.js', './shared/glossary.js',
   './shared/procedures.js', './shared/buhlmann.js', './shared/intro.js', './shared/i18n.js', './shared/wear-version.js', './shared/vendor/qrcode.js',
   './planner/index.html', './planner/app.js',
-  './nitrox/index.html', './nitrox/app.js', './nitrox/exercices.js',
+  './nitrox/index.html', './nitrox/app.js', './nitrox/exercices.js', './nitrox/examen.js',
   './procedures/index.html', './saturation/index.html', './saturation/app.js',
   './briefing/index.html', './watch/index.html',
   './icons/icon-192.png', './icons/icon-512.png', './icons/logo.svg',

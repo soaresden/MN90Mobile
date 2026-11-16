@@ -276,15 +276,16 @@
         { c: ['Total', '40', '200', '160', '91', '<b>69</b>'], cls: 'tot' },
       ]) + rep('<b>O₂ pur jusqu’à 109 b</b> (40 + 69), puis <b>air jusqu’à 200 b</b>. La bouteille d’O₂ doit être <b>au-dessus de 109 b</b> pour pouvoir transférer jusque-là.') },
     { n: 'À toi #2', t: '%SNC : 50 min à 30 m au Nitrox 36, palier O₂', tags: ['%SNC', 'Palier O₂'],
-      q: '50 min à 30 m au Nitrox 36, palier à l’O₂ pur. La MN90 donne 9 min de palier à 3 m. Calcule le %SNC de la plongée.',
-      r: schema([{ prof: 30, fond: '50 min', palier: { prof: 3, texte: 'O₂ 6 min' } }]) +
+      q: '50 min à 30 m au Nitrox 36, palier à l’O₂ pur. Calcule le %SNC de la plongée.',
+      r: schema([{ prof: 30, fond: '50 min', palier: { prof: 3, texte: 'O₂ 8 min' } }]) +
         phases([
           ['1. Fond', '30 m', '50', 'Nx36', '4,0', '1,44 → <b>1,5</b> → 0,83', '2,56', '41,5 %'],
           ['2. Remontée', '30 → 3 m', '27 / 15 = 1,8', 'Nx36', '4,0', 'celle du fond → 0,83', '', '1,5 %'],
-          ['3. Palier', '3 m', '9 × 2/3 = 6', 'O₂ pur', '1,3', '1,3 → <b>1,3</b> → 0,56', '', '3,4 %'],
+          ['3. Palier', '3 m', '12 × 2/3 = 8', 'O₂ pur', '1,3', '1,3 → <b>1,3</b> → 0,56', '', '4,5 %'],
           ['4. Remontée surface', '3 → 0 m', '0,5', 'O₂ pur', '1,3', 'celle du palier → 0,56', '', '0,3 %'],
-        ], ['Total', '<b>≈ 46,6 %</b>']) +
-        note('Piège : 1,44 b n’existe pas dans la table → on prend la colonne <b>au-dessus</b>, 1,5 b (0,83 %/min), pas 1,4 b.') + rep('<b>≈ 47 %</b> : sous 50 %, pas d’intervalle minimum imposé.') },
+        ], ['Total', '<b>≈ 47,8 %</b>']) +
+        steps([['PEA', 'PpN₂ = 4 × 0,64 = 2,56 b → 2,56 / 0,8 = 3,2 b → <b>22 m</b> → 50 min : <b>12 min à 3 m</b>, GPS J'], ['À l’O₂', '12 × 2/3 = <b>8 min</b>']]) +
+        note('Piège : 1,44 b n’existe pas dans la table → on prend la colonne <b>au-dessus</b>, 1,5 b (0,83 %/min), pas 1,4 b.') + rep('<b>≈ 48 %</b> : sous 50 %, pas d’intervalle minimum imposé.') },
   ];
 
   const carte = (e, ouvert = false) => `<details class="exo"${ouvert ? ' open' : ''}><summary><b>${e.n}</b> ${e.t} ${e.tags.map(t => `<span class="exo-tag">${t}</span>`).join('')}</summary>
