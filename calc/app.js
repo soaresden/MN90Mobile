@@ -202,26 +202,25 @@
 
   /* ---------- l'état ---------- */
   const S = { q: null, i: 0, v: {}, saisie: '', fini: false, expl: false, ruban: [] };
-  const ruban = $('#ruban'), affichage = $('#affichage'), invite = $('#invite'), menu = $('#menu');
+  const ruban = $('#ruban'), affichage = $('#affichage'), invite = $('#invite'), liste = $('#liste');
 
   function rendreRuban() {
     ruban.innerHTML = S.ruban.map(x => {
       if (x.h) return `<div class="r-h">${x.h}</div>`;
       if (x.txt != null) return `<div class="r-t">${x.txt}${S.expl && x.c ? `<small>${x.c}</small>` : ''}</div>`;
       if ('val' in x) return `<div class="r-v"><span>${x.q}</span><b>${x.val}</b></div>`;
-      if ('rep' in x) return x.rep ? `<div class="r-rep">${x.rep}</div>` : '';
-      if ('x' in x) return S.expl && x.x.trim() ? `<div class="r-x">💡 ${x.x}</div>` : '';
+      if ('rep' in x) return x.rep ? `<div class="r-rep">→ ${x.rep}</div>` : '';
+      if ('x' in x) return S.expl && x.x.trim() ? `<div class="r-x">${x.x}</div>` : '';
       return `<div class="r-l"><span class="k">${x.k}</span><span class="eg">=</span><b>${x.r}</b>${S.expl && x.c ? `<small>${x.c}</small>` : ''}</div>`;
     }).join('');
     ruban.scrollTop = ruban.scrollHeight;
   }
   function rendre() {
-    menu.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.q || '') === (S.q?.id || '')));
+    liste.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.q || '') === (S.q?.id || '')));
     if (S.q && !S.fini) {
       const c = S.q.champs[S.i];
       invite.textContent = `${c.q}  (${String(c.v).replace('.', ',')} si vide)`;
-    } else if (S.q && S.fini) invite.textContent = S.expl ? '= : cacher les explications · AC : recommencer' : '= : les explications · AC : recommencer · ou calcule ici';
-    else invite.textContent = 'Calculatrice · choisis un énoncé en haut';
+    } else invite.textContent = '';
     affichage.textContent = S.saisie || '0';
     affichage.classList.toggle('vide', !S.saisie);
     rendreRuban();
@@ -230,7 +229,7 @@
   function choisir(id) {
     S.q = Q.find(x => x.id === id) || null;
     S.i = 0; S.v = {}; S.saisie = ''; S.fini = false; S.expl = false;
-    S.ruban = S.q ? [{ h: S.q.t }, { txt: S.q.e, c: '' }] : [];
+    S.ruban = S.q ? [{ txt: `${S.q.t} : ${S.q.e}`, c: '' }] : [];
     rendre();
   }
 
@@ -258,15 +257,19 @@
       } catch (e) { flash(); }
       return rendre();
     }
-    if (S.q && S.fini) { S.expl = !S.expl; rendre(); }
+    if (S.q && S.fini && !S.expl) { S.expl = true; rendre(); }
   }
   function flash() { affichage.classList.add('err'); setTimeout(() => affichage.classList.remove('err'), 350); }
 
   function touche(k) {
     if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) { /* pas de vibreur */ }
     if (k === '=') return egal();
-    if (k === 'AC') { if (S.q) choisir(S.q.id); else { S.saisie = ''; S.ruban = []; rendre(); } return; }
-    if (k === '⌫') { S.saisie = S.saisie.slice(0, -1); return rendre(); }
+    if (k === 'AC') {
+      if (S.expl) { S.expl = false; return rendre(); }           // 1er AC : les explications s'en vont
+      if (S.q) choisir(S.q.id); else { S.saisie = ''; S.ruban = []; rendre(); }
+      return;
+    }
+    if (k === '⌫') { if (S.expl && !S.saisie) { S.expl = false; return rendre(); } S.saisie = S.saisie.slice(0, -1); return rendre(); }
     if (k === ',' && /[\d]*,[\d]*$/.test(S.saisie.split(/[+−×÷()]/).pop())) return;
     S.saisie += k;
     rendre();
@@ -282,8 +285,23 @@
     const k = /^\d$/.test(e.key) ? e.key : map[e.key];
     if (k) { e.preventDefault(); touche(k); }
   });
-  menu.innerHTML = `<button type="button" data-q="">🧮 Calcul</button>` + Q.map(x => `<button type="button" data-q="${x.id}">${x.t}</button>`).join('');
-  menu.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; choisir(b.dataset.q); b.scrollIntoView({ inline: 'center', block: 'nearest' }); });
+  liste.innerHTML = `<button type="button" data-q="">Calculatrice simple<small>sans énoncé</small></button>` +
+    Q.map(x => `<button type="button" data-q="${x.id}">${x.t}<small>${x.e}</small></button>`).join('');
+  const vue = v => {
+    document.querySelectorAll('header button[data-vue]').forEach(b => b.classList.toggle('on', b.dataset.vue === v));
+    document.querySelectorAll('.vue').forEach(x => { x.hidden = x.dataset.vue !== v; });
+  };
+  document.querySelector('header').addEventListener('click', e => { const b = e.target.closest('button[data-vue]'); if (b) vue(b.dataset.vue); });
+  liste.addEventListener('click', e => { const b = e.target.closest('button[data-q]'); if (!b) return; choisir(b.dataset.q); vue('calc'); });
+  // Glisser vers la gauche : les énoncés ; vers la droite : la calculatrice
+  let x0 = null, y0 = 0;
+  document.addEventListener('touchstart', e => { if (e.target.closest('#clavier')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) vue(dx < 0 ? 'enonces' : 'calc');
+    x0 = null;
+  }, { passive: true });
 
   window.NitroxCalc = { evaluer, Q, choisir, touche };
   choisir('');
