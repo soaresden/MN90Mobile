@@ -148,7 +148,7 @@
     }
     const total = parts.reduce((a, c) => a + c, 0);
     rows.push({ tot: true, c: [`Total`, '', '', '', '', '', '', cel(n(total, 2), `${nom} = ${parts.map(x => n(x, 2)).join(' + ')} = ${n(total, 2)}${u}`), ''] });
-    return { rows, total };
+    return { rows, total, fin: lig(`${nom} = ${parts.map(x => n(x, 2)).join(' + ')}`, n(total, 2) + u) };
   }
 
   const verdict = x => (x > 100 ? 'au-delà de 100 % : PAS POSSIBLE (crise hyperoxique possible)' : x > 90 ? 'au-delà de 90 % : intervalle ≥ 2 h' : x > 50 ? 'au-delà de 50 % : intervalle ≥ 45 min' : 'sous 50 % : OK');
@@ -182,7 +182,7 @@
       calc: v => { const r = E().plongee({ prof: v.prof, duree: v.duree, fo2: v.o2 / 100, o2: !!v.po2 });
         if (r.err) return { l: [txt(r.err)], rep: 'hors table', x: '' };
         const t = lignesTableau(r, ['A', 'B', 'C', 'D'], 'snc', eqAir(r));
-        return { l: [{ tab: { head: TETE('snc'), rows: t.rows } }], rep: `%SNC = ${n(r.snc, 1)} % · ${verdict(r.snc)}`,
+        return { l: [{ tab: { head: TETE('snc'), rows: t.rows } }], fin: [t.fin], rep: `%SNC = ${n(r.snc, 1)} % · ${verdict(r.snc)}`,
           x: 'Fond : durée MN90 (descente comprise). Remontée : (fond − 1er palier) / 15. Palier à l’O₂ : 2/3 du temps à l’air, 5 min minimum. Remontée surface : 3 m à 6 m/min = 0,5 min. Sans palier : remontée = fond / 15, et 0 pour les deux dernières lignes.' + (r.alertes.length ? ' ⚠ ' + r.alertes.join(' ').replace(/<[^>]+>/g, '') : '') }; } },
     { id: 'inter', t: 'Intervalle surface', e: '%SNC de 43 % après 2 h de surface', champs: [C('snc', '%SNC à la sortie ?', 43), C('is', 'Intervalle (min) ? (2 h = 120)', 120)],
       calc: v => { const c = E().coefIntervalle(v.is);
@@ -221,7 +221,7 @@
             cel(n(reste, 2), `%SNC = ${n(r1.snc, 2)} × ${n(c.coef, 3)} = ${n(reste, 2)} % au départ de P2`), ''],
           ...t2.rows.map(x => (x.tot ? { tot: true, c: ['Total P2', ...x.c.slice(1)] } : x)),
           { tot: true, c: ['Journée', '', '', '', '', '', '', cel(n(tot, 2), `%SNC = ${n(reste, 2)} + ${n(r2.snc, 2)} = ${n(tot, 2)} % → ${verdict(tot)}`), cel(`${n(r1.otu + r2.otu, 0)} OTU`, `OTU = ${n(r1.otu, 1)} + ${n(r2.otu, 1)} = ${n(r1.otu + r2.otu, 0)} (limite 850 le 1er jour ; pas d’effet de l’intervalle)`)] }];
-        return { l: [{ tab: { head: TETE('snc'), rows } }], rep: `%SNC journée = ${n(tot, 1)} % · ${verdict(tot)}`,
+        return { l: [{ tab: { head: TETE('snc'), rows } }], fin: [lig(`%SNC = ${n(reste, 2)} + ${n(r2.snc, 2)}`, `${n(tot, 2)} %`), lig(`OTU = ${n(r1.otu, 1)} + ${n(r2.otu, 1)}`, `${n(r1.otu + r2.otu, 0)} OTU`)], rep: `%SNC journée = ${n(tot, 1)} % · ${verdict(tot)}`,
           x: 'A à D : plongée 1 (fond, remontée / 15, palier à l’O₂ = 2/3 du temps, 5 min mini, remontée surface 0,5 min). E : %SNC × coefficient de l’intervalle. F à I : plongée 2, avec la majoration (Tableau I : GPS × intervalle, colonne inférieure ; Tableau II : azote et profondeur, du dessus). Journée : E + total P2.' +
             (tot > 100 ? ' Solutions : plus d’intervalle, P2 moins profonde ou plus courte, ou un Nitrox moins riche en P2.' : '') + [...r1.alertes, ...r2.alertes].map(a => ' ⚠ ' + a.replace(/<[^>]+>/g, '')).join('') };
       } },
@@ -237,7 +237,7 @@
       calc: v => { const r = E().plongee({ prof: v.prof, duree: v.duree, fo2: v.o2 / 100, o2: !!v.po2 });
         if (r.err) return { l: [txt(r.err)], rep: 'hors table', x: '' };
         const t = lignesTableau(r, ['A', 'B', 'C', 'D'], 'otu', eqAir(r));
-        return { l: [{ tab: { head: TETE('otu'), rows: t.rows } }], rep: `OTU = ${n(r.otu, 0)}`, x: 'OTU/min : 0,6 → 0,26 · 1,0 → 1 · 1,3 → 1,48 · 1,4 → 1,63 · 1,5 → 1,78 · 1,6 → 1,93 (colonne immédiatement supérieure). On additionne tout sur la journée (pas d’effet de l’intervalle). Limite : 850 le 1er jour, puis 700, 620, 525…' }; } },
+        return { l: [{ tab: { head: TETE('otu'), rows: t.rows } }], fin: [t.fin], rep: `OTU = ${n(r.otu, 0)}`, x: 'OTU/min : 0,6 → 0,26 · 1,0 → 1 · 1,3 → 1,48 · 1,4 → 1,63 · 1,5 → 1,78 · 1,6 → 1,93 (colonne immédiatement supérieure). On additionne tout sur la journée (pas d’effet de l’intervalle). Limite : 850 le 1er jour, puis 700, 620, 525…' }; } },
     { id: 'gonf', t: 'Gonflage', e: 'De 30 b de Nitrox 40 à un Nitrox 60 à 200 b', champs: [C('pi', 'Reste dans le bloc (b) ?', 30), C('fi', 'Reste : % O₂ ? (air = 20)', 40), C('pf', 'Pression finale (b) ?', 200), C('ff', 'Nitrox voulu : % O₂ ?', 60)],
       calc: v => { const fi = v.fi / 100, ff = v.ff / 100, n0 = v.pi * (1 - fi), n1 = v.pf * (1 - ff), o0 = v.pi * fi, o1 = v.pf * ff, dN = n1 - n0, dO = o1 - o0, o2 = dO - dN / 4;
         const l = [titre('N₂'), lig(`On a = ${v.pi} × ${n(1 - fi, 2)}`, b(n0)), lig(`On veut = ${v.pf} × ${n(1 - ff, 2)}`, b(n1)), lig(`À ajouter = ${n(n1)} − ${n(n0)}`, b(dN), 'tout l’azote vient de l’air'),
@@ -282,6 +282,15 @@
     plier(!ruban.classList.contains('plie'));
   });
   function rendreRuban() {
+    const plie = ruban.classList.contains('plie');
+    if (plie && S.q) {
+      const items = S.fini ? [...(S.fin || []), ...S.ruban.filter(x => 'rep' in x)] : S.ruban.filter(x => 'val' in x);
+      const sauve = S.ruban; S.ruban = items;
+      try { return rendreTout(); } finally { S.ruban = sauve; }
+    }
+    return rendreTout();
+  }
+  function rendreTout() {
     const html = [];
     let vals = [];
     const vider = () => { if (vals.length) html.push(`<div class="r-vals">${vals.join('')}</div>`); vals = []; };
@@ -323,7 +332,7 @@
 
   function choisir(id) {
     S.q = Q.find(x => x.id === id) || null;
-    S.i = 0; S.v = {}; S.saisie = ''; S.fini = false; S.expl = false; S.detail = null;
+    S.i = 0; S.v = {}; S.saisie = ''; S.fini = false; S.expl = false; S.detail = null; S.fin = [];
     ruban.classList.add('plie');
     S.ruban = [];
     rendre();
@@ -342,6 +351,7 @@
         let r;
         try { r = S.q.calc(S.v); } catch (e) { r = { l: [{ txt: 'Calcul impossible : ' + e.message }], rep: '', x: '' }; }
         S.ruban.push(...r.l, { rep: r.rep || '' }, { x: r.x || '' });
+        S.fin = r.fin || r.l.filter(x => x.k != null).slice(-1);
       }
       return rendre();
     }
