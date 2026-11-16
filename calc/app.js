@@ -52,51 +52,55 @@
     return v;
   }
 
-  /* ---------- les lignes à taper ---------- */
+  /* ---------- les lignes, écrites comme sur la copie : « Grandeur = calcul = résultat » ---------- */
   const lig = (k, r, c = '') => ({ k, r, c });
   const txt = (s, c = '') => ({ txt: s, c });
   const titre = s => ({ h: s });
-  const colTxt = c => (c == null ? '< 0,6 → 0' : `colonne ${n(c, 1)}`);
+  const b = x => `${n(x)} bar`;
+  // PpO₂ → colonne NOAA (immédiatement supérieure) → %SNC/min ou OTU/min
+  const noaa = (pp, r, quoi = 'snc') => (r.c == null ? `${b(pp)} (< 0,6 : rien)` : `${b(pp)} → ${n(r.c, 1)} → ${n(quoi === 'snc' ? r.snc : r.otu, 2)} ${quoi === 'snc' ? '%' : 'OTU'}/min`);
+  const ligPa = z => lig(`Pa = ${n(z)} / 10 + 1 (atm)`, b(pa(z)), 'pression absolue');
 
   function lignesPEA(prof, fo2) {
-    const out = [lig(`${n(prof)} ÷ 10 + 1`, n(pa(prof)), 'Pa : pression absolue (b)')];
+    const out = [ligPa(prof)];
     if (fo2 <= 0.21 + 1e-9) { out.push(txt('Air : table MN90 à la profondeur réelle')); return { out, pea: prof }; }
     const pn = pa(prof) * (1 - fo2), paAir = pn / 0.8, pea = (paAir - 1) * 10;
-    out.push(lig(`${n(pa(prof))} × ${n(1 - fo2, 2)}`, n(pn), `PpN₂ (Nitrox ${Math.round(fo2 * 100)} = ${Math.round((1 - fo2) * 100)} % de N₂)`),
-      lig(`${n(pn)} ÷ 0,8`, n(paAir), 'Pa de l’air qui donnerait la même PpN₂'),
-      lig(`(${n(paAir)} − 1) × 10`, `${n(pea, 2)} m`, 'PEA → ligne MN90 immédiatement supérieure'));
+    const ligne = M().lookup(Math.max(pea, 0.1), 1).d;
+    out.push(lig(`PpN₂ = ${n(pa(prof))} × ${n(1 - fo2, 2)}`, b(pn), `Nitrox ${Math.round(fo2 * 100)} = ${Math.round((1 - fo2) * 100)} % de N₂`),
+      lig(`Pa air = ${n(pn)} / 0,8`, `${b(paAir)} = ${b(paAir - 1)} + 1 bar (atm)`, 'la Pa de l’air qui donnerait la même PpN₂'),
+      lig(`PEA = ${n(paAir - 1)} × 10`, `${n(pea, 2)} m → ligne ${ligne ?? '—'} m`, 'ligne MN90 immédiatement supérieure'));
     return { out, pea };
   }
   const palTxt = r => (r.paliers.length ? r.paliers.map(x => `${x.tAir} min à ${x.z} m`).join(' + ') : 'pas de palier');
-  const tableTxt = r => txt(`MN90 ${r.tab.d} m · ${r.duree} min → ligne ${hm(r.tab.t)} : ${palTxt(r)} · GPS ${r.tab.gps}`, 'les chiffres sous 15/12/9/6/3 m sont les paliers ; après : DTR puis GPS');
+  const tableTxt = (r, duree = r.duree) => txt(`MN90 ${r.tab.d} m · ${duree} min → ligne ${hm(r.tab.t)} : ${palTxt(r)} · GPS ${r.tab.gps}`, 'les chiffres sous 15/12/9/6/3 m sont les paliers ; après : DTR puis GPS');
 
-  // Le tableau en 4 étapes d'une plongée (déjà calculée par NitroxExamen.plongee), en lignes de calculatrice
+  // Le tableau en 4 étapes d'une plongée (NitroxExamen.plongee)
   function lignesPhases(r, quoi = 'snc') {
     const out = [], parts = [];
     const taux = x => (quoi === 'snc' ? x.snc : x.otu), part = x => (quoi === 'snc' ? x.sncP : x.otuP);
-    const u = quoi === 'snc' ? ' %' : ' OTU', nom = quoi === 'snc' ? '%SNC/min (NOAA)' : 'OTU/min';
+    const nom = quoi === 'snc' ? '%SNC' : 'OTU', u = quoi === 'snc' ? ' %' : ' OTU';
     const [fond, rem, ...reste] = r.rows;
-    out.push(titre('① Fond'), lig(`${n(r.pa)} × ${n(r.fo2, 2)}`, `${n(r.pp)} b`, `PpO₂ du fond → ${colTxt(fond.c)} (immédiatement supérieure)`),
-      lig(`${n(taux(fond), 2)} × ${n(fond.d)}`, n(part(fond), 2) + u, `${nom} × durée MN90 (descente comprise)`));
+    out.push(titre('① Fond'), lig(`PpO₂ = ${n(r.pa)} × ${n(r.fo2, 2)}`, noaa(r.pp, fond, quoi), 'colonne NOAA immédiatement supérieure'),
+      lig(`${nom} = ${n(taux(fond), 2)} × ${n(fond.d)}`, n(part(fond), 2) + u, 'durée MN90, descente comprise'));
     parts.push(part(fond));
     const premier = r.paliers[0]?.z ?? 0;
-    out.push(titre('② Remontée'), lig(`(${n(r.prof)} − ${premier}) ÷ 15`, `${n(rem.d, 2)} min`, `jusqu’au ${premier ? '1er palier' : 'surface'}, à 15 m/min`),
-      lig(`${n(taux(rem), 2)} × ${n(rem.d, 2)}`, n(part(rem), 2) + u, 'même PpO₂ qu’au fond'));
+    out.push(titre('② Remontée'), lig(`Durée = (${n(r.prof)} − ${premier}) / 15`, `${n(rem.d, 2)} min`, `jusqu’au ${premier ? '1er palier' : 'surface'}, à 15 m/min`),
+      lig(`${nom} = ${n(taux(rem), 2)} × ${n(rem.d, 2)}`, n(part(rem), 2) + u, 'même PpO₂ qu’au fond'));
     parts.push(part(rem));
     r.paliers.forEach((p, i) => {
       const row = reste[i];
       out.push(titre(`③ Palier ${p.z} m${p.enO2 ? ' à l’O₂ pur' : ''}`));
-      if (p.enO2) out.push(lig(`${p.tAir} × 2 ÷ 3`, `${n(p.tAir * 2 / 3, 2)} → ${p.t} min`, `2/3 du temps à l’air, arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''}`));
-      out.push(lig(`${n(pa(p.z))} × ${p.enO2 ? '1' : n(r.fo2, 2)}`, `${n(row.pp)} b`, `PpO₂ du palier → ${colTxt(row.c)}`),
-        lig(`${n(taux(row), 2)} × ${n(row.d)}`, n(part(row), 2) + u));
+      if (p.enO2) out.push(lig(`Durée O₂ = ${p.tAir} × 2/3`, `${n(p.tAir * 2 / 3, 2)} → ${p.t} min`, `arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''}`));
+      out.push(lig(`PpO₂ = ${n(pa(p.z))} × ${p.enO2 ? '1' : n(r.fo2, 2)}`, noaa(row.pp, row, quoi)),
+        lig(`${nom} = ${n(taux(row), 2)} × ${n(row.d)}`, n(part(row), 2) + u));
       parts.push(part(row));
     });
     if (r.paliers.length) {
       const s = reste[r.paliers.length], z = r.paliers[r.paliers.length - 1].z;
-      out.push(titre('④ Remontée surface'), lig(`${z} ÷ 6`, `${n(s.d, 2)} min`, `${z} m à 6 m/min`), lig(`${n(taux(s), 2)} × ${n(s.d, 2)}`, n(part(s), 2) + u, 'PpO₂ du palier'));
+      out.push(titre('④ Remontée surface'), lig(`Durée = ${z} / 6`, `${n(s.d, 2)} min`, `${z} m à 6 m/min`), lig(`${nom} = ${n(taux(s), 2)} × ${n(s.d, 2)}`, n(part(s), 2) + u, 'PpO₂ du palier'));
       parts.push(part(s));
-    } else out.push(txt('③ Palier : 0 · ④ Remontée surface : 0 (pas de palier)'));
-    out.push(titre('Total'), lig(parts.map(x => n(x, 2)).join(' + '), n(parts.reduce((a, b) => a + b, 0), 2) + u));
+    } else out.push(txt('③ Palier = 0 · ④ Remontée surface = 0 (pas de palier)'));
+    out.push(titre('Total'), lig(`${nom} = ${parts.map(x => n(x, 2)).join(' + ')}`, n(parts.reduce((a, c) => a + c, 0), 2) + u));
     return out;
   }
 
@@ -107,35 +111,35 @@
   const Q = [
     { id: 'pp', t: 'Pressions partielles', e: 'PpO₂ et PpN₂ de l’air à 20 m', champs: [C('prof', 'Profondeur (m) ?', 20), C('o2', '% O₂ ? (air = 20)', 20)],
       calc: v => { const p = pa(v.prof), o = v.o2 / 100;
-        return { l: [lig(`${n(v.prof)} ÷ 10 + 1`, `${n(p)} b`, 'Pa'), lig(`${n(p)} × ${n(o, 2)}`, `${n(p * o)} b`, 'PpO₂ = Pa × %O₂'), lig(`${n(p)} − ${n(p * o)}`, `${n(p * (1 - o))} b`, 'PpN₂ = Pa − PpO₂ (ou Pa × %N₂)')],
-          rep: `PpO₂ ${n(p * o)} b · PpN₂ ${n(p * (1 - o))} b`, x: 'Dalton : la pression totale est la somme des pressions partielles. Limites : PpO₂ 1,6 b, narcose dès 3,2 b de N₂, 5,6 b de N₂ maxi.' }; } },
+        return { l: [ligPa(v.prof), lig(`PpO₂ = ${n(p)} × ${n(o, 2)}`, b(p * o)), lig(`PpN₂ = ${n(p)} − ${n(p * o)}`, b(p * (1 - o)), `ou ${n(p)} × ${n(1 - o, 2)}`)],
+          rep: `PpO₂ = ${b(p * o)} · PpN₂ = ${b(p * (1 - o))}`, x: 'Dalton : la pression totale est la somme des pressions partielles. Limites : PpO₂ 1,6 b, narcose dès 3,2 b de N₂, 5,6 b de N₂ maxi.' }; } },
     { id: 'mod', t: 'Profondeur max', e: 'Profondeur max d’un Nitrox 40 (ou 80, ou l’air)', champs: [C('o2', 'Nitrox : % O₂ ?', 40), C('pp', 'PpO₂ max ? (1,6)', 1.6)],
       calc: v => { const o = v.o2 / 100, pm = v.pp / o, z = (pm - 1) * 10, fn = 1 - o;
-        return { l: [lig(`Pa max = ${n(v.pp, 1)} / ${n(o, 2)}`, `${n(pm, 2)} bar = ${n(pm - 1, 2)} bar (eau) + 1 bar (atm)`, 'Pa (pression absolue) = PpO₂ max / %O₂, dont 1 bar d’atmosphère'),
-          lig(`${n(pm - 1, 2)} bar × 10`, `${n(z, 1)} m`, '1 bar d’eau = 10 m')],
+        return { l: [lig(`Pa max = ${n(v.pp, 1)} / ${n(o, 2)}`, `${b(pm)} = ${b(pm - 1)} (eau) + 1 bar (atm)`, 'Pa (pression absolue) = PpO₂ max / %O₂'),
+          lig(`Prof. max = ${n(pm - 1)} × 10`, `${n(z, 1)} m`, '1 bar d’eau = 10 m')],
           rep: `MOD ${o >= 0.995 ? 'O₂ pur' : o <= 0.21 ? 'air' : 'Nx' + v.o2} = ${n(z, 1)} m`,
-          x: `Arrondir vers la sécurité (35,7 → 35 m). ${z < 25 ? 'Un Nitrox aussi riche sert aux paliers (déco) ; l’O₂ pur : 6 m maxi.' : 'Gaz fond.'} Azote (pour l’air) : narcose à 3,2 b → 3,2 / ${n(fn, 2)} = ${n(3.2 / fn, 2)} bar → ${n((3.2 / fn - 1) * 10, 1)} m ; N₂ max 5,6 b → ${n(5.6 / fn, 2)} bar → ${n((5.6 / fn - 1) * 10, 1)} m.` }; } },
+          x: `Arrondir vers la sécurité (35,7 → 35 m). ${z < 25 ? 'Un Nitrox aussi riche sert aux paliers (déco) ; l’O₂ pur : 6 m maxi.' : 'Gaz fond.'} Azote : narcose à 3,2 b → 3,2 / ${n(fn, 2)} = ${b(3.2 / fn)} → ${n((3.2 / fn - 1) * 10, 1)} m ; N₂ max 5,6 b → ${b(5.6 / fn)} → ${n((5.6 / fn - 1) * 10, 1)} m.` }; } },
     { id: 'best', t: 'Best mix', e: 'Best mix pour 45 m / pour 1 h à 32 m / déco à partir de 22 m', champs: [C('prof', 'Profondeur (m) ?', 45), C('duree', 'Durée (min) ? (0 = inconnue)', 0)],
       calc: v => { const p = pa(v.prof), pp = v.duree > 45 ? 1.5 : 1.6, x = pp / p, nx = Math.floor(x * 100 + 1e-9);
-        return { l: [lig(`${n(v.prof)} ÷ 10 + 1`, `${n(p)} b`, 'Pa'), txt(v.duree > 45 ? `${v.duree} min > 45 min : PpO₂ 1,5 b (à 1,6 b, la NOAA ne donne que 45 min)` : 'PpO₂ 1,6 b'),
-          lig(`${n(pp, 1)} ÷ ${n(p)}`, n(x), '%O₂ maxi = PpO₂ ÷ Pa'), txt(`→ arrondi VERS LE BAS : Nitrox ${nx}`), lig(`${n(p)} × ${n(nx / 100, 2)}`, `${n(p * nx / 100)} b`, 'vérification : ≤ ' + n(pp, 1) + ' b')],
-          rep: nx >= 100 ? 'O₂ pur' : `Nitrox ${nx}`, x: 'Toujours vérifier : Pa × mélange doit retomber sous la PpO₂ max. Si on arrondit vers le haut, on la dépasse. Le corrigé Q#3 donne Nx36 pour 1 h à 32 m (0,357 arrondi au plus près, 1,51 b).' }; } },
+        return { l: [ligPa(v.prof), txt(v.duree > 45 ? `${v.duree} min > 45 min → PpO₂ 1,5 b (à 1,6 b, la NOAA ne donne que 45 min)` : 'PpO₂ max = 1,6 b'),
+          lig(`%O₂ = ${n(pp, 1)} / ${n(p)}`, `${n(x)} → Nx${nx}`, 'arrondi VERS LE BAS'), lig(`PpO₂ = ${n(p)} × ${n(nx / 100, 2)}`, `${b(p * nx / 100)} ≤ ${n(pp, 1)} ✓`, 'vérification')],
+          rep: nx >= 100 ? 'O₂ pur' : `Best mix = Nitrox ${nx}`, x: 'Toujours vérifier : Pa × mélange doit retomber sous la PpO₂ max. Si on arrondit vers le haut, on la dépasse. Le corrigé Q#3 donne Nx36 pour 1 h à 32 m (0,357 arrondi au plus près, 1,51 b).' }; } },
     { id: 'pea', t: 'Prof. équivalente air', e: 'PEA d’une plongée à 30 m au Nitrox 40', champs: [C('prof', 'Profondeur (m) ?', 30), C('o2', 'Nitrox : % O₂ ?', 40)],
       calc: v => { const { out, pea } = lignesPEA(v.prof, v.o2 / 100), t = M().lookup(Math.max(pea, 0.1), 1);
-        return { l: out, rep: `PEA ${n(pea, 1)} m → table ${t.d ?? '—'} m`, x: 'On lit la MN90 à la ligne immédiatement supérieure à la PEA. La DTR de la table est fausse : on remonte de la profondeur réelle (et on consomme à la profondeur réelle).' }; } },
+        return { l: out, rep: `PEA = ${n(pea, 1)} m → table ${t.d ?? '—'} m`, x: 'On lit la MN90 à la ligne immédiatement supérieure à la PEA. La DTR de la table est fausse : on remonte de la profondeur réelle (et on consomme à la profondeur réelle).' }; } },
     { id: 'portion', t: '%SNC d’une portion', e: '%SNC de 30 min à 20 m au Nitrox 50', champs: [C('prof', 'Profondeur (m) ?', 20), C('duree', 'Durée (min) ?', 30), C('o2', 'Nitrox : % O₂ ?', 50)],
       calc: v => { const p = pa(v.prof), pp = p * v.o2 / 100, r = E().lire(pp);
-        return { l: [lig(`${n(v.prof)} ÷ 10 + 1`, `${n(p)} b`, 'Pa'), lig(`${n(p)} × ${n(v.o2 / 100, 2)}`, `${n(pp)} b`, `PpO₂ → ${colTxt(r.c)}`), lig(`${n(r.snc, 2)} × ${n(v.duree)}`, `${n(r.snc * v.duree, 2)} %`, '%SNC/min (NOAA) × durée')],
-          rep: `${n(r.snc * v.duree, 1)} % · ${verdict(r.snc * v.duree)}`, x: pp > 1.6 + 1e-9 ? 'PpO₂ au-delà de 1,6 b : INTERDIT.' : 'Table NOAA : on prend la colonne immédiatement supérieure (1,44 → 1,5). Sous 0,6 b, rien ne compte.' }; } },
+        return { l: [ligPa(v.prof), lig(`PpO₂ = ${n(p)} × ${n(v.o2 / 100, 2)}`, noaa(pp, r)), lig(`%SNC = ${n(r.snc, 2)} × ${n(v.duree)}`, `${n(r.snc * v.duree, 2)} %`)],
+          rep: `%SNC = ${n(r.snc * v.duree, 1)} % · ${verdict(r.snc * v.duree)}`, x: pp > 1.6 + 1e-9 ? 'PpO₂ au-delà de 1,6 b : INTERDIT.' : 'Table NOAA : on prend la colonne immédiatement supérieure (1,44 → 1,5). Sous 0,6 b, rien ne compte.' }; } },
     { id: 'snc', t: '%SNC plongée (4 étapes)', e: '60 min à 25 m au Nitrox 40, palier à l’O₂ pur', champs: [C('prof', 'Profondeur (m) ?', 25), C('duree', 'Durée (min) ?', 60), C('o2', 'Nitrox : % O₂ ?', 40), C('po2', 'Palier à l’O₂ pur ? 1 = oui, 0 = non', 1)],
       calc: v => { const r = E().plongee({ prof: v.prof, duree: v.duree, fo2: v.o2 / 100, o2: !!v.po2 });
         if (r.err) return { l: [txt(r.err)], rep: 'hors table', x: '' };
-        return { l: [...lignesPEA(v.prof, v.o2 / 100).out, tableTxt(r), ...lignesPhases(r, 'snc')], rep: `${n(r.snc, 1)} % · ${verdict(r.snc)}`,
-          x: 'Fond : durée MN90 (descente comprise). Remontée : (fond − 1er palier) ÷ 15. Palier à l’O₂ : 2/3 du temps à l’air, 5 min minimum. Remontée surface : 3 m à 6 m/min = 0,5 min. Sans palier : remontée = fond ÷ 15, et 0 pour les deux dernières lignes.' + (r.alertes.length ? ' ⚠ ' + r.alertes.join(' ').replace(/<[^>]+>/g, '') : '') }; } },
+        return { l: [...lignesPEA(v.prof, v.o2 / 100).out, tableTxt(r), ...lignesPhases(r, 'snc')], rep: `%SNC = ${n(r.snc, 1)} % · ${verdict(r.snc)}`,
+          x: 'Fond : durée MN90 (descente comprise). Remontée : (fond − 1er palier) / 15. Palier à l’O₂ : 2/3 du temps à l’air, 5 min minimum. Remontée surface : 3 m à 6 m/min = 0,5 min. Sans palier : remontée = fond / 15, et 0 pour les deux dernières lignes.' + (r.alertes.length ? ' ⚠ ' + r.alertes.join(' ').replace(/<[^>]+>/g, '') : '') }; } },
     { id: 'inter', t: 'Intervalle surface', e: '%SNC de 43 % après 2 h de surface', champs: [C('snc', '%SNC à la sortie ?', 43), C('is', 'Intervalle (min) ? (2 h = 120)', 120)],
       calc: v => { const c = E().coefIntervalle(v.is);
-        return { l: [txt(`${hm(v.is)} → colonne ${hm(c.col)} (immédiatement inférieure) → coefficient ${n(c.coef)}`), lig(`${n(v.snc)} × ${n(c.coef)}`, `${n(v.snc * c.coef, 2)} %`, '%SNC restant au départ de la plongée suivante')],
-          rep: `${n(v.snc * c.coef, 1)} %`, x: 'Le %SNC est divisé par 2 toutes les 90 min à l’air. Coefficients : 30 min 0,79 · 1 h 0,63 · 1 h 30 0,50 · 2 h 0,40 · 2 h 30 0,315 · 3 h 0,25 · 3 h 30 0,20 · 4 h 0,16. Les OTU, eux, ne baissent pas.' }; } },
+        return { l: [txt(`${hm(v.is)} → colonne ${hm(c.col)} (immédiatement inférieure) → coefficient ${n(c.coef)}`), lig(`%SNC = ${n(v.snc)} × ${n(c.coef)}`, `${n(v.snc * c.coef, 2)} %`, 'au départ de la plongée suivante')],
+          rep: `%SNC restant = ${n(v.snc * c.coef, 1)} %`, x: 'Le %SNC est divisé par 2 toutes les 90 min à l’air. Coefficients : 30 min 0,79 · 1 h 0,63 · 1 h 30 0,50 · 2 h 0,40 · 2 h 30 0,315 · 3 h 0,25 · 3 h 30 0,20 · 4 h 0,16. Les OTU, eux, ne baissent pas.' }; } },
     { id: 'jour', t: 'Journée 2 plongées', e: 'P1 70 min 30 m Nx35 palier O₂ · 2 h 30 · P2 40 min 25 m Nx45',
       champs: [C('p1', 'P1 : profondeur (m) ?', 30), C('d1', 'P1 : durée (min) ?', 70), C('o1', 'P1 : % O₂ ?', 35), C('x1', 'P1 : palier O₂ pur ? 1 / 0', 1), C('is', 'Intervalle (min) ? (2 h 30 = 150)', 150),
         C('p2', 'P2 : profondeur (m) ?', 25), C('d2', 'P2 : durée (min) ?', 40), C('o2', 'P2 : % O₂ ?', 45), C('x2', 'P2 : palier O₂ pur ? 1 / 0', 0)],
@@ -144,7 +148,7 @@
         if (r1.err) return { l: [txt('P1 : ' + r1.err)], rep: 'hors table', x: '' };
         const l = [titre('PLONGÉE 1'), ...lignesPEA(v.p1, v.o1 / 100).out, tableTxt(r1), ...lignesPhases(r1, 'snc')];
         const c = E().coefIntervalle(v.is), reste = r1.snc * c.coef;
-        l.push(titre(`INTERVALLE ${hm(v.is)}`), txt(`colonne ${hm(c.col)} → coefficient ${n(c.coef)}`), lig(`${n(r1.snc, 2)} × ${n(c.coef)}`, `${n(reste, 2)} %`, '%SNC au départ de P2'));
+        l.push(titre(`INTERVALLE ${hm(v.is)}`), txt(`colonne ${hm(c.col)} → coefficient ${n(c.coef)}`), lig(`%SNC = ${n(r1.snc, 2)} × ${n(c.coef)}`, `${n(reste, 2)} %`, 'au départ de P2'));
         l.push(titre('PLONGÉE 2'));
         const { out, pea } = lignesPEA(v.p2, v.o2 / 100);
         l.push(...out);
@@ -159,45 +163,47 @@
             const row = lib.TABLE_II.find(x => x[0] >= n2 - 1e-9) || lib.TABLE_II[lib.TABLE_II.length - 1];
             const di = lib.T2_DEPTHS.findIndex(d => d >= pea - 1e-9);
             maj = row[1 + di];
-            l.push(txt(`Tableau I : GPS ${gps} × ${hm(lib.T1_COLS[k])} (colonne inférieure) → azote ${n(n2, 2)}`, 'intervalle : colonne du dessous'),
+            l.push(txt(`Tableau I : GPS ${gps} × ${hm(lib.T1_COLS[k])} → azote ${n(n2, 2)}`, 'intervalle : colonne du dessous'),
               txt(`Tableau II : ligne ${n(row[0], 2)} × colonne ${lib.T2_DEPTHS[di]} m → majoration ${maj} min`, 'azote et profondeur : ligne et colonne du dessus'));
           }
         }
-        l.push(lig(`${v.d2} + ${maj}`, `${v.d2 + maj} min`, 'durée fictive (pour lire la table)'));
+        l.push(lig(`Durée fictive = ${v.d2} + ${maj}`, `${v.d2 + maj} min`, 'pour lire la table'));
         const r2 = E().plongee({ prof: v.p2, duree: v.d2, fo2: v.o2 / 100, o2: !!v.x2 }, { fictive: v.d2 + maj });
         if (r2.err) return { l: [...l, txt('P2 : ' + r2.err)], rep: 'hors table', x: '' };
-        l.push(txt(`MN90 ${r2.tab.d} m · ${v.d2 + maj} min → ligne ${hm(r2.tab.t)} : ${palTxt(r2)} · GPS ${r2.tab.gps}`), ...lignesPhases(r2, 'snc'));
+        l.push(tableTxt(r2, v.d2 + maj), ...lignesPhases(r2, 'snc'));
         const tot = reste + r2.snc;
-        l.push(titre('JOURNÉE'), lig(`${n(reste, 2)} + ${n(r2.snc, 2)}`, `${n(tot, 2)} %`, verdict(tot)), lig(`${n(r1.otu, 1)} + ${n(r2.otu, 1)}`, `${n(r1.otu + r2.otu, 0)} OTU`, 'OTU de la journée (limite 850 le 1er jour)'));
-        return { l, rep: `%SNC ${n(tot, 1)} % · ${verdict(tot)}`,
-          x: 'Étapes : ① plongée 1 (tableau 4 lignes) → ② × coefficient de l’intervalle → ③ plongée 2 : PEA, Tableau I (GPS × intervalle, colonne inférieure), Tableau II (azote et profondeur, du dessus), durée fictive → paliers, tableau 4 lignes → ④ addition.' +
+        l.push(titre('JOURNÉE'), lig(`%SNC = ${n(reste, 2)} + ${n(r2.snc, 2)}`, `${n(tot, 2)} %`, verdict(tot)), lig(`OTU = ${n(r1.otu, 1)} + ${n(r2.otu, 1)}`, `${n(r1.otu + r2.otu, 0)} OTU`, 'limite 850 le 1er jour'));
+        return { l, rep: `%SNC journée = ${n(tot, 1)} % · ${verdict(tot)}`,
+          x: 'Étapes : ① plongée 1 (4 lignes) → ② × coefficient de l’intervalle → ③ plongée 2 : PEA, Tableau I (GPS × intervalle, colonne inférieure), Tableau II (azote et profondeur, du dessus), durée fictive → paliers, 4 lignes → ④ addition.' +
             (tot > 100 ? ' Solutions : plus d’intervalle, P2 moins profonde ou plus courte, ou un Nitrox moins riche en P2.' : '') + [...r1.alertes, ...r2.alertes].map(a => ' ⚠ ' + a.replace(/<[^>]+>/g, '')).join('') };
       } },
     { id: 'tmax', t: 'Durée max (%SNC)', e: 'Durée max d’une 2e plongée au Nx32 à 40 m avec 40 % de %SNC restant', champs: [C('prof', 'Profondeur (m) ?', 40), C('o2', 'Nitrox : % O₂ ?', 32), C('deja', '%SNC déjà présent ?', 40)],
       calc: v => { const p = pa(v.prof), pp = p * v.o2 / 100, r = E().lire(pp);
-        if (r.c == null) return { l: [lig(`${n(p)} × ${n(v.o2 / 100, 2)}`, `${n(pp)} b`, 'sous 0,6 b')], rep: 'pas de limite %SNC', x: '' };
+        if (r.c == null) return { l: [lig(`PpO₂ = ${n(p)} × ${n(v.o2 / 100, 2)}`, `${b(pp)} (< 0,6)`)], rep: 'pas de limite %SNC', x: '' };
         const dmax = E().NOAA[r.c][1], t = (100 - v.deja) / 100 * dmax;
-        return { l: [lig(`${n(v.prof)} ÷ 10 + 1`, `${n(p)} b`, 'Pa'), lig(`${n(p)} × ${n(v.o2 / 100, 2)}`, `${n(pp)} b`, `PpO₂ → ${colTxt(r.c)} : ${dmax} min maxi`),
-          lig(`(100 − ${n(v.deja)}) ÷ 100 × ${dmax}`, `${n(t, 1)} min`, 'part restante × durée maxi NOAA'), lig(`(${n(v.prof)} − 6) ÷ 15`, `${n((v.prof - 6) / 15, 2)} min`, 'dont la remontée jusqu’à 6 m')],
-          rep: `${n(t, 1)} min`, x: 'Durée maxi NOAA : 1,6 b → 45 min, 1,5 b → 120 min, 1,4 b → 150 min. Trop court ? Prendre un Nitrox moins riche (best mix à 1,5 b).' }; } },
+        return { l: [ligPa(v.prof), lig(`PpO₂ = ${n(p)} × ${n(v.o2 / 100, 2)}`, `${b(pp)} → ${n(r.c, 1)} → ${dmax} min maxi (NOAA)`),
+          lig(`Reste = 100 − ${n(v.deja)}`, `${n(100 - v.deja)} %`), lig(`Durée max = ${n((100 - v.deja) / 100, 2)} × ${dmax}`, `${n(t, 1)} min`, 'remontée jusqu’à 6 m comprise'),
+          lig(`Remontée = (${n(v.prof)} − 6) / 15`, `${n((v.prof - 6) / 15, 2)} min`)],
+          rep: `Durée max = ${n(t, 1)} min`, x: 'Durée maxi NOAA : 1,6 b → 45 min, 1,5 b → 120 min, 1,4 b → 150 min. Trop court ? Prendre un Nitrox moins riche (best mix à 1,5 b).' }; } },
     { id: 'otu', t: 'OTU', e: 'OTU : 70 min à 28 m au Nitrox 40', champs: [C('prof', 'Profondeur (m) ?', 28), C('duree', 'Durée (min) ?', 70), C('o2', 'Nitrox : % O₂ ?', 40), C('po2', 'Palier à l’O₂ pur ? 1 = oui, 0 = non', 0)],
       calc: v => { const r = E().plongee({ prof: v.prof, duree: v.duree, fo2: v.o2 / 100, o2: !!v.po2 });
         if (r.err) return { l: [txt(r.err)], rep: 'hors table', x: '' };
-        return { l: [tableTxt(r), ...lignesPhases(r, 'otu')], rep: `${n(r.otu, 0)} OTU`, x: 'OTU/min : 0,6 → 0,26 · 1,0 → 1 · 1,3 → 1,48 · 1,4 → 1,63 · 1,5 → 1,78 · 1,6 → 1,93 (colonne immédiatement supérieure). On additionne tout sur la journée (pas d’effet de l’intervalle). Limite : 850 le 1er jour, puis 700, 620, 525…' }; } },
+        return { l: [ligPa(v.prof), tableTxt(r), ...lignesPhases(r, 'otu')], rep: `OTU = ${n(r.otu, 0)}`, x: 'OTU/min : 0,6 → 0,26 · 1,0 → 1 · 1,3 → 1,48 · 1,4 → 1,63 · 1,5 → 1,78 · 1,6 → 1,93 (colonne immédiatement supérieure). On additionne tout sur la journée (pas d’effet de l’intervalle). Limite : 850 le 1er jour, puis 700, 620, 525…' }; } },
     { id: 'gonf', t: 'Gonflage', e: 'De 30 b de Nitrox 40 à un Nitrox 60 à 200 b', champs: [C('pi', 'Reste dans le bloc (b) ?', 30), C('fi', 'Reste : % O₂ ? (air = 20)', 40), C('pf', 'Pression finale (b) ?', 200), C('ff', 'Nitrox voulu : % O₂ ?', 60)],
       calc: v => { const fi = v.fi / 100, ff = v.ff / 100, n0 = v.pi * (1 - fi), n1 = v.pf * (1 - ff), o0 = v.pi * fi, o1 = v.pf * ff, dN = n1 - n0, dO = o1 - o0, o2 = dO - dN / 4;
-        const l = [titre('N₂'), lig(`${v.pi} × ${n(1 - fi, 2)}`, n(n0, 2), 'on a'), lig(`${v.pf} × ${n(1 - ff, 2)}`, n(n1, 2), 'on veut'), lig(`${n(n1, 2)} − ${n(n0, 2)}`, n(dN, 2), 'à ajouter : tout vient de l’air'),
-          titre('O₂'), lig(`${v.pi} × ${n(fi, 2)}`, n(o0, 2), 'on a'), lig(`${v.pf} × ${n(ff, 2)}`, n(o1, 2), 'on veut'), lig(`${n(o1, 2)} − ${n(o0, 2)}`, n(dO, 2), 'à ajouter'),
-          lig(`${n(dN, 2)} ÷ 4`, n(dN / 4, 2), 'O₂ apporté par l’air'), lig(`${n(dO, 2)} − ${n(dN / 4, 2)}`, n(o2, 2), 'O₂ PUR à mettre'), titre('Total'), lig(`${n(dN, 2)} ÷ 0,8`, n(dN / 0.8, 2), 'air à mettre'), lig(`${v.pi} + ${n(o2, 2)}`, `${n(v.pi + o2, 1)} b`, 'pression après l’O₂')];
+        const l = [titre('N₂'), lig(`On a = ${v.pi} × ${n(1 - fi, 2)}`, b(n0)), lig(`On veut = ${v.pf} × ${n(1 - ff, 2)}`, b(n1)), lig(`À ajouter = ${n(n1)} − ${n(n0)}`, b(dN), 'tout l’azote vient de l’air'),
+          titre('O₂'), lig(`On a = ${v.pi} × ${n(fi, 2)}`, b(o0)), lig(`On veut = ${v.pf} × ${n(ff, 2)}`, b(o1)), lig(`À ajouter = ${n(o1)} − ${n(o0)}`, b(dO)),
+          lig(`O₂ de l’air = ${n(dN)} / 4`, b(dN / 4), 'l’air apporte 1 part d’O₂ pour 4 de N₂'), lig(`O₂ pur = ${n(dO)} − ${n(dN / 4)}`, b(o2)),
+          titre('Total'), lig(`Air = ${n(dN)} / 0,8`, b(dN / 0.8)), lig(`O₂ jusqu’à = ${v.pi} + ${n(o2)}`, b(v.pi + o2))];
         if (dN < -1e-9 || o2 < -1e-9) return { l, rep: 'impossible : vider le bloc d’abord (reste = 0)', x: '' };
         return { l, rep: `O₂ pur jusqu’à ${n(v.pi + o2, 1)} b, puis air jusqu’à ${v.pf} b`, x: 'O₂ pur d’abord (5 b/min, 3 b/min au-delà de 100 b), puis air au compresseur. La bouteille d’O₂ doit être au-dessus de la pression visée. Ensuite : 24 h d’homogénéisation, analyse, étiquette (% O₂, MOD, date, initiales), registre.' }; } },
     { id: 'mariotte', t: 'Réserve d’O₂ (Mariotte)', e: 'Bloc 15 L à 30 b de Nx40, réserve O₂ 50 L à 100 b, compresseur air, 200 b', champs: [C('v1', 'Bloc : volume (L) ?', 15), C('p1', 'Bloc : pression (b) ?', 30), C('f1', 'Bloc : % O₂ ?', 40), C('v2', 'Réserve O₂ : volume (L) ?', 50), C('p2', 'Réserve O₂ : pression (b) ?', 100), C('pf', 'Pression finale (b) ?', 200)],
       calc: v => {
         const m = (p1, f1, nom) => { const peq = Math.min((p1 * v.v1 + v.p2 * v.v2) / (v.v1 + v.v2), v.pf), aj = peq - p1, air = v.pf - peq, o2 = p1 * f1 + aj + air * 0.2;
-          return { pct: o2 / v.pf * 100, l: [titre(nom), lig(`(${p1} × ${v.v1} + ${v.p2} × ${v.v2}) ÷ (${v.v1} + ${v.v2})`, `${n(peq, 1)} b`, 'équilibre (Mariotte)'), lig(`${n(peq, 1)} − ${p1}`, `${n(aj, 1)} b`, 'O₂ ajouté'),
-            lig(`${v.pf} − ${n(peq, 1)}`, `${n(air, 1)} b`, 'air ajouté'), lig(`${n(p1 * f1, 2)} + ${n(aj, 1)} + ${n(air, 1)} × 0,2`, `${n(o2, 1)} b`, 'O₂ total'), lig(`${n(o2, 1)} ÷ ${v.pf} × 100`, `${n(o2 / v.pf * 100, 1)} %`, `→ Nitrox ${Math.floor(o2 / v.pf * 100 + 1e-9)}`)] }; };
-        const a = m(v.p1, v.f1 / 100, '1) Bloc branché tel quel'), b = m(1, 0.2, '2) Bloc vidé d’abord (1 b d’air)'), best = b.pct > a.pct ? b : a;
-        return { l: [...a.l, ...b.l], rep: `meilleur : Nitrox ${Math.floor(best.pct + 1e-9)}${best === b ? ' (bloc vidé)' : ''}`, x: 'Mariotte : P = (P1 × V1 + P2 × V2) ÷ (V1 + V2). Vider le bloc avant laisse plus de place à l’O₂ de la réserve. Le corrigé Q#11 arrondit les pressions et trouve Nx44 puis Nx51.' };
+          return { pct: o2 / v.pf * 100, l: [titre(nom), lig(`P équilibre = (${p1} × ${v.v1} + ${v.p2} × ${v.v2}) / (${v.v1} + ${v.v2})`, `${n(peq, 1)} bar`, 'Mariotte'), lig(`O₂ ajouté = ${n(peq, 1)} − ${p1}`, `${n(aj, 1)} bar`),
+            lig(`Air = ${v.pf} − ${n(peq, 1)}`, `${n(air, 1)} bar`), lig(`O₂ total = ${n(p1 * f1, 2)} + ${n(aj, 1)} + ${n(air, 1)} × 0,2`, `${n(o2, 1)} bar`), lig(`%O₂ = ${n(o2, 1)} / ${v.pf}`, `${n(o2 / v.pf * 100, 1)} % → Nx${Math.floor(o2 / v.pf * 100 + 1e-9)}`)] }; };
+        const a = m(v.p1, v.f1 / 100, '1) Bloc branché tel quel'), c = m(1, 0.2, '2) Bloc vidé d’abord (1 b d’air)'), best = c.pct > a.pct ? c : a;
+        return { l: [...a.l, ...c.l], rep: `Meilleur : Nitrox ${Math.floor(best.pct + 1e-9)}${best === c ? ' (bloc vidé)' : ''}`, x: 'Mariotte : P = (P1 × V1 + P2 × V2) / (V1 + V2). Vider le bloc avant laisse plus de place à l’O₂ de la réserve. Le corrigé Q#11 arrondit les pressions et trouve Nx44 puis Nx51.' };
       } },
   ];
 
