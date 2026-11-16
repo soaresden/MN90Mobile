@@ -81,10 +81,6 @@
     res.rows = rows;
     res.snc = rows.reduce((s, r) => s + r.sncP, 0);
     res.otu = rows.reduce((s, r) => s + r.otuP, 0);
-    // Une PEA juste au-dessus d'une ligne de la table (le corrigé arrondit parfois : 22,5 m lu en 22 m)
-    if (!air && tab.d - pea > 0 && pea - Math.floor(pea) <= 0.5 && L().lookup(Math.floor(pea), fictive).d === Math.floor(pea)) {
-      res.alertes.push(`PEA ${f(pea, 1)} m : la ligne <b>immédiatement supérieure</b> est ${tab.d} m. Le corrigé de Serge arrondit parfois la Pa (3,25 → 3,2 b, ligne 22 m) : dans ce cas, montre ton raisonnement.`);
-    }
     return res;
   }
 
@@ -149,8 +145,7 @@
         return steps([['Pa', `1 + ${f(v.prof, 1)} / 10 = <b>${f(p, 2)} b</b>`], ['Formule', '%O₂ = PpO₂ max / Pa, <b>arrondi vers le bas</b>'],
           ['Durée', v.duree > 45 ? `${v.duree} min > 45 min : à 1,6 b la NOAA ne donne que 45 min → on prend <b>1,5 b</b> (120 min)` : v.duree ? `${v.duree} min ≤ 45 min : <b>1,6 b</b> possible` : 'durée inconnue : <b>1,6 b</b> (le best mix ne dépend alors que de la profondeur)']]) +
           tbl(['PpO₂ max', 'Calcul', 'Best mix', 'PpO₂ réelle', 'Arrondi au plus près'], [1.6, 1.5, 1.4].map(pp => ({ c: ligne(pp), cls: pp === choix ? 'tot' : '' }))) +
-          rep(`Best mix à ${f(v.prof, 1)} m${v.duree ? ` pour ${v.duree} min` : ''} : <b>${nx(Math.floor(choix / p * 100 + 1e-9) / 100)}</b> (PpO₂ ${f(choix, 1)} b)`) +
-          note('Le corrigé Q#3 donne Nx36 pour 1 h à 32 m (1,5 / 4,2 = 0,357, arrondi au plus près, PpO₂ réelle 1,51 b). Arrondir vers le bas (Nx35) est le plus sûr : écris le calcul et ton choix.');
+          rep(`Best mix à ${f(v.prof, 1)} m${v.duree ? ` pour ${v.duree} min` : ''} : <b>${nx(Math.floor(choix / p * 100 + 1e-9) / 100)}</b> (PpO₂ ${f(choix, 1)} b)`);
       } },
     { id: 'pea', t: '🟰 Profondeur équivalente air', ex: 'PEA d’une plongée à 30 m au Nitrox 40', champs: [PROF('prof', 30), MIX('o2', 40), DUREE('duree', 0, 'Durée (min, 0 = sans table)')],
       calc: v => {
@@ -262,8 +257,7 @@
         if (typeof a === 'string' || typeof b === 'string') return [a, b].map(x => (typeof x === 'string' ? x : x.html)).join('');
         const mieux = b.pct > a.pct ? b : a;
         return steps([['Mariotte', 'à l’équilibre : <b>P = (P1 × V1 + P2 × V2) / (V1 + V2)</b>']]) + a.html + b.html +
-          rep(`Meilleur : <b>Nx${Math.floor(mieux.pct + 1e-9)}</b> (${f(mieux.pct, 1)} %)${mieux === b ? ' en vidant le bloc d’abord' : ' en gardant le reste du bloc'}.`) +
-          note('Le corrigé Q#11 arrondit les pressions (77 b, 76 b ajoutés) et trouve Nx51 ; sans arrondir on trouve 50,5 %. Écris le calcul, c’est lui qui compte.');
+          rep(`Meilleur : <b>Nx${Math.floor(mieux.pct + 1e-9)}</b> (${f(mieux.pct, 1)} %)${mieux === b ? ' en vidant le bloc d’abord' : ' en gardant le reste du bloc'}.`);
       } },
     { id: 'otu', t: '🫁 OTU', ex: 'OTU d’une plongée (le détail par phase est dans « %SNC d’une plongée » et « Journée »)', champs: [PROF('prof', 30), DUREE('duree', 70), MIX('o2', 35), PALIER_O2()],
       calc: v => {

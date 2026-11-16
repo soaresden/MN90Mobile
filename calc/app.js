@@ -185,7 +185,7 @@
     if (k) { e.preventDefault(); touche(k); }
   });
   liste.innerHTML = `<button type="button" data-q="">Calculatrice simple<small>sans énoncé</small></button>` +
-    Q.map(x => `<button type="button" data-q="${x.id}">${x.t}<small>${ORDRE[x.id]} · ${x.e}</small></button>`).join('');
+    Q.map(x => `<button type="button" data-q="${x.id}">${x.t}<small>${x.e}</small></button>`).join('');
   const vue = v => {
     document.querySelectorAll('header button[data-vue]').forEach(b => b.classList.toggle('on', b.dataset.vue === v));
     document.querySelectorAll('.vue').forEach(x => { x.hidden = x.dataset.vue !== v; });

@@ -21,7 +21,7 @@
     const pps = () => (S.conf ? [1.4, 1.5, 1.6] : [1.4, 1.6]);
 
     function render() {
-      el.lvlSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.v === 'conf') === S.conf));
+      el.lvlSeg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v !== 'assist' && (b.dataset.v === 'conf') === S.conf));
       el.o2.max = S.conf ? 100 : 40;
       document.querySelectorAll('.conf-only').forEach(b => { b.hidden = !S.conf; });
       document.querySelectorAll('.simple-only').forEach(b => { b.hidden = S.conf; });
@@ -333,7 +333,43 @@
       el.genOut.querySelectorAll('details').forEach(d => { d.open = true; });
       window.print();
     });
-    el.lvlSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.conf = b.dataset.v === 'conf'; if (!S.conf && +el.o2.value > 40) el.o2.value = 40; S.pmax = S.conf ? 1.4 : 1.6; render(); if (generated) generate(); });
+    // Trois niveaux : Nitrox simple, Nitrox Confirmé, et le mode Assistant (son propre écran)
+    const asApp = document.getElementById('asApp'), nxApp = document.querySelector('.nx-app');
+    const MODE = 'mn90:nitroxMode';
+    let assist = false;
+    try { assist = localStorage.getItem(MODE) === 'assist'; } catch (e) { /* stockage indisponible */ }
+    const NIVEAUX = [['simple', '⚗️ Nitrox simple'], ['conf', '🎓 Nitrox Confirmé'], ['assist', '🧮 Assistant']];
+    const niveauHTML = () => `<div class="seg asx-niveau" role="group" aria-label="Niveau Nitrox">${NIVEAUX.map(([v, t]) =>
+      `<button type="button" data-v="${v}" class="${(v === 'assist' ? assist : !assist && (v === 'conf') === S.conf) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+    function appliquerMode() {
+      try { localStorage.setItem(MODE, assist ? 'assist' : ''); } catch (e) { /* stockage indisponible */ }
+      if (nxApp) nxApp.hidden = assist;
+      if (!asApp) return;
+      asApp.hidden = !assist;
+      if (assist && window.NitroxAssistants) {
+        window.NitroxAssistants.rendreApp(asApp, {
+          niveau: niveauHTML(),
+          onNiveau: v => choisirNiveau(v),
+          // PEA → la table Nitrox de ce mélange, dans l'outil Nitrox
+          onTable: o2 => {
+            if (o2 > 40) S.conf = true;
+            assist = false; appliquerMode();
+            el.o2.value = o2; S.pmax = S.conf ? 1.4 : 1.6; render();
+            el.ntabs.querySelector('[data-pane="gen"]').click();
+            generate();
+          },
+        });
+      }
+      if (!assist) window.dispatchEvent(new Event('resize'));
+    }
+    function choisirNiveau(v) {
+      if (v === 'assist') { assist = true; return appliquerMode(); }
+      assist = false;
+      S.conf = v === 'conf'; if (!S.conf && +el.o2.value > 40) el.o2.value = 40; S.pmax = S.conf ? 1.4 : 1.6;
+      appliquerMode(); render(); if (generated) generate();
+    }
+    el.lvlSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) choisirNiveau(b.dataset.v); });
+    appliquerMode();
     [el.decoO2].forEach(i => i.addEventListener('input', renderDecoGas));
     [el.o2Depth, el.o2Time].forEach(i => i.addEventListener('input', renderO2Stops));
     [el.gPf, el.gFo2, el.gPi, el.gFi].forEach(i => i.addEventListener('input', renderGonf));
@@ -352,7 +388,8 @@
       if (b.dataset.pane === 'exam' && exam && !exam.childElementCount && window.NitroxAssistants) window.NitroxAssistants.rendre(exam);
     });
     // nitrox/index.html#examen ou #exercices : ouvre directement l'onglet
-    const ouvrir = { '#examen': 'exam', '#assistants': 'exam', '#exercices': 'exo' }[location.hash];
+    const ouvrir = { '#exercices': 'exo' }[location.hash];
+    if (location.hash === '#assistant' || location.hash === '#examen') choisirNiveau('assist');
     if (ouvrir) el.ntabs.querySelector(`[data-pane="${ouvrir}"]`)?.click();
     // Hauteur de la barre du haut, et graphiques redessinés quand leur zone change de taille
     const nav = document.querySelector('.navbar');

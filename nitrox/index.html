@@ -52,7 +52,29 @@
   .pp-tbl td.bad { color: var(--danger); font-weight: 800; background: color-mix(in srgb, var(--danger) 10%, transparent); }
   .pp-tbl tr.cur td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
 
-  @media (min-width: 1000px) and (min-height: 600px) {
+  @media (min-width: 900px) and (min-height: 520px) {
+    /* Tablette en paysage : tout tient dans l'écran, sans défiler */
+    .nx-side { gap: 8px; }
+    .nx-side .card { padding: 10px 12px; }
+    .nx-side h2 { margin-bottom: 4px; }
+    .nx-side .field { margin-bottom: 6px; gap: 3px; }
+    .nx-side .big { font-size: 1.9rem; line-height: 1.1; }
+    .nx-side .trio > * { padding: 4px 6px; }
+    .nx-side .reqs { font-size: .8rem; }
+    #lvlSeg button { font-size: .8rem; padding: 6px 4px; white-space: nowrap; }
+  }
+  @media (min-width: 900px) and (min-height: 520px) and (max-height: 780px) {
+    /* Petite tablette : on garde l'essentiel du volet */
+    .nx-side .reqs, .nx-side #ppHint { display: none; }
+    .nx-side .big { font-size: 1.5rem; }
+    .nx-side .muted.small { font-size: .74rem; }
+    .nx-side .card { padding: 8px 10px; }
+    .nx-side .field input[type=range] { margin: 0; }
+  }
+  @media (min-width: 900px) and (max-width: 1099px) and (min-height: 520px) {
+    .nx-app { grid-template-columns: 255px minmax(0, 1fr) minmax(300px, 32vw) !important; gap: 10px !important; padding: 8px 10px !important; }
+  }
+  @media (min-width: 900px) and (min-height: 520px) {
     html, body { height: 100%; overflow: hidden; }
     .nx-app { grid-template-columns: 300px minmax(0, 1fr) minmax(330px, 28vw); height: calc(100dvh - var(--nav-h, 58px)); padding: 10px 14px; }
     .nx-side { overflow-y: auto; }
@@ -71,6 +93,64 @@
     .pbody { overflow: visible; }
     .pane[data-pane="gen"] { display: block !important; }
     .gen-depth { break-inside: avoid; }
+  }
+  /* ===== Mode Assistant : volet à gauche, valeurs au milieu, résultat à droite ===== */
+  .nx-app[hidden], .as-app[hidden] { display: none !important; }
+  .asx { display: flex; flex-direction: column; gap: 10px; padding: 10px 14px; }
+  .asx-top { display: flex; justify-content: center; }
+  .asx-niveau { max-width: 560px; width: 100%; }
+  .asx-niveau button { flex: 1; font-size: .86rem; }
+  .asx-corps { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .asx-nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .asx-nav::-webkit-scrollbar { display: none; }
+  .asx-nav button { flex: 0 0 auto; text-align: left; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); border-radius: 10px; padding: 9px 12px; font-weight: 700; font-size: .86rem; cursor: pointer; white-space: nowrap; }
+  .asx-nav button.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .asx-in, .asx-out { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; min-width: 0; }
+  .asx-in h3 { margin: 0 0 6px; }
+  .asx-champs { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .asx-reset { margin-top: 6px; }
+  .asx-out { display: flex; flex-direction: column; gap: 8px; }
+  .asx-table { align-self: flex-start; }
+  .asx-tete, .asx-pl { display: grid; grid-template-columns: 30px repeat(3, minmax(0, 1fr)) 92px; gap: 6px; align-items: center; }
+  .asx-tete { font-size: .7rem; color: var(--text3); font-weight: 700; margin-top: 4px; }
+  .asx-tete span { text-align: center; }
+  .asx-pl { padding: 5px 0; }
+  .asx-pl b { color: var(--accent); }
+  .asx-pl .input { text-align: center; font-weight: 800; padding: 7px 4px; min-width: 0; }
+  .asx-o2 button { padding: 6px 4px; font-size: .78rem; }
+  .asx-is { display: flex; align-items: center; gap: 8px; padding: 4px 0 4px 36px; font-size: .82rem; color: var(--text2); border-left: 2px dashed var(--border); margin-left: 12px; }
+  .asx-is .input { width: 76px; text-align: center; font-weight: 800; padding: 6px 4px; }
+  .asx-is i { font-style: normal; color: var(--text3); }
+  .asx-vue { align-self: flex-start; }
+  .asx-rq { font-size: .8rem; color: var(--text2); }
+  .asx-rq summary { cursor: pointer; font-weight: 700; }
+  .asx-rq div { padding: 3px 0 0 14px; }
+  .asx-vue-corps { min-height: 0; }
+  .asx-sch { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .asx-sch svg { width: 100%; height: auto; display: block; }
+  .sch-alerte { fill: var(--danger); font-size: 12px; font-weight: 800; }
+  .as-tab.duo th.snc, .as-tab.duo td.snc { color: var(--accent); }
+  .as-tab.duo th.otu, .as-tab.duo td.otu { color: #a855f7; }
+  .as-tab.duo tr.tot td.otu { color: #a855f7; }
+  .asx-detail { position: sticky; bottom: 0; }
+  @media (min-width: 640px) { .asx-sch.n2, .asx-sch.n3, .asx-sch.n4 { grid-template-columns: 1fr 1fr; } }
+  .asx-nav .ic { margin-right: 6px; }
+  @media (min-width: 900px) and (max-width: 1199px) {
+    .asx-corps { grid-template-columns: 52px minmax(290px, 330px) minmax(0, 1fr) !important; }
+    .asx-nav button { padding: 10px 0; text-align: center; font-size: 1.15rem; }
+    .asx-nav .tx { display: none; }
+    .asx-nav .ic { margin: 0; }
+    .asx { padding: 8px 10px; }
+  }
+  @media (min-width: 900px) {
+    .asx { height: calc(100dvh - var(--nav-h, 58px)); }
+    .asx-corps { flex: 1; min-height: 0; grid-template-columns: 200px minmax(300px, 380px) minmax(0, 1fr); }
+    .asx-nav { flex-direction: column; overflow: auto; }
+    .asx-nav button { white-space: normal; }
+    .asx-in, .asx-out { overflow-y: auto; scrollbar-width: thin; }
+    .asx[data-a="journee"] .asx-sch { max-height: calc(100dvh - var(--nav-h, 58px) - 210px); }
+    .asx[data-a="journee"] .asx-sch.n3, .asx[data-a="journee"] .asx-sch.n4 { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+    .asx[data-a="journee"] .asx-sch svg { max-height: 100%; }
   }
   /* Exercices commentés */
   details.exo { border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); margin: 6px 0; }
@@ -172,8 +252,9 @@
   <!-- ===== Réglages et réponses ===== -->
   <aside class="nx-side">
     <div class="seg" id="lvlSeg" role="group" aria-label="Niveau Nitrox">
-      <button type="button" data-v="simple" class="on">⚗️ Nitrox simple</button>
-      <button type="button" data-v="conf">🎓 Nitrox Confirmé</button>
+      <button type="button" data-v="simple" class="on">⚗️ Simple</button>
+      <button type="button" data-v="conf">🎓 Confirmé</button>
+      <button type="button" data-v="assist">🧮 Assistant</button>
     </div>
     <section class="card side-field">
       <h2>🧪 Mon mélange <button type="button" class="help-btn" data-help="mod" aria-label="C’est quoi ?">?</button></h2>
@@ -234,7 +315,6 @@
       <button type="button" class="ptab conf-only" data-pane="o2stops" hidden>⏱️ Paliers O₂</button>
       <button type="button" class="ptab conf-only" data-pane="gonf" hidden>⛽ Gonflage</button>
       <button type="button" class="ptab" data-pane="exo">📝 Exercices commentés</button>
-      <button type="button" class="ptab conf-only" data-pane="exam" hidden>🧮 Assistants</button>
     </div>
     <div class="pbody">
       <div class="pane" data-pane="mix">
@@ -249,6 +329,11 @@
       <div class="pane" data-pane="tox" hidden>
         <h3 class="conf-only" hidden>Ma dose d’oxygène <button type="button" class="btn btn-outline btn-sm" data-noaa>📋 Table NOAA</button></h3><h3 class="simple-only">Toxicité de l’oxygène</h3>
         <div class="steps" id="sncSteps"></div>
+        <details class="gen-depth conf-only" hidden><summary>⏱ Table des coefficients d’intervalle surface (%SNC)</summary>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Intervalle</th><th>0 h 30</th><th>1 h</th><th>1 h 30</th><th>2 h</th><th>2 h 30</th><th>3 h</th><th>3 h 30</th><th>4 h</th><th>5 h</th><th>6 h</th></tr></thead>
+          <tbody><tr><td>Coefficient</td><td>0,79</td><td>0,63</td><td>0,50</td><td>0,40</td><td>0,315</td><td>0,25</td><td>0,20</td><td>0,16</td><td>0,10</td><td>0,06</td></tr></tbody></table></div>
+          <p class="small muted" style="padding:0 8px 8px">Le %SNC est divisé par 2 toutes les 90 min à l’air. %SNC au départ de la plongée suivante = %SNC × coefficient (colonne immédiatement inférieure). Les OTU, eux, ne baissent pas.</p>
+        </details>
       </div>
       <div class="pane" data-pane="decogas" hidden>
         <h3>🟢 Mon gaz de déco</h3>
@@ -275,10 +360,6 @@
         </div>
         <div id="gonfOut"></div>
       </div>
-      <div class="pane" data-pane="exam" hidden>
-        <h3>🧮 Assistants de calcul Nitrox Confirmé</h3>
-        <div id="examOut" class="notranslate" lang="fr"></div>
-      </div>
       <div class="pane" data-pane="exo" hidden>
         <h3>📝 Exercices commentés</h3>
         <div id="exoOut" class="notranslate" lang="fr"></div>
@@ -295,5 +376,6 @@
     </div>
   </section>
 </main>
+<main id="asApp" class="as-app" hidden></main>
 </body>
 </html>
