@@ -26,6 +26,12 @@
   #liste button.on { color: var(--acc); }
   #ruban { flex: 1 1 auto; min-height: 60px; overflow-y: auto; padding: 4px 2px 6px; display: flex; flex-direction: column; gap: 3px; font-variant-numeric: tabular-nums; }
   #ruban > :first-child { margin-top: auto; }
+  #ruban, #liste { scrollbar-width: none; }
+  #ruban::-webkit-scrollbar, #liste::-webkit-scrollbar { display: none; }
+  /* Replié : les 2 dernières lignes seulement, collées au-dessus de l'affichage ; touché : tout le ruban */
+  #ruban { cursor: pointer; }
+  #ruban.plie { flex: 0 0 auto; margin-top: auto; max-height: 3.6rem; min-height: 0; overflow: hidden; }
+  #ruban.plie > :first-child { margin-top: 0; }
   .r-h { color: var(--acc); font-weight: 700; font-size: .86rem; margin-top: 8px; }
   .r-t { color: var(--txt2); font-size: .9rem; }
   .r-v { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; color: var(--txt2); }

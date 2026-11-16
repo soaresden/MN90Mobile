@@ -204,6 +204,8 @@
   const S = { q: null, i: 0, v: {}, saisie: '', fini: false, expl: false, ruban: [] };
   const ruban = $('#ruban'), affichage = $('#affichage'), invite = $('#invite'), liste = $('#liste');
 
+  ruban.classList.add('plie');
+  ruban.addEventListener('click', () => { ruban.classList.toggle('plie'); ruban.scrollTop = ruban.scrollHeight; });
   function rendreRuban() {
     ruban.innerHTML = S.ruban.map(x => {
       if (x.h) return `<div class="r-h">${x.h}</div>`;
