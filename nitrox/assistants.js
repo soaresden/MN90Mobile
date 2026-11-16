@@ -231,25 +231,25 @@
   const TETE2 = ['', 'Prof', 'Durée', 'Gaz', 'Pa', 'PpO₂', '%SNC/min', '%SNC', 'OTU/min', 'OTU', 'EqAir'];
   // Le tableau d'une plongée, %SNC et OTU côte à côte
   function lignesDuo(r, L, eq) {
-    const paC = z => cel(n(pa(z)), `Pa = ${n(z)} / 10 + 1 (atm) = ${n(pa(z))} bar`);
-    const ppC = (row, paV, f) => cel(n(row.pp), `PpO₂ = ${n(paV)} × ${n(f, 2)} = ${n(row.pp)} bar` + (row.c == null ? ' → sous 0,6 : rien' : ` → colonne ${n(row.c, 1)} (immédiatement supérieure)`));
-    const sncM = row => cel(row.c == null ? '0' : n(row.snc, 2), row.c == null ? 'sous 0,6 b : 0' : `NOAA : colonne ${n(row.c, 1)} → ${n(row.snc, 2)} %/min`);
-    const snc = row => cel(n(row.sncP, 2), `%SNC = ${n(row.snc, 2)} × ${n(row.d, 2)} = ${n(row.sncP, 2)} %`);
-    const otuM = row => cel(row.c == null ? '0' : n(row.otu, 2), row.c == null ? 'sous 0,6 b : 0' : `OTU : colonne ${n(row.c, 1)} → ${n(row.otu, 2)} OTU/min`);
-    const otu = row => cel(n(row.otuP, 1), `OTU = ${n(row.otu, 2)} × ${n(row.d, 2)} = ${n(row.otuP, 1)}`);
+    const paC = z => ({ ...cel(n(pa(z)), `Pa = ${n(z)} / 10 + 1 (atm) = ${n(pa(z))} bar`), f: `${n(z)}/10 + 1` });
+    const ppC = (row, paV, f) => ({ f: `${n(paV)} × ${n(f, 2)}`, ...cel(n(row.pp), `PpO₂ = ${n(paV)} × ${n(f, 2)} = ${n(row.pp)} bar` + (row.c == null ? ' → sous 0,6 : rien' : ` → colonne ${n(row.c, 1)} (immédiatement supérieure)`)) });
+    const sncM = row => ({ f: row.c == null ? '< 0,6' : `col. ${n(row.c, 1)}`, ...cel(row.c == null ? '0' : n(row.snc, 2), row.c == null ? 'sous 0,6 b : 0' : `NOAA : colonne ${n(row.c, 1)} → ${n(row.snc, 2)} %/min`) });
+    const snc = row => ({ ...cel(n(row.sncP, 2), `%SNC = ${n(row.snc, 2)} × ${n(row.d, 2)} = ${n(row.sncP, 2)} %`), f: `${n(row.snc, 2)} × ${n(row.d, 2)}` });
+    const otuM = row => ({ f: row.c == null ? '< 0,6' : `col. ${n(row.c, 1)}`, ...cel(row.c == null ? '0' : n(row.otu, 2), row.c == null ? 'sous 0,6 b : 0' : `OTU : colonne ${n(row.c, 1)} → ${n(row.otu, 2)} OTU/min`) });
+    const otu = row => ({ ...cel(n(row.otuP, 1), `OTU = ${n(row.otu, 2)} × ${n(row.d, 2)} = ${n(row.otuP, 1)}`), f: `${n(row.otu, 2)} × ${n(row.d, 2)}` });
     const [fond, rem, ...reste] = r.rows, g = gazNom(r.fo2);
     const rows = [[`${L[0]}-Fond`, cel(n(r.prof)), cel(n(fond.d), 'durée de la plongée (descente comprise)'), cel(g), paC(r.prof), ppC(fond, r.pa, r.fo2), sncM(fond), snc(fond), otuM(fond), otu(fond), eq]];
     const premier = r.paliers[0]?.z ?? 0;
-    rows.push([`${L[1]}-Remontée`, cel(`${n(r.prof)}→${premier}`), cel(n(rem.d, 2), `Durée = (${n(r.prof)} − ${premier}) / 15 = ${n(rem.d, 2)} min (15 m/min jusqu’au ${premier ? '1er palier' : 'surface'})`),
+    rows.push([`${L[1]}-Remontée`, cel(`${n(r.prof)}→${premier}`), { ...cel(n(rem.d, 2), `Durée = (${n(r.prof)} − ${premier}) / 15 = ${n(rem.d, 2)} min (15 m/min jusqu’au ${premier ? '1er palier' : 'surface'})`), f: `(${n(r.prof)} − ${premier}) / 15` },
       cel(g), paC(r.prof), cel(n(rem.pp), 'même PpO₂ qu’au fond'), sncM(rem), snc(rem), otuM(rem), otu(rem), '']);
     if (r.paliers.length) {
       r.paliers.forEach((p, i) => {
         const row = reste[i], f = p.enO2 ? 1 : r.fo2;
-        rows.push([`${L[2]}-Palier`, cel(`${p.z}`), cel(String(p.t), p.enO2 ? `Durée O₂ = ${p.tAir} × 2/3 = ${n(p.tAir * 2 / 3, 2)} → ${p.t} min (arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''})` : `MN90 : ${p.tAir} min à ${p.z} m`),
+        rows.push([`${L[2]}-Palier`, cel(`${p.z}`), { f: p.enO2 ? `${p.tAir} × 2/3` : '', ...cel(String(p.t), p.enO2 ? `Durée O₂ = ${p.tAir} × 2/3 = ${n(p.tAir * 2 / 3, 2)} → ${p.t} min (arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''})` : `MN90 : ${p.tAir} min à ${p.z} m`) },
           cel(gazNom(f)), paC(p.z), ppC(row, pa(p.z), f), sncM(row), snc(row), otuM(row), otu(row), '']);
       });
       const s = reste[r.paliers.length], z = r.paliers[r.paliers.length - 1].z, f = r.paliers[r.paliers.length - 1].enO2 ? 1 : r.fo2;
-      rows.push([`${L[3]}-Remontée`, cel(`${z}→0`), cel(n(s.d, 2), `Durée = ${z} / 6 = ${n(s.d, 2)} min (6 m/min)`), cel(gazNom(f)), paC(z), cel(n(s.pp), 'PpO₂ du palier'), sncM(s), snc(s), otuM(s), otu(s), '']);
+      rows.push([`${L[3]}-Remontée`, cel(`${z}→0`), { ...cel(n(s.d, 2), `Durée = ${z} / 6 = ${n(s.d, 2)} min (6 m/min)`), f: `${z} / 6` }, cel(gazNom(f)), paC(z), cel(n(s.pp), 'PpO₂ du palier'), sncM(s), snc(s), otuM(s), otu(s), '']);
     } else {
       rows.push([`${L[2]}-Palier`, cel('—'), cel('0', 'pas de palier'), '', '', '', '', cel('0'), '', cel('0'), ''], [`${L[3]}-Remontée`, cel('—'), cel('0', `déjà comptée en ${L[1]}`), '', '', '', '', cel('0'), '', cel('0'), '']);
     }
@@ -297,8 +297,8 @@
       if (fond.c != null && ex.NOAA[fond.c]) { e.dmaxNoaa = ex.NOAA[fond.c][1]; e.tmax = Math.max(0, (100 - e.depart) / 100 * e.dmaxNoaa); }
       if (i) {
         const L = lettres[k++];
-        rows.push([`${L}-IntSurf`, '', cel(String(e.interval), hm(e.interval)), '', '', '', cel(n(e.coef.coef, 3), `${hm(e.interval)} → colonne ${hm(e.coef.col)} (immédiatement inférieure) → coefficient ${n(e.coef.coef, 3)}`),
-          cel(n(e.depart, 2), `%SNC = ${n(e.avant, 2)} × ${n(e.coef.coef, 3)} = ${n(e.depart, 2)} % au départ de la plongée ${i + 1}`), '', cel(n(otuTot, 1), 'les OTU ne baissent pas pendant l’intervalle'), '']);
+        rows.push([`${L}-IntSurf`, '', cel(String(e.interval), hm(e.interval)), '', '', '', { ...cel(n(e.coef.coef, 3), `${hm(e.interval)} → colonne ${hm(e.coef.col)} (immédiatement inférieure) → coefficient ${n(e.coef.coef, 3)}`), f: `col. ${hm(e.coef.col)}` },
+          { ...cel(n(e.depart, 2), `%SNC = ${n(e.avant, 2)} × ${n(e.coef.coef, 3)} = ${n(e.depart, 2)} % au départ de la plongée ${i + 1}`), f: `${n(e.avant, 2)} × ${n(e.coef.coef, 3)}` }, '', cel(n(otuTot, 1), 'les OTU ne baissent pas pendant l’intervalle'), '']);
       }
       rows.push(...lignesDuo(e.r, lettres.slice(k, k + 4), eqAir(e.r, i ? { txt: e.majTxt, maj: e.maj, fictive: pl.duree + e.maj } : null)));
       k += 4;
@@ -637,7 +637,8 @@
       for (const q of M.pts) { if (q.vt <= vt) p = q; else break; }
       const c = svg.querySelector('#fr-cur'); c.setAttribute('x1', x(vt)); c.setAttribute('x2', x(vt));
       remplir('fr-js', p.snc, jMaxS); remplir('fr-jo', p.otu, jMaxO);
-      svg.querySelector('#fr-js-v').textContent = `${n(p.snc, 1)} %`; svg.querySelector('#fr-jo-v').textContent = n(p.otu, 0);
+      const sm = v => (v > 100 ? '😱' : v > 90 ? '😟' : v > 50 ? '😐' : '😀');
+      svg.querySelector('#fr-js-v').textContent = `${sm(p.snc)} ${n(p.snc, 1)} %`; svg.querySelector('#fr-jo-v').textContent = `${p.otu > 850 ? '😱' : p.otu > 600 ? '😐' : '😀'} ${n(p.otu, 0)}`;
       lect.innerHTML = `<div><b>P${p.i + 1}</b> · ${p.phase}${p.z > 0 ? ` · <b>${n(p.z, 1)} m</b> · PpO₂ <b>${n(p.pp, 2)}</b>` : ''} · <span style="color:${SNCC}">%SNC <b>${n(p.snc, 1)} %</b></span> · <span style="color:${OTUC}">OTU <b>${n(p.otu, 0)}</b></span></div>${p.calc ? `<div class="fr-calc">${p.calc}</div>` : ''}`;
     };
     const versT = ev => { const r = svg.getBoundingClientRect(); return ((ev.clientX - r.left) / r.width * W - g) / (d - g) * M.fin; };
@@ -694,6 +695,8 @@
   }
   const nxNom = pct => (pct >= 100 ? 'O₂ pur' : pct <= 21 ? 'air' : 'Nx' + pct);
 
+  const BORNES = { prof: [0, 70, 1], p1: [0, 70, 1], p2: [0, 70, 1], duree: [0, 180, 1], o2: [21, 100, 1], fi: [20, 100, 1], ff: [21, 100, 1], pi: [0, 300, 5], pf: [50, 300, 10], v1: [1, 30, 1], v2: [5, 100, 5], p2r: [10, 300, 5], f1: [20, 100, 1], is: [15, 720, 15], deja: [0, 100, 1], snc: [0, 150, 1] };
+  const curseur = (id, val, attr = 'data-r') => { const b = BORNES[id]; return b ? `<input type="range" class="asx-range" ${attr}="${id}" min="${b[0]}" max="${b[1]}" step="${b[2]}" value="${val}" aria-label="curseur">` : ''; };
   /* ---------- Le mode « Assistant » de la page Nitrox : volet à gauche, valeurs, résultat à droite ---------- */
   const LISTE = [['pp', '🫧 Pressions partielles'], ['mod', '📏 Profondeur max'], ['pea', '🟰 Prof. équivalente air'], ['best', '🎯 Best mix'],
     ['journee', '🧠 Journée plongée'], ['gonf', '⛽ Gonflage']];
@@ -705,7 +708,7 @@
     try { etat = JSON.parse(localStorage.getItem(CLE_APP) || '{}'); } catch (e) { etat = {}; }
     const garder = () => { try { localStorage.setItem(CLE_APP, JSON.stringify(etat)); } catch (e) { /* stockage indisponible */ } };
     etat.a = LISTE.some(([id]) => id === etat.a) ? etat.a : 'journee';
-    etat.vue = etat.vue || 'courbe';
+    etat.vue = etat.vue === 'schema' ? 'schema' : 'courbe';
     box.innerHTML = `<div class="asx">
       <div class="asx-top">${niveau}</div>
       <div class="asx-corps">
@@ -722,7 +725,7 @@
       const v = (etat[q.id] = etat[q.id] || Object.fromEntries(q.champs.map(c => [c.id, c.v])));
       zIn.innerHTML = `<h3>${LISTE.find(x => x[0] === q.id)[1]}</h3><p class="small muted">Exemple : ${q.e}</p><div class="asx-champs">${q.champs.map(c => CHOIX[c.id]
         ? `<div class="field exam-champ">${libelle(c, q.id)}<div class="seg" data-c="${c.id}">${CHOIX[c.id].map(([val, lab]) => `<button type="button" data-v="${val}" class="${+v[c.id] === val ? 'on' : ''}">${lab}</button>`).join('')}</div></div>`
-        : `<label class="field exam-champ"><span class="field-row">${libelle(c, q.id)}</span><span class="exam-pas"><button type="button" data-m="${c.id}" aria-label="moins">−</button><input class="input" type="number" inputmode="decimal" data-c="${c.id}" value="${v[c.id]}"><button type="button" data-p="${c.id}" aria-label="plus">＋</button></span></label>`).join('')}</div>
+        : `<label class="field exam-champ"><span class="field-row">${libelle(c, q.id)}</span><span class="exam-pas"><button type="button" data-m="${c.id}" aria-label="moins">−</button><input class="input" type="number" inputmode="decimal" data-c="${c.id}" value="${v[c.id]}"><button type="button" data-p="${c.id}" aria-label="plus">＋</button></span>${curseur(c.id, v[c.id])}</label>`).join('')}</div>
         <button type="button" class="btn btn-outline btn-sm asx-reset">↺ Valeurs de l’exemple</button>`;
       const calculer = () => {
         let r;
@@ -756,12 +759,10 @@
       const J = (etat.journee = etat.journee || { nb: 2, pl: PLONGEE_DEF.map(x => ({ ...x })), is: [150, 120, 120] });
       const ligneP = (p, i) => `<div class="asx-pl" data-i="${i}">
           <b>P${i + 1}</b>
-          <input class="input" type="number" inputmode="decimal" data-k="prof" value="${p.prof}" aria-label="Profondeur plongée ${i + 1}">
-          <input class="input" type="number" inputmode="numeric" data-k="duree" value="${p.duree}" aria-label="Temps plongée ${i + 1}">
-          <input class="input" type="number" inputmode="numeric" data-k="o2" value="${p.o2}" aria-label="Nitrox plongée ${i + 1}">
+          ${[['prof', 'decimal', 'Profondeur'], ['duree', 'numeric', 'Temps'], ['o2', 'numeric', 'Nitrox']].map(([k, im, a]) => `<span class="asx-cel"><input class="input" type="number" inputmode="${im}" data-k="${k}" value="${p[k]}" aria-label="${a} plongée ${i + 1}">${curseur(k, p[k], 'data-rk')}</span>`).join('')}
           <div class="seg asx-o2" data-k="palierO2"><button type="button" data-v="0" class="${p.palierO2 ? '' : 'on'}">Non</button><button type="button" data-v="1" class="${p.palierO2 ? 'on' : ''}">Oui</button></div>
         </div>`;
-      const ligneIs = i => `<div class="asx-is" data-is="${i}"><span>⏱ Intervalle surface</span><input class="input" type="number" inputmode="numeric" value="${J.is[i]}" aria-label="Intervalle avant la plongée ${i + 2}"><span>min <i>(${hm(J.is[i])})</i></span></div>`;
+      const ligneIs = i => `<div class="asx-is" data-is="${i}"><span>⏱ Intervalle surface</span><input class="input" type="number" inputmode="numeric" value="${J.is[i]}" aria-label="Intervalle avant la plongée ${i + 2}"><span>min <i>(${hm(J.is[i])})</i></span>${curseur('is', J.is[i], 'data-ris')}</div>`;
       zIn.innerHTML = `<h3>🧠 Journée plongée</h3>
         <div class="field">Nombre de plongées<div class="seg asx-nb">${[1, 2, 3, 4].map(k => `<button type="button" data-nb="${k}" class="${J.nb === k ? 'on' : ''}">${k}</button>`).join('')}</div></div>
         <div class="asx-tete"><span></span><span>Prof. (m)</span><span>Temps (min)</span><span>Nitrox (%)</span><span>Palier O₂ pur ?</span></div>
@@ -770,13 +771,14 @@
       const calculer = () => {
         const j = calcJournee(J.pl.slice(0, J.nb), J.is);
         const tab = `<div class="tbl-wrap asx-tab"><table class="tbl exo-tbl as-tab duo"><thead><tr>${TETE2.map((h, k) => `<th class="${k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''}">${h}</th>`).join('')}</tr></thead><tbody>` +
-          j.rows.map(r => { const cs = r.tot ? r.c : r; return `<tr${r.tot ? ' class="tot"' : ''}>${cs.map((c, k) => { const cls = k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''; if (c == null || c === '') return `<td class="${cls}"></td>`; if (typeof c === 'string') return `<td class="${cls}">${c}</td>`; return c.d ? `<td class="${cls}">${c.v}<small class="asx-d">${c.d}</small></td>` : `<td class="${cls}">${c.v}</td>`; }).join('')}</tr>`; }).join('') + '</tbody></table></div>';
-        zOut.innerHTML = `<div class="exo-rep">${j.err ? '⚠ ' + j.err : j.rep}</div>` +
+          j.rows.map(r => { const cs = r.tot ? r.c : r; return `<tr${r.tot ? ' class="tot"' : ''}>${cs.map((c, k) => { const cls = k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''; if (c == null || c === '') return `<td class="${cls}"></td>`; if (typeof c === 'string') return `<td class="${cls}">${c}</td>`; return `<td class="${cls}"${c.d ? ` title="${esc(c.d)}"` : ''}>${c.v}${c.f ? `<small class="asx-d">${c.f}</small>` : ''}</td>`; }).join('')}</tr>`; }).join('') + '</tbody></table></div>';
+        const nv = j.err ? ['rouge', '⚠️', ''] : j.snc > 100 || j.otu > 850 ? ['rouge', '😱', 'danger'] : j.snc > 90 ? ['rouge', '😟', 'limite : 2 h de surface au moins'] : j.snc > 50 ? ['orange', '😐', 'attention : 45 min de surface au moins'] : ['vert', '😀', 'tranquille'];
+        zOut.innerHTML = `<div class="exo-rep niv-${nv[0]}" data-emoji="${nv[1]}">${j.err ? j.err : j.rep}${nv[2] ? ` · <b>${nv[2]}</b>` : ''}</div>` +
           (j.depassements.length ? `<div class="exo-note warn">${j.depassements.join('<br>')}</div>` : '') +
           (j.alertes.length ? `<details class="asx-rq"><summary>⚠ ${j.alertes.length} remarque${j.alertes.length > 1 ? 's' : ''} sur la lecture de la table</summary>${[...new Set(j.alertes)].map(a => `<div>${a}</div>`).join('')}</details>` : '') +
-          `<div class="seg asx-vue"><button type="button" data-vue="courbe" class="${etat.vue === 'courbe' ? 'on' : ''}">📈 Courbe</button><button type="button" data-vue="schema" class="${etat.vue === 'schema' ? 'on' : ''}">🧾 Schéma</button><button type="button" data-vue="tableau" class="${etat.vue === 'tableau' ? 'on' : ''}">📋 Tableau</button></div>` +
-          `<div class="asx-vue-corps ${etat.vue}">${etat.vue === 'schema' && j.schema.length ? schemaJournee(j.schema) : etat.vue === 'tableau' ? tab : ''}</div>` + detailHTML;
-        if (etat.vue === 'courbe' || !['schema', 'tableau'].includes(etat.vue)) {
+          `<div class="seg asx-vue"><button type="button" data-vue="courbe" class="${etat.vue !== 'schema' ? 'on' : ''}">📈 Courbe</button><button type="button" data-vue="schema" class="${etat.vue === 'schema' ? 'on' : ''}">🧾 Schéma + tableau</button></div>` +
+          `<div class="asx-vue-corps ${etat.vue === 'schema' ? 'schema' : 'courbe'}">${etat.vue === 'schema' ? `${j.schema.length ? schemaJournee(j.schema) : ''}${tab}` : ''}</div>` + detailHTML;
+        if (etat.vue !== 'schema') {
           const boite = zOut.querySelector('.asx-vue-corps');
           boite.classList.add('courbe');
           requestAnimationFrame(() => dessinerFrise(boite, j));
@@ -785,8 +787,14 @@
         garder();
       };
       zIn.oninput = e => {
-        const i = e.target.closest('input');
+        let i = e.target.closest('input');
         if (!i || i.value === '' || isNaN(+i.value)) return;
+        // un curseur : on recopie dans le champ voisin, et inversement
+        if (i.classList.contains('asx-range')) {
+          const champ = i.parentElement.querySelector('input[type=number]');
+          champ.value = i.value; i = champ;
+          if (i.closest('.asx-is')) i.closest('.asx-is').querySelector('i').textContent = `(${hm(+i.value)})`;
+        } else { const r = i.parentElement.querySelector('input.asx-range'); if (r) r.value = i.value; }
         const pl = i.closest('.asx-pl'), is = i.closest('.asx-is');
         if (pl) J.pl[+pl.dataset.i][i.dataset.k] = +i.value;
         if (is) { J.is[+is.dataset.is] = +i.value; is.querySelector('i').textContent = `(${hm(+i.value)})`; }
@@ -805,7 +813,7 @@
     // --- Gonflage : ce qu'on a, ce qu'on veut, la source d'O₂ (bouteille ou réserve limitée) ---
     const gonflage = () => {
       const G = (etat.gonf2 = etat.gonf2 || { v1: 15, pi: 30, fi: 40, pf: 200, ff: 60, src: 'bouteille', v2: 50, p2: 100 });
-      const champ = (id, lbl) => `<label class="field exam-champ"><span class="field-row">${lbl}</span><span class="exam-pas"><button type="button" data-m="${id}" aria-label="moins">−</button><input class="input" type="number" inputmode="decimal" data-c="${id}" value="${G[id]}"><button type="button" data-p="${id}" aria-label="plus">＋</button></span></label>`;
+      const champ = (id, lbl) => `<label class="field exam-champ"><span class="field-row">${lbl}</span><span class="exam-pas"><button type="button" data-m="${id}" aria-label="moins">−</button><input class="input" type="number" inputmode="decimal" data-c="${id}" value="${G[id]}"><button type="button" data-p="${id}" aria-label="plus">＋</button></span>${curseur(id === 'p2' ? 'p2r' : id, G[id])}</label>`;
       zIn.innerHTML = `<h3>⛽ Gonflage</h3>
         <div class="asx-groupe"><b>Ce qu’on a</b><div class="asx-2">${champ('v1', 'Bloc (L)')}${champ('pi', 'Reste (b)')}${champ('fi', 'Reste : % O₂')}</div></div>
         <div class="asx-groupe"><b>Ce qu’on veut</b><div class="asx-2">${champ('pf', 'Pression finale (b)')}${champ('ff', 'Nitrox (% O₂)')}</div></div>
@@ -856,6 +864,18 @@
       const d = zOut.querySelector('.asx-detail');
       d.textContent = td.dataset.d; d.hidden = false;
     });
+    zIn.addEventListener('input', e => {
+      const r = e.target.closest('input.asx-range[data-r]');
+      if (r) {
+        const id = r.dataset.r === 'p2r' ? 'p2' : r.dataset.r, i = zIn.querySelector(`input[data-c="${id}"]`);
+        if (i) { i.value = r.value; i.dispatchEvent(new Event('input', { bubbles: true })); }
+        e.stopImmediatePropagation();
+        return;
+      }
+      const i = e.target.closest('input[data-c]');
+      const rg = i && zIn.querySelector(`input.asx-range[data-r="${i.dataset.c === 'p2' && zIn.querySelector('input.asx-range[data-r="p2r"]') ? 'p2r' : i.dataset.c}"]`);
+      if (rg && rg !== document.activeElement) rg.value = i.value;
+    }, true);
     nav.addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (!b) return; etat.a = b.dataset.a; garder(); montrer(); });
     let rt = null;
     window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => zOut._frise && zOut.isConnected && zOut._frise(), 150); });

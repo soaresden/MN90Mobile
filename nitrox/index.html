@@ -195,7 +195,8 @@
   .asx-vue-corps.courbe .fr { display: block; touch-action: none; cursor: crosshair; }
   .fr-lecture { font-size: .88rem; padding: 4px 2px 0; min-height: 1.5em; }
   .fr-calc { font-size: .8rem; color: var(--text2); margin-top: 2px; }
-  small.asx-d { display: block; font-size: .66rem; font-weight: 500; color: var(--text3); white-space: normal; min-width: 90px; max-width: 190px; margin: 2px auto 0; line-height: 1.25; }
+  small.asx-d { display: block; font-size: .64rem; font-weight: 500; color: var(--text3); white-space: nowrap; margin-top: 1px; line-height: 1.2; }
+  .as-tab.duo td { padding-top: 3px; padding-bottom: 3px; }
   .fr-lbl { font-size: 11px; fill: var(--text3); font-weight: 600; }
   .fr-p { font-size: 12px; fill: var(--text); font-weight: 800; }
   .fr-val { font-size: 13px; fill: var(--text); font-weight: 800; }
@@ -207,6 +208,19 @@
   .fr-jauge { fill: var(--bg2); stroke: var(--border); }
   .fr-cur { stroke: var(--text); stroke-width: 1.5; stroke-dasharray: 3 2; }
   @media (min-width: 900px) { .asx[data-a="journee"] .asx-out { overflow: hidden; } }
+  /* Curseurs sous les champs, smiley de niveau, schéma en grand */
+  .asx-range { width: 100%; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
+  .asx-cel { display: flex; flex-direction: column; min-width: 0; }
+  .asx-is .asx-range { flex: 1 1 120px; max-width: 200px; }
+  .exo-rep[data-emoji]::before { content: attr(data-emoji) " "; }
+  .exo-rep.niv-orange { background: color-mix(in srgb, #f59e0b 16%, transparent); border-left-color: #f59e0b; }
+  .exo-rep.niv-rouge { background: color-mix(in srgb, #ef4444 15%, transparent); border-left-color: #ef4444; }
+  @media (min-width: 900px) {
+    .asx[data-a="journee"] .asx-vue-corps.schema { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+    .asx[data-a="journee"] .asx-vue-corps.schema .asx-sch { flex: 1 1 50%; min-height: 0; max-height: none !important; grid-auto-rows: minmax(0, 1fr); }
+    .asx[data-a="journee"] .asx-vue-corps.schema .asx-tab { flex: 1 1 50%; min-height: 0; overflow: auto; }
+    .asx[data-a="journee"] .asx-vue-corps.schema .asx-sch svg { width: 100%; height: 100%; max-height: none !important; }
+  }
   /* Exercices commentés */
   details.exo { border: 1px solid var(--border); border-radius: 10px; background: var(--bg2); margin: 6px 0; }
   details.exo > summary { cursor: pointer; padding: 9px 11px; font-size: .9rem; line-height: 1.35; list-style-position: inside; }
