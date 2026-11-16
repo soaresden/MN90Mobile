@@ -43,6 +43,18 @@
   .r-l small, .r-t small { flex-basis: 100%; display: block; color: var(--warn); font-size: .78rem; text-align: right; }
   .r-t small { text-align: left; }
   .r-rep { margin-top: 6px; text-align: right; font-weight: 700; font-size: 1.15rem; color: var(--acc); }
+  #ruban > * { flex-shrink: 0; }
+  .r-vals { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; row-gap: 1px; }
+  .r-tab { overflow-x: auto; scrollbar-width: none; margin-top: 4px; }
+  .r-tab::-webkit-scrollbar { display: none; }
+  .r-tab table { border-collapse: collapse; width: 100%; font-size: .74rem; font-variant-numeric: tabular-nums; }
+  .r-tab th { color: var(--txt2); font-weight: 600; padding: 3px 4px; text-align: center; border-bottom: 1px solid #2f444c; white-space: nowrap; }
+  .r-tab td { padding: 5px 4px; text-align: center; white-space: nowrap; border-bottom: 1px solid #1a272c; }
+  .r-tab td:first-child { text-align: left; color: var(--txt2); }
+  .r-tab td[data-d] { cursor: pointer; }
+  .r-tab td.sel { background: color-mix(in srgb, var(--acc) 30%, transparent); border-radius: 4px; }
+  .r-tab tr.tot td { color: var(--acc); font-weight: 700; }
+  #invite.detail { color: var(--warn); font-weight: 600; font-size: .88rem; text-align: left; line-height: 1.35; }
   .r-x { margin-top: 6px; color: var(--warn); font-size: .86rem; line-height: 1.4; }
   #invite { color: var(--acc); font-size: .86rem; font-weight: 700; text-align: right; min-height: 1.2em; padding-top: 4px; }
   #invite, #affichage { flex: 0 0 auto; }
