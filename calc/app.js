@@ -110,10 +110,12 @@
         return { l: [lig(`${n(v.prof)} ÷ 10 + 1`, `${n(p)} b`, 'Pa'), lig(`${n(p)} × ${n(o, 2)}`, `${n(p * o)} b`, 'PpO₂ = Pa × %O₂'), lig(`${n(p)} − ${n(p * o)}`, `${n(p * (1 - o))} b`, 'PpN₂ = Pa − PpO₂ (ou Pa × %N₂)')],
           rep: `PpO₂ ${n(p * o)} b · PpN₂ ${n(p * (1 - o))} b`, x: 'Dalton : la pression totale est la somme des pressions partielles. Limites : PpO₂ 1,6 b, narcose dès 3,2 b de N₂, 5,6 b de N₂ maxi.' }; } },
     { id: 'mod', t: 'Profondeur max', e: 'Profondeur max d’un Nitrox 40 (ou 80, ou l’air)', champs: [C('o2', 'Nitrox : % O₂ ?', 40), C('pp', 'PpO₂ max ? (1,6)', 1.6)],
-      calc: v => { const o = v.o2 / 100, pm = v.pp / o, z = (pm - 1) * 10;
-        return { l: [lig(`${n(v.pp)} ÷ ${n(o, 2)}`, `${n(pm)} b`, 'Pa max = PpO₂ max ÷ %O₂'), lig(`(${n(pm)} − 1) × 10`, `${n(z, 2)} m`, 'profondeur = (Pa − 1) × 10'),
-          txt(`Narcose (3,2 b de N₂) : 3,2 ÷ ${n(1 - o, 2)} = ${n(3.2 / (1 - o))} b → ${n((3.2 / (1 - o) - 1) * 10, 1)} m`), txt(`N₂ max (5,6 b) : 5,6 ÷ ${n(1 - o, 2)} = ${n(5.6 / (1 - o))} b → ${n((5.6 / (1 - o) - 1) * 10, 1)} m`)],
-          rep: `MOD ${n(z, 1)} m${z < 25 ? ' · gaz de déco' : ' · gaz fond'}`, x: 'On arrondit vers la sécurité (35,7 → 35 m ; le cours écrit parfois 36). Un Nitrox très riche (Nx80) sert aux paliers ; l’O₂ pur : 6 m maxi. À l’air, c’est l’azote (5,6 b) qui limite avant l’O₂.' }; } },
+      calc: v => { const o = v.o2 / 100, pm = v.pp / o, z = (pm - 1) * 10, fn = 1 - o;
+        return { l: [lig(`Pa max = ${n(v.pp, 1)} / ${n(o, 2)}`, `${n(pm, 2)} bar`, 'Pa (pression absolue) = PpO₂ max / %O₂'),
+          lig(`${n(pm, 2)} bar − 1 bar (atm)`, `${n(pm - 1, 2)} bar`, 'on retire la pression atmosphérique : reste la pression de l’eau'),
+          lig(`${n(pm - 1, 2)} bar × 10`, `${n(z, 1)} m`, '1 bar d’eau = 10 m')],
+          rep: `MOD ${o >= 0.995 ? 'O₂ pur' : o <= 0.21 ? 'air' : 'Nx' + v.o2} = ${n(z, 1)} m`,
+          x: `Arrondir vers la sécurité (35,7 → 35 m). ${z < 25 ? 'Un Nitrox aussi riche sert aux paliers (déco) ; l’O₂ pur : 6 m maxi.' : 'Gaz fond.'} Azote (pour l’air) : narcose à 3,2 b → 3,2 / ${n(fn, 2)} = ${n(3.2 / fn, 2)} bar → ${n((3.2 / fn - 1) * 10, 1)} m ; N₂ max 5,6 b → ${n(5.6 / fn, 2)} bar → ${n((5.6 / fn - 1) * 10, 1)} m.` }; } },
     { id: 'best', t: 'Best mix', e: 'Best mix pour 45 m / pour 1 h à 32 m / déco à partir de 22 m', champs: [C('prof', 'Profondeur (m) ?', 45), C('duree', 'Durée (min) ? (0 = inconnue)', 0)],
       calc: v => { const p = pa(v.prof), pp = v.duree > 45 ? 1.5 : 1.6, x = pp / p, nx = Math.floor(x * 100 + 1e-9);
         return { l: [lig(`${n(v.prof)} ÷ 10 + 1`, `${n(p)} b`, 'Pa'), txt(v.duree > 45 ? `${v.duree} min > 45 min : PpO₂ 1,5 b (à 1,6 b, la NOAA ne donne que 45 min)` : 'PpO₂ 1,6 b'),
