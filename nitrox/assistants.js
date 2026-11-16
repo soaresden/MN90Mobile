@@ -45,16 +45,16 @@
     const taux = x => (quoi === 'snc' ? x.snc : x.otu), part = x => (quoi === 'snc' ? x.sncP : x.otuP);
     const nom = quoi === 'snc' ? '%SNC' : 'OTU', u = quoi === 'snc' ? ' %' : ' OTU';
     const [fond, rem, ...reste] = r.rows;
-    out.push(titre('① Fond'), lig(`PpO₂ = ${n(r.pa)} × ${n(r.fo2, 2)}`, noaa(r.pp, fond, quoi), 'colonne NOAA immédiatement supérieure'),
+    out.push(titre('A · Fond'), lig(`PpO₂ = ${n(r.pa)} × ${n(r.fo2, 2)}`, noaa(r.pp, fond, quoi), 'colonne NOAA immédiatement supérieure'),
       lig(`${nom} = ${n(taux(fond), 2)} × ${n(fond.d)}`, n(part(fond), 2) + u, 'durée MN90, descente comprise'));
     parts.push(part(fond));
     const premier = r.paliers[0]?.z ?? 0;
-    out.push(titre('② Remontée'), lig(`Durée = (${n(r.prof)} − ${premier}) / 15`, `${n(rem.d, 2)} min`, `jusqu’au ${premier ? '1er palier' : 'surface'}, à 15 m/min`),
+    out.push(titre('B · Remontée'), lig(`Durée = (${n(r.prof)} − ${premier}) / 15`, `${n(rem.d, 2)} min`, `jusqu’au ${premier ? '1er palier' : 'surface'}, à 15 m/min`),
       lig(`${nom} = ${n(taux(rem), 2)} × ${n(rem.d, 2)}`, n(part(rem), 2) + u, 'même PpO₂ qu’au fond'));
     parts.push(part(rem));
     r.paliers.forEach((p, i) => {
       const row = reste[i];
-      out.push(titre(`③ Palier ${p.z} m${p.enO2 ? ' à l’O₂ pur' : ''}`));
+      out.push(titre(`C · Palier ${p.z} m${p.enO2 ? ' à l’O₂ pur' : ''}`));
       if (p.enO2) out.push(lig(`Durée O₂ = ${p.tAir} × 2/3`, `${n(p.tAir * 2 / 3, 2)} → ${p.t} min`, `arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''}`));
       out.push(lig(`PpO₂ = ${n(pa(p.z))} × ${p.enO2 ? '1' : n(r.fo2, 2)}`, noaa(row.pp, row, quoi)),
         lig(`${nom} = ${n(taux(row), 2)} × ${n(row.d)}`, n(part(row), 2) + u));
@@ -62,9 +62,9 @@
     });
     if (r.paliers.length) {
       const s = reste[r.paliers.length], z = r.paliers[r.paliers.length - 1].z;
-      out.push(titre('④ Remontée surface'), lig(`Durée = ${z} / 6`, `${n(s.d, 2)} min`, `${z} m à 6 m/min`), lig(`${nom} = ${n(taux(s), 2)} × ${n(s.d, 2)}`, n(part(s), 2) + u, 'PpO₂ du palier'));
+      out.push(titre('D · Remontée surface'), lig(`Durée = ${z} / 6`, `${n(s.d, 2)} min`, `${z} m à 6 m/min`), lig(`${nom} = ${n(taux(s), 2)} × ${n(s.d, 2)}`, n(part(s), 2) + u, 'PpO₂ du palier'));
       parts.push(part(s));
-    } else out.push(txt('③ Palier = 0 · ④ Remontée surface = 0 (pas de palier)'));
+    } else out.push(txt('C · Palier = 0 · D · Remontée surface = 0 (pas de palier)'));
     out.push(titre('Total'), lig(`${nom} = ${parts.map(x => n(x, 2)).join(' + ')}`, n(parts.reduce((a, c) => a + c, 0), 2) + u));
     return out;
   }
@@ -101,7 +101,7 @@
     if (r.paliers.length) {
       r.paliers.forEach((p, i) => {
         const row = reste[i], f = p.enO2 ? 1 : r.fo2;
-        rows.push([`${L[2]}-Palier`, cel(`${p.z}`), cel(String(p.t), p.enO2 ? `Durée O₂ = ${p.tAir} × 2/3 = ${n(p.tAir * 2 / 3, 2)} → ${p.t} min (arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''})` : `MN90 : ${p.tAir} min à ${p.z} m`),
+        rows.push([`${L[2]}-Palier ${p.z} m`, cel(`${p.z}`), cel(String(p.t), p.enO2 ? `Durée O₂ = ${p.tAir} × 2/3 = ${n(p.tAir * 2 / 3, 2)} → ${p.t} min (arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''})` : `MN90 : ${p.tAir} min à ${p.z} m`),
           cel(gazNom(f)), paC(p.z), ppC(row, pa(p.z), f), noaaC(row), partC(row), '']);
         parts.push(part(row));
       });
@@ -228,30 +228,34 @@
 
 
   /* ---------- Journée plongée : de 1 à 4 plongées, %SNC et OTU dans le même tableau ---------- */
-  const TETE2 = ['', 'Prof', 'Durée', 'Gaz', 'Pa', 'PpO₂', '%SNC/min', '%SNC', 'OTU/min', 'OTU', 'EqAir'];
+  const TETE2 = ['', 'Prof', 'Durée', 'Gaz', 'PpO₂', '%SNC', 'OTU', 'EqAir'];
+  // 11 colonnes de calcul → 8 à l'affichage : Pa dans la formule de la PpO₂, le %/min dans celle du %SNC et des OTU
+  const COLS8 = [0, 1, 2, 3, 5, 7, 9, 10];
+  const compact8 = r => { if (r.tot) return { ...r, c: COLS8.map(i => r.c[i]) }; const m = COLS8.map(i => r[i]); m.ph = r.ph; return m; };
+  const ph = (nom, arr) => { arr.ph = nom; return arr; };
   // Le tableau d'une plongée, %SNC et OTU côte à côte
   function lignesDuo(r, L, eq) {
     const paC = z => ({ ...cel(n(pa(z)), `Pa = ${n(z)} / 10 + 1 (atm) = ${n(pa(z))} bar`), f: `${n(z)}/10 + 1` });
-    const ppC = (row, paV, f) => ({ f: `${n(paV)} × ${n(f, 2)}`, ...cel(n(row.pp), `PpO₂ = ${n(paV)} × ${n(f, 2)} = ${n(row.pp)} bar` + (row.c == null ? ' → sous 0,6 : rien' : ` → colonne ${n(row.c, 1)} (immédiatement supérieure)`)) });
+    const ppC = (row, paV, f) => ({ f: `${n(paV)} × ${n(f, 2)}${row.c != null && Math.abs(row.c - row.pp) > 1e-9 ? ` → ${n(row.c, 1)}` : ''}`, ...cel(n(row.pp), `PpO₂ = ${n(paV)} × ${n(f, 2)} = ${n(row.pp)} bar` + (row.c == null ? ' → sous 0,6 : rien' : ` → colonne ${n(row.c, 1)} (immédiatement supérieure)`)) });
     const sncM = row => ({ f: row.c == null ? '< 0,6' : `col. ${n(row.c, 1)}`, ...cel(row.c == null ? '0' : n(row.snc, 2), row.c == null ? 'sous 0,6 b : 0' : `NOAA : colonne ${n(row.c, 1)} → ${n(row.snc, 2)} %/min`) });
     const snc = row => ({ ...cel(n(row.sncP, 2), `%SNC = ${n(row.snc, 2)} × ${n(row.d, 2)} = ${n(row.sncP, 2)} %`), f: `${n(row.snc, 2)} × ${n(row.d, 2)}` });
     const otuM = row => ({ f: row.c == null ? '< 0,6' : `col. ${n(row.c, 1)}`, ...cel(row.c == null ? '0' : n(row.otu, 2), row.c == null ? 'sous 0,6 b : 0' : `OTU : colonne ${n(row.c, 1)} → ${n(row.otu, 2)} OTU/min`) });
     const otu = row => ({ ...cel(n(row.otuP, 1), `OTU = ${n(row.otu, 2)} × ${n(row.d, 2)} = ${n(row.otuP, 1)}`), f: `${n(row.otu, 2)} × ${n(row.d, 2)}` });
     const [fond, rem, ...reste] = r.rows, g = gazNom(r.fo2);
-    const rows = [[`${L[0]}-Fond`, cel(n(r.prof)), cel(n(fond.d), 'durée de la plongée (descente comprise)'), cel(g), paC(r.prof), ppC(fond, r.pa, r.fo2), sncM(fond), snc(fond), otuM(fond), otu(fond), eq]];
+    const rows = [ph('fond', [`${L[0]}-Fond`, cel(n(r.prof)), cel(n(fond.d), 'durée de la plongée (descente comprise)'), cel(g), paC(r.prof), ppC(fond, r.pa, r.fo2), sncM(fond), snc(fond), otuM(fond), otu(fond), eq])];
     const premier = r.paliers[0]?.z ?? 0;
-    rows.push([`${L[1]}-Remontée`, cel(`${n(r.prof)}→${premier}`), { ...cel(n(rem.d, 2), `Durée = (${n(r.prof)} − ${premier}) / 15 = ${n(rem.d, 2)} min (15 m/min jusqu’au ${premier ? '1er palier' : 'surface'})`), f: `(${n(r.prof)} − ${premier}) / 15` },
-      cel(g), paC(r.prof), cel(n(rem.pp), 'même PpO₂ qu’au fond'), sncM(rem), snc(rem), otuM(rem), otu(rem), '']);
+    rows.push(ph('remontee', [`${L[1]}-Remontée`, cel(`${n(r.prof)}→${premier}`), { ...cel(n(rem.d, 2), `Durée = (${n(r.prof)} − ${premier}) / 15 = ${n(rem.d, 2)} min (15 m/min jusqu’au ${premier ? '1er palier' : 'surface'})`), f: `(${n(r.prof)} − ${premier}) / 15` },
+      cel(g), paC(r.prof), cel(n(rem.pp), 'même PpO₂ qu’au fond'), sncM(rem), snc(rem), otuM(rem), otu(rem), '']));
     if (r.paliers.length) {
       r.paliers.forEach((p, i) => {
         const row = reste[i], f = p.enO2 ? 1 : r.fo2;
-        rows.push([`${L[2]}-Palier`, cel(`${p.z}`), { f: p.enO2 ? `${p.tAir} × 2/3` : '', ...cel(String(p.t), p.enO2 ? `Durée O₂ = ${p.tAir} × 2/3 = ${n(p.tAir * 2 / 3, 2)} → ${p.t} min (arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''})` : `MN90 : ${p.tAir} min à ${p.z} m`) },
-          cel(gazNom(f)), paC(p.z), ppC(row, pa(p.z), f), sncM(row), snc(row), otuM(row), otu(row), '']);
+        rows.push(ph('palier', [`${L[2]}-Palier ${p.z} m`, cel(`${p.z}`), { f: p.enO2 ? `${p.tAir} × 2/3` : '', ...cel(String(p.t), p.enO2 ? `Durée O₂ = ${p.tAir} × 2/3 = ${n(p.tAir * 2 / 3, 2)} → ${p.t} min (arrondi au-dessus${p.min5 ? ', 5 min minimum' : ''})` : `MN90 : ${p.tAir} min à ${p.z} m`) },
+          cel(gazNom(f)), paC(p.z), ppC(row, pa(p.z), f), sncM(row), snc(row), otuM(row), otu(row), '']));
       });
       const s = reste[r.paliers.length], z = r.paliers[r.paliers.length - 1].z, f = r.paliers[r.paliers.length - 1].enO2 ? 1 : r.fo2;
-      rows.push([`${L[3]}-Remontée`, cel(`${z}→0`), { ...cel(n(s.d, 2), `Durée = ${z} / 6 = ${n(s.d, 2)} min (6 m/min)`), f: `${z} / 6` }, cel(gazNom(f)), paC(z), cel(n(s.pp), 'PpO₂ du palier'), sncM(s), snc(s), otuM(s), otu(s), '']);
+      rows.push(ph('surface', [`${L[3]}-Remontée`, cel(`${z}→0`), { ...cel(n(s.d, 2), `Durée = ${z} / 6 = ${n(s.d, 2)} min (6 m/min)`), f: `${z} / 6` }, cel(gazNom(f)), paC(z), cel(n(s.pp), 'PpO₂ du palier'), sncM(s), snc(s), otuM(s), otu(s), '']));
     } else {
-      rows.push([`${L[2]}-Palier`, cel('—'), cel('0', 'pas de palier'), '', '', '', '', cel('0'), '', cel('0'), ''], [`${L[3]}-Remontée`, cel('—'), cel('0', `déjà comptée en ${L[1]}`), '', '', '', '', cel('0'), '', cel('0'), '']);
+      rows.push(ph('palier', [`${L[2]}-Palier`, cel('—'), cel('0', 'pas de palier'), '', '', '', '', cel('0'), '', cel('0'), '']), ph('surface', [`${L[3]}-Remontée`, cel('—'), cel('0', `déjà comptée en ${L[1]}`), '', '', '', '', cel('0'), '', cel('0'), '']));
     }
     return rows;
   }
@@ -297,8 +301,8 @@
       if (fond.c != null && ex.NOAA[fond.c]) { e.dmaxNoaa = ex.NOAA[fond.c][1]; e.tmax = Math.max(0, (100 - e.depart) / 100 * e.dmaxNoaa); }
       if (i) {
         const L = lettres[k++];
-        rows.push([`${L}-IntSurf`, '', cel(String(e.interval), hm(e.interval)), '', '', '', { ...cel(n(e.coef.coef, 3), `${hm(e.interval)} → colonne ${hm(e.coef.col)} (immédiatement inférieure) → coefficient ${n(e.coef.coef, 3)}`), f: `col. ${hm(e.coef.col)}` },
-          { ...cel(n(e.depart, 2), `%SNC = ${n(e.avant, 2)} × ${n(e.coef.coef, 3)} = ${n(e.depart, 2)} % au départ de la plongée ${i + 1}`), f: `${n(e.avant, 2)} × ${n(e.coef.coef, 3)}` }, '', cel(n(otuTot, 1), 'les OTU ne baissent pas pendant l’intervalle'), '']);
+        rows.push(ph('is', [`${L}-IntSurf`, '', cel(String(e.interval), hm(e.interval)), '', '', '', { ...cel(n(e.coef.coef, 3), `${hm(e.interval)} → colonne ${hm(e.coef.col)} (immédiatement inférieure) → coefficient ${n(e.coef.coef, 3)}`), f: `col. ${hm(e.coef.col)}` },
+          { ...cel(n(e.depart, 2), `%SNC = ${n(e.avant, 2)} × ${n(e.coef.coef, 3)} = ${n(e.depart, 2)} % au départ de la plongée ${i + 1}`), f: `${n(e.avant, 2)} × ${n(e.coef.coef, 3)}` }, '', cel(n(otuTot, 1), 'les OTU ne baissent pas pendant l’intervalle'), '']));
       }
       rows.push(...lignesDuo(e.r, lettres.slice(k, k + 4), eqAir(e.r, i ? { txt: e.majTxt, maj: e.maj, fictive: pl.duree + e.maj } : null)));
       k += 4;
@@ -312,7 +316,7 @@
       res.push(e);
     }
     const err = res.find(e => e.err)?.err;
-    return { res, rows, schema, snc: cours, otu: otuTot, err,
+    return { res, rows: rows.map(compact8), schema, snc: cours, otu: otuTot, err,
       rep: `%SNC fin de journée = ${n(cours, 1)} % · ${verdict(cours)} · OTU ${n(otuTot, 0)} / 850`,
       alertes: res.flatMap(e => (e.r?.alertes || []).map(a => `Plongée ${e.i + 1} : ${a.replace(/<[^>]+>/g, '')}`)),
       depassements: res.filter(e => e.tmax != null && e.pl.duree > e.tmax).map(e => `Plongée ${e.i + 1} : ${e.pl.duree} min prévues, mais la durée max à cette PpO₂ avec ${n(e.depart, 1)} % de %SNC au départ est ${n(e.tmax, 0)} min.`) };
@@ -320,45 +324,60 @@
 
   /* ---------- Le schéma de la plongée, avec les valeurs écrites dessus ---------- */
   function svgPlongee(r, num, maxProf, otu = false, extra = null) {
-    const W = 400, top = extra ? 46 : 34, bas = extra ? 160 : 150, H = extra ? 228 : 215;
+    const Lt = extra?.lettres || ['①', '②', '③', '④'];
+    const W = 400, top = extra ? 50 : 34, bas = extra ? 164 : 150, H = extra ? 232 : 215;
     const y = z => top + z / maxProf * (bas - top);
     const g = gazNom(r.fo2), [fond, rem, ...reste] = r.rows, val = x => (otu ? x.otuP : x.sncP), u = otu ? ' OTU' : ' %';
     const pal = r.paliers, x0 = 10, xD = 40, xF = pal.length ? 175 : 240, larg = 44;
     const xR = pal.length ? xF + 28 : 300;
     let pts = [[x0, top], [xD, y(r.prof)], [xF, y(r.prof)]], t = '';
+    const segs = [];   // [étape, points] pour colorer la courbe
     const lbl = (x, yy, s, cls = 'sch-lbl', a = 'middle') => `<text x="${x}" y="${yy}" class="${cls}" text-anchor="${a}">${s}</text>`;
-    t += lbl(xD + 4, y(r.prof) - 22, `① Fond · ${n(r.prof, 1)} m · ${n(fond.d, 0)} min`, 'sch-lbl', 'start');
+    t += lbl(xD + 4, y(r.prof) - 22, `${Lt[0]} Fond · ${n(r.prof, 1)} m · ${n(fond.d, 0)} min`, 'sch-lbl', 'start');
     t += lbl(xD + 4, y(r.prof) - 9, `${g} · PpO₂ ${n(fond.pp, 2)} → ${n(val(fond), 2)}${u}`, 'sch-val', 'start');
     let x = xR;
     pal.forEach((p, i) => {
+      segs.push(['palier', [pts[pts.length - 1], [x, y(p.z)], [x + larg, y(p.z)]]]);
       pts.push([x, y(p.z)], [x + larg, y(p.z)]);
       const row = reste[i];
       // Les paliers en liste, à droite sous la courbe : pas de chevauchement à 6 et 3 m
-      t += `<text x="${W - 4}" y="${y(pal[0].z) + 20 + i * 30}" class="sch-lbl" text-anchor="end">③ ${p.z} m · ${p.t} min${p.enO2 ? ' à l’O₂' : ''}</text>`;
+      t += `<text x="${W - 4}" y="${y(pal[0].z) + 20 + i * 30}" class="sch-lbl" text-anchor="end">${Lt[2]} ${p.z} m · ${p.t} min${p.enO2 ? ' à l’O₂' : ''}</text>`;
       t += `<text x="${W - 4}" y="${y(pal[0].z) + 34 + i * 30}" class="sch-val" text-anchor="end">PpO₂ ${n(row.pp, 2)} → ${n(val(row), 2)}${u}</text>`;
       x += larg + 10;
     });
     pts.push([x + (pal.length ? 4 : 0), top]);
-    t += lbl(xF + 4, y(r.prof) + 15, `② ${n(rem.d, 2)} min · ${n(val(rem), 2)}${u}`, 'sch-lbl', 'start');
+    // fond (descente comprise), remontée au 1er palier (ou à la surface), paliers, remontée surface
+    const fondSeg = ['fond', pts.slice(0, 3)];
+    const remSeg = ['remontee', [pts[2], pal.length ? pts[3] : pts[3]]];
+    const surfSeg = pal.length ? ['surface', [pts[pts.length - 2], pts[pts.length - 1]]] : null;
+    const tousSegs = [fondSeg, remSeg, ...segs.map((sg, k) => (k === 0 ? ['palier', sg[1].slice(1)] : sg)), surfSeg].filter(Boolean);
+    t += lbl(xF + 4, y(r.prof) + 15, `${Lt[1]} ${n(rem.d, 2)} min · ${n(val(rem), 2)}${u}`, 'sch-lbl', 'start');
     if (pal.length) {
       const s = reste[pal.length];
-      t += lbl(Math.min(x + 6, W - 4), top - 8, `④ ${n(s.d, 1)} min · ${n(val(s), 2)}${u}`, 'sch-lbl', 'end');
+      t += lbl(Math.min(x + 6, W - 4), top - 8, `${Lt[3]} ${n(s.d, 1)} min · ${n(val(s), 2)}${u}`, 'sch-lbl', 'end');
     }
     t += lbl(x0, top - 8, `Plongée ${num}`, 'sch-z', 'start');
     t += lbl(W / 2, H - 22, `PEA ${n(r.pea, 1)} m → table ${r.tab.d} m · ${hm(r.tab.t)} → ${pal.length ? pal.map(p => `${p.tAir} min à ${p.z} m`).join(' + ') : 'pas de palier'} · GPS ${r.tab.gps}`, 'sch-z');
     t += lbl(W / 2, H - 6, extra ? `Total : ${n(r.snc, 2)} % SNC · ${n(r.otu, 0)} OTU` : `Total plongée ${num} : ${n(otu ? r.otu : r.snc, 2)}${u}`, 'sch-tot');
-    if (extra?.haut) t += lbl(W / 2, 12, extra.haut, extra.alerte ? 'sch-alerte' : 'sch-is');
+    if (extra?.haut) t += lbl(W / 2, 12, extra.haut, extra.haut2 || !extra.alerte ? 'sch-is' : 'sch-alerte');
+    if (extra?.haut2) t += lbl(W / 2, 27, extra.haut2, extra.alerte ? 'sch-alerte' : 'sch-is');
     return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Schéma de la plongée ${num}"><line x1="0" y1="${top}" x2="${W}" y2="${top}" class="sch-surf"/>` +
-      `<polyline points="${pts.map(q => q.join(',')).join(' ')}" class="sch-prof"/>${t}</svg>`;
+      tousSegs.map(([e2, ps]) => `<polyline points="${ps.map(q => q.join(',')).join(' ')}" class="sch-prof ph-${e2}"/>`).join('') + `${t}</svg>`;
   }
   function schemaJournee(sch) {
-    const maxProf = Math.max(...sch.map(x => x.r.prof));
-    return `<div class="asx-sch n${sch.length}">${sch.map(x => {
-      const morceaux = [];
-      if (x.interval != null) morceaux.push(`⏱ ${hm(x.interval)} : ${n(x.avant, 1)} × ${n(x.coef, 3)} = ${n(x.depart, 1)} %${x.maj ? ` · maj. +${x.maj} min` : ''}`);
-      if (x.tmax != null) morceaux.push(`durée max ${n(x.tmax, 0)} min`);
-      return svgPlongee(x.r, x.num, maxProf, false, { haut: morceaux.join(' · '), alerte: x.tmax != null && x.duree > x.tmax });
-    }).join('')}</div>`;
+    const maxProf = Math.max(...sch.map(x => x.r.prof)), AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const parts = [];
+    sch.forEach((x, i) => {
+      // entre deux plongées, le temps de surface : bien visible
+      if (x.interval != null) {
+        parts.push(`<div class="sch-surface${i === 2 ? ' ligne' : ''}" title="Surface : %SNC ${n(x.avant, 1)} × ${n(x.coef, 3)} = ${n(x.depart, 1)} %${x.maj ? ` · majoration +${x.maj} min` : ''}"><span>${AZ[(x.num - 1) * 5 - 1]} · surface</span><b>⏱ ${hm(x.interval)}</b>` +
+          `<span>%SNC → <b>${n(x.depart, 1)} %</b></span>${x.maj ? `<span>maj. +${x.maj}</span>` : ''}</div>`);
+      }
+      const L0 = (x.num - 1) * 5;
+      const dmax = x.tmax != null ? `durée max ${n(x.tmax, 0)} min${x.duree > x.tmax ? ` (prévu ${x.duree})` : ''}` : '';
+      parts.push(svgPlongee(x.r, x.num, maxProf, false, { haut: dmax, alerte: x.tmax != null && x.duree > x.tmax, lettres: [0, 1, 2, 3].map(k => `${AZ[L0 + k]} ·`) }));
+    });
+    return `<div class="asx-sch n${sch.length}">${parts.join('')}</div>`;
   }
   function schemaHTML(liste) {
     const maxProf = Math.max(...liste.map(x => x.r.prof));
@@ -548,7 +567,7 @@
     s += `<text x="${bx - 14}" y="${by + 200}" class="viz-val" text-anchor="end">arrondi vers le bas</text><text x="${bx - 14}" y="${by + 220}" class="viz-lbl" text-anchor="end">→ ${nom === 'NITROX' ? 'Nx' + nx : nom}</text>`;
     s += `<text x="${bx + bw + 14}" y="${by + 80}" class="viz-val">PpO₂ max</text><text x="${bx + bw + 14}" y="${by + 100}" class="viz-lbl">${duree > 45 ? '1,5 b (plus de 45 min)' : '1,6 b'}</text>`;
     s += `<text x="${bx + bw + 14}" y="${by + 150}" class="viz-val">Vérification</text><text x="${bx + bw + 14}" y="${by + 170}" class="viz-lbl">${n(p, 2)} × ${n(nx / 100, 2)} = ${n(ppReel, 2)} ≤ ${n(pp, 1)} ✓</text>`;
-    return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Le bloc et son étiquette Nitrox">${s}</svg>`;
+    return `<svg class="viz viz-bloc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Le bloc et son étiquette Nitrox">${s}</svg>`;
   }
 
   /* ---------- Journée plongée : la frise (profil, %SNC, OTU) et les jauges, avec un curseur ---------- */
@@ -588,7 +607,7 @@
   function dessinerFrise(box, j) {
     const M = modeleJournee(j);
     if (!M.pts.length) { box.innerHTML = ''; return; }
-    const W = Math.max(320, box.clientWidth), H = Math.max(260, box.clientHeight);
+    const W = Math.max(320, box.clientWidth), H = Math.max(170, box.clientHeight - 40);
     const gJ = W >= 560 ? 132 : 96, g = 40, d = W - gJ - 34, haut = 22, milieu = Math.round(H * 0.42), bas = H - 26;
     const x = t => g + t / M.fin * (d - g);
     const zMax = Math.max(10, ...M.pts.map(p => p.z));
@@ -607,7 +626,12 @@
     s += `<line x1="${g}" x2="${d}" y1="${yz(0)}" y2="${yz(0)}" class="fr-surf"/>`;
     for (let z = 10; z <= zMax; z += zMax > 40 ? 20 : 10) s += `<text x="${g - 5}" y="${yz(z) + 4}" class="fr-lbl" text-anchor="end">${z} m</text><line x1="${g}" x2="${d}" y1="${yz(z)}" y2="${yz(z)}" class="fr-grille"/>`;
     const prof = M.pts.map((p, k) => `${k ? 'L' : 'M'}${x(p.vt).toFixed(1)},${yz(p.z).toFixed(1)}`).join('');
-    s += `<path d="${prof}L${x(M.fin)},${yz(0)}L${g},${yz(0)}Z" class="fr-aire"/><path d="${prof}" class="fr-prof"/>`;
+    s += `<path d="${prof}L${x(M.fin)},${yz(0)}L${g},${yz(0)}Z" class="fr-aire"/>`;
+    const etape = q => (q.phase === 'fond' ? 'fond' : q.phase === 'remontée' ? 'remontee' : q.phase === 'remontée surface' ? 'surface' : q.phase.startsWith('palier') ? 'palier' : 'is');
+    let morceau = [];
+    const tracer = () => { if (morceau.length > 1) s += `<path d="${morceau.map((q, k) => `${k ? 'L' : 'M'}${x(q.vt).toFixed(1)},${yz(q.z).toFixed(1)}`).join('')}" class="fr-prof ph-${etape(morceau[0])}"/>`; };
+    M.pts.forEach((q, k) => { if (morceau.length && etape(q) !== etape(morceau[morceau.length - 1])) { morceau.push(q); tracer(); morceau = [q]; } else morceau.push(q); });
+    tracer();
     // %SNC et OTU, avec leurs limites
     for (const [v, c, t] of [[50, '#f59e0b', '50 %'], [90, '#f97316', '90 %'], [100, '#ef4444', '100 %']]) if (v <= sMax) s += `<line x1="${g}" x2="${d}" y1="${ys(v)}" y2="${ys(v)}" stroke="${c}" stroke-dasharray="5 4"/><text x="${g - 5}" y="${ys(v) + 4}" class="fr-lbl" fill="${c}" text-anchor="end">${t}</text>`;
     if (850 <= oMax) s += `<line x1="${g}" x2="${d}" y1="${yo(850)}" y2="${yo(850)}" stroke="${OTUC}" stroke-dasharray="2 4"/><text x="${d + 4}" y="${yo(850) + 4}" class="fr-lbl" fill="${OTUC}">850</text>`;
@@ -691,7 +715,7 @@
       s += `<text x="${mx}" y="${y + 204}" class="viz-lbl" text-anchor="middle">monte le bloc au plus à ${n(res.peq, 1)} b</text>`;
       s += `<text x="${mx}" y="${y + 222}" class="viz-val" text-anchor="middle" fill="${ok2 ? '#16a34a' : C.o2}">${ok2 ? `✓ suffit (elle finit à ${n(res.apres, 1)} b)` : '✗ ne suffit pas'}</text>`;
     }
-    return `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gonflage : ce qu'on a, ce qu'on veut"><defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--text3)"/></marker></defs>${s}</svg>`;
+    return `<svg class="viz viz-gonf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gonflage : ce qu'on a, ce qu'on veut"><defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--text3)"/></marker></defs>${s}</svg>`;
   }
   const nxNom = pct => (pct >= 100 ? 'O₂ pur' : pct <= 21 ? 'air' : 'Nx' + pct);
 
@@ -757,26 +781,40 @@
     // --- Journée plongée : 1 à 4 plongées, la courbe ou le tableau à droite ---
     const journee = () => {
       const J = (etat.journee = etat.journee || { nb: 2, pl: PLONGEE_DEF.map(x => ({ ...x })), is: [150, 120, 120] });
+      // Une ligne par plongée : surface avant | P | profondeur | temps | Nitrox | palier O₂ | ce que dit la table
       const ligneP = (p, i) => `<div class="asx-pl" data-i="${i}">
+          ${i ? `<span class="asx-is" data-is="${i - 1}"><span class="asx-is-l">⏱ <input class="input" type="number" inputmode="numeric" value="${J.is[i - 1]}" aria-label="Intervalle avant la plongée ${i + 1}"> <i>${hm(J.is[i - 1])}</i></span>${curseur('is', J.is[i - 1], 'data-ris')}</span>` : '<span class="asx-is vide">—</span>'}
           <b>P${i + 1}</b>
           ${[['prof', 'decimal', 'Profondeur'], ['duree', 'numeric', 'Temps'], ['o2', 'numeric', 'Nitrox']].map(([k, im, a]) => `<span class="asx-cel"><input class="input" type="number" inputmode="${im}" data-k="${k}" value="${p[k]}" aria-label="${a} plongée ${i + 1}">${curseur(k, p[k], 'data-rk')}</span>`).join('')}
           <div class="seg asx-o2" data-k="palierO2"><button type="button" data-v="0" class="${p.palierO2 ? '' : 'on'}">Non</button><button type="button" data-v="1" class="${p.palierO2 ? 'on' : ''}">Oui</button></div>
+          <div class="asx-info" data-info="${i}"></div>
         </div>`;
-      const ligneIs = i => `<div class="asx-is" data-is="${i}"><span>⏱ Intervalle surface</span><input class="input" type="number" inputmode="numeric" value="${J.is[i]}" aria-label="Intervalle avant la plongée ${i + 2}"><span>min <i>(${hm(J.is[i])})</i></span>${curseur('is', J.is[i], 'data-ris')}</div>`;
-      zIn.innerHTML = `<h3>🧠 Journée plongée</h3>
-        <div class="field">Nombre de plongées<div class="seg asx-nb">${[1, 2, 3, 4].map(k => `<button type="button" data-nb="${k}" class="${J.nb === k ? 'on' : ''}">${k}</button>`).join('')}</div></div>
-        <div class="asx-tete"><span></span><span>Prof. (m)</span><span>Temps (min)</span><span>Nitrox (%)</span><span>Palier O₂ pur ?</span></div>
-        ${J.pl.slice(0, J.nb).map((p, i) => (i ? ligneIs(i - 1) : '') + ligneP(p, i)).join('')}
-        <button type="button" class="btn btn-outline btn-sm asx-reset">↺ Exemple du cours</button>`;
+      zIn.innerHTML = `<div class="asx-j-tete"><h3>🧠 Journée plongée</h3><span class="small muted">Plongées</span><div class="seg asx-nb">${[1, 2, 3, 4].map(k => `<button type="button" data-nb="${k}" class="${J.nb === k ? 'on' : ''}">${k}</button>`).join('')}</div>
+          <button type="button" class="btn btn-outline btn-sm asx-plier">${etat.jplie ? '▼ Déplier' : '▲ Replier'}</button>
+          <button type="button" class="btn btn-outline btn-sm asx-reset">↺ Exemple du cours</button></div>
+        ${etat.jplie ? `<div class="asx-resume">${J.pl.slice(0, J.nb).map((p, i) => `${i ? `<span class="asx-r-is">⏱ ${hm(J.is[i - 1])}</span>` : ''}<span><b>P${i + 1}</b> ${p.prof} m · ${p.duree} min · ${nxNom(p.o2)}${p.palierO2 ? ' · O₂' : ''}</span>`).join('')}</div>` : ''}
+        <div class="asx-jgrid"${etat.jplie ? ' hidden' : ''}><div class="asx-pl asx-jh"><span>Surface avant</span><span></span><span>Prof. (m)</span><span>Temps (min)</span><span>Nitrox (%)</span><span>Palier O₂ pur</span><span>Ce que dit la table</span></div>
+        ${J.pl.slice(0, J.nb).map((p, i) => ligneP(p, i)).join('')}</div>`;
       const calculer = () => {
         const j = calcJournee(J.pl.slice(0, J.nb), J.is);
-        const tab = `<div class="tbl-wrap asx-tab"><table class="tbl exo-tbl as-tab duo"><thead><tr>${TETE2.map((h, k) => `<th class="${k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''}">${h}</th>`).join('')}</tr></thead><tbody>` +
-          j.rows.map(r => { const cs = r.tot ? r.c : r; return `<tr${r.tot ? ' class="tot"' : ''}>${cs.map((c, k) => { const cls = k === 6 || k === 7 ? 'snc' : k === 8 || k === 9 ? 'otu' : ''; if (c == null || c === '') return `<td class="${cls}"></td>`; if (typeof c === 'string') return `<td class="${cls}">${c}</td>`; return `<td class="${cls}"${c.d ? ` title="${esc(c.d)}"` : ''}>${c.v}${c.f ? `<small class="asx-d">${c.f}</small>` : ''}</td>`; }).join('')}</tr>`; }).join('') + '</tbody></table></div>';
+        // à gauche, sous chaque plongée : ce que dit la table
+        j.res.forEach(e => {
+          const box = zIn.querySelector(`.asx-info[data-info="${e.i}"]`);
+          if (!box) return;
+          if (!e.r || e.r.err) { box.innerHTML = `<span class="ko">${e.err || ''}</span>`; return; }
+          const pal = e.r.paliers;
+          box.innerHTML = `<span>MN90 <b>${e.r.tab.d} m · ${hm(e.r.tab.t)}</b></span>` +
+            (pal.length ? pal.map(p => `<span class="ph-palier">palier <b>${p.tAir} min à ${p.z} m</b>${p.enO2 ? ` → <b>${p.t} min O₂</b>` : ''}</span>`).join('') : '<span>pas de palier</span>') +
+            `<span>GPS <b>${e.r.tab.gps}</b></span>${e.maj ? `<span>maj. <b>+${e.maj} min</b></span>` : ''}` +
+            (e.tmax != null ? `<span class="${e.pl.duree > e.tmax ? 'ko' : ''}">durée max <b>${n(e.tmax, 0)} min</b></span>` : '');
+        });
+        const tab = `<div class="tbl-wrap asx-tab"><table class="tbl exo-tbl as-tab duo"><thead><tr>${TETE2.map((h, k) => `<th class="${k === 5 ? 'snc' : k === 6 ? 'otu' : ''}">${h}</th>`).join('')}</tr></thead><tbody>` +
+          j.rows.map(r => { const cs = r.tot ? r.c : r; return `<tr class="${r.tot ? 'tot' : 'ph-' + (r.ph || '')}">${cs.map((c, k) => { const cls = k === 5 ? 'snc' : k === 6 ? 'otu' : ''; if (c == null || c === '') return `<td class="${cls}"></td>`; if (typeof c === 'string') return `<td class="${cls}">${c}</td>`; return `<td class="${cls}"${c.d ? ` title="${esc(c.d)}"` : ''}>${c.v}${c.f ? `<small class="asx-d">${c.f}</small>` : ''}</td>`; }).join('')}</tr>`; }).join('') + '</tbody></table></div>';
         const nv = j.err ? ['rouge', '⚠️', ''] : j.snc > 100 || j.otu > 850 ? ['rouge', '😱', 'danger'] : j.snc > 90 ? ['rouge', '😟', 'limite : 2 h de surface au moins'] : j.snc > 50 ? ['orange', '😐', 'attention : 45 min de surface au moins'] : ['vert', '😀', 'tranquille'];
-        zOut.innerHTML = `<div class="exo-rep niv-${nv[0]}" data-emoji="${nv[1]}">${j.err ? j.err : j.rep}${nv[2] ? ` · <b>${nv[2]}</b>` : ''}</div>` +
+        zOut.innerHTML = `<div class="asx-tete-res"><div class="exo-rep niv-${nv[0]}" data-emoji="${nv[1]}">${j.err ? j.err : j.rep}${nv[2] ? ` · <b>${nv[2]}</b>` : ''}</div>` +
+          `<div class="seg asx-vue"><button type="button" data-vue="courbe" class="${etat.vue !== 'schema' ? 'on' : ''}" title="Courbe">📈</button><button type="button" data-vue="schema" class="${etat.vue === 'schema' ? 'on' : ''}" title="Schéma + tableau">🧾</button></div></div>` +
           (j.depassements.length ? `<div class="exo-note warn">${j.depassements.join('<br>')}</div>` : '') +
           (j.alertes.length ? `<details class="asx-rq"><summary>⚠ ${j.alertes.length} remarque${j.alertes.length > 1 ? 's' : ''} sur la lecture de la table</summary>${[...new Set(j.alertes)].map(a => `<div>${a}</div>`).join('')}</details>` : '') +
-          `<div class="seg asx-vue"><button type="button" data-vue="courbe" class="${etat.vue !== 'schema' ? 'on' : ''}">📈 Courbe</button><button type="button" data-vue="schema" class="${etat.vue === 'schema' ? 'on' : ''}">🧾 Schéma + tableau</button></div>` +
           `<div class="asx-vue-corps ${etat.vue === 'schema' ? 'schema' : 'courbe'}">${etat.vue === 'schema' ? `${j.schema.length ? schemaJournee(j.schema) : ''}${tab}` : ''}</div>` + detailHTML;
         if (etat.vue !== 'schema') {
           const boite = zOut.querySelector('.asx-vue-corps');
@@ -791,17 +829,17 @@
         if (!i || i.value === '' || isNaN(+i.value)) return;
         // un curseur : on recopie dans le champ voisin, et inversement
         if (i.classList.contains('asx-range')) {
-          const champ = i.parentElement.querySelector('input[type=number]');
+          const champ = (i.closest('.asx-is') || i.parentElement).querySelector('input[type=number]');
           champ.value = i.value; i = champ;
-          if (i.closest('.asx-is')) i.closest('.asx-is').querySelector('i').textContent = `(${hm(+i.value)})`;
-        } else { const r = i.parentElement.querySelector('input.asx-range'); if (r) r.value = i.value; }
+        } else { const r = (i.closest('.asx-is') || i.parentElement).querySelector('input.asx-range'); if (r) r.value = i.value; }
         const pl = i.closest('.asx-pl'), is = i.closest('.asx-is');
-        if (pl) J.pl[+pl.dataset.i][i.dataset.k] = +i.value;
-        if (is) { J.is[+is.dataset.is] = +i.value; is.querySelector('i').textContent = `(${hm(+i.value)})`; }
+        if (is) { J.is[+is.dataset.is] = +i.value; is.querySelector('i').textContent = hm(+i.value); }
+        else if (pl) J.pl[+pl.dataset.i][i.dataset.k] = +i.value;
         calculer();
       };
       zIn.onclick = e => {
         if (e.target.closest('.asx-reset')) { delete etat.journee; return montrer(); }
+        if (e.target.closest('.asx-plier, .asx-resume')) { etat.jplie = !etat.jplie; garder(); return montrer(); }
         const nb = e.target.closest('button[data-nb]');
         if (nb) { J.nb = +nb.dataset.nb; return montrer(); }
         const o = e.target.closest('.asx-o2 button');
@@ -837,7 +875,7 @@
           }
         }
         const ligneHTML = x => (x.h ? `<h4>${x.h}</h4>` : x.txt != null ? `<div class="as-t">${x.txt}${x.c ? `<small>${x.c}</small>` : ''}</div>` : `<div class="as-l"><span>${x.k}</span> <i>=</i> <b>${x.r}</b>${x.c ? `<small>${x.c}</small>` : ''}</div>`);
-        zOut.innerHTML = `<div class="exo-rep">${r.rep}</div>` + svgGonflage(G, g, res) + `<div class="as-res asx-2col">${[...r.l, ...plus].map(ligneHTML).join('')}</div>` + (r.x ? `<div class="exo-note">${r.x}</div>` : '');
+        zOut.innerHTML = `<div class="exo-rep">${r.rep}</div>` + svgGonflage(G, g, res) + `<div class="as-res asx-3col">${[...r.l, ...plus].map(ligneHTML).join('')}</div>` + (r.x ? `<div class="exo-note petite">${r.x}</div>` : '');
         garder();
       };
       zIn.oninput = e => { const i = e.target.closest('input[data-c]'); if (!i || i.value === '' || isNaN(+i.value)) return; G[i.dataset.c] = +i.value; calculer(); };
